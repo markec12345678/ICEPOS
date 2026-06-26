@@ -42,7 +42,7 @@ export interface Order {
   id: string;
   tableId: string;
   table: Table;
-  status: "open" | "paid" | "cancelled";
+  status: "open" | "paid" | "cancelled" | "storno";
   items: OrderItem[];
   total: number;
   vatTotal: number;
@@ -50,7 +50,20 @@ export interface Order {
   paidAt: string | null;
   paymentMethod: "cash" | "card" | null;
   receiptNo: string | null;
+  invoiceNumber: string | null;
+  zoi: string | null;
+  eor: string | null;
+  fursXml: string | null;
+  businessUnit: string;
+  cashRegister: string;
   operator: string;
+  operatorTaxNo: string;
+  // Storno
+  stornoOf: string | null;
+  stornoReason: string | null;
+  stornoAt: string | null;
+  stornoZoi: string | null;
+  stornoEor: string | null;
 }
 
 export interface CartItem {

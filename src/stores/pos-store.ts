@@ -3,8 +3,8 @@ import type { CartItem, MenuItem } from "@/lib/types";
 
 interface PosState {
   // Navigation
-  activeView: "tables" | "order" | "dashboard";
-  setActiveView: (v: "tables" | "order" | "dashboard") => void;
+  activeView: "tables" | "order" | "receipts" | "menu" | "dashboard";
+  setActiveView: (v: "tables" | "order" | "receipts" | "menu" | "dashboard") => void;
 
   // Selected table
   selectedTableId: string | null;

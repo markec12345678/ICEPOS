@@ -120,7 +120,93 @@ async function main() {
     console.log("✅ Demo naročilo na mizi 2 ustvarjeno");
   }
 
+  // Demo: nekaj plačanih računov iz današnjega dne (za dnevnik + statistiko)
+  await seedPaidReceipts(db);
+
   console.log("🎉 Seed končan!");
+}
+
+async function seedPaidReceipts(db: import("@prisma/client").PrismaClient) {
+  // Poenostavljen FURS-like podpis (demo, brez pravega RSA)
+  function fakeZoi(n: number) {
+    return Array.from({ length: 32 }, (_, i) =>
+      ((n + i * 7) % 16).toString(16).toUpperCase()
+    ).join("");
+  }
+  function fakeEor(n: number) {
+    return Array.from({ length: 32 }, (_, i) =>
+      ((n * 3 + i * 11) % 16).toString(16).toUpperCase()
+    ).join("");
+  }
+
+  const jota = await db.menuItem.findFirst({ where: { name: "Jota" } });
+  const kranjska = await db.menuItem.findFirst({ where: { name: "Kranjska klobasa s kislim zeljem" } });
+  const pivo = await db.menuItem.findFirst({ where: { name: "Pivo Laško" } });
+  const cappuccino = await db.menuItem.findFirst({ where: { name: "Cappuccino" } });
+  const potica = await db.menuItem.findFirst({ where: { name: "Potica" } });
+  const spritz = await db.menuItem.findFirst({ where: { name: "Aperol Spritz" } });
+  const biftek = await db.menuItem.findFirst({ where: { name: "Biftek z gobovo omako" } });
+  const gibanicaLocal = await db.menuItem.findFirst({ where: { name: "Prekmurska gibanica" } });
+  const refoškLocal = await db.menuItem.findFirst({ where: { name: "Refošk" } });
+  const table3 = await db.table.findFirst({ where: { number: 3 } });
+  const table5 = await db.table.findFirst({ where: { number: 5 } });
+  const table7 = await db.table.findFirst({ where: { number: 7 } });
+  const table9 = await db.table.findFirst({ where: { number: 9 } });
+  const table10 = await db.table.findFirst({ where: { number: 10 } });
+
+  const demoReceipts = [
+    { hoursAgo: 5, table: table3, items: [{ m: jota, q: 2 }, { m: pivo, q: 2 }, { m: potica, q: 1 }], method: "cash", operator: "Ana" },
+    { hoursAgo: 4, table: table5, items: [{ m: kranjska, q: 1 }, { m: pivo, q: 1 }, { m: potica, q: 1 }], method: "card", operator: "Ana" },
+    { hoursAgo: 3, table: table7, items: [{ m: cappuccino, q: 2 }, { m: gibanicaLocal, q: 1 }], method: "cash", operator: "Marko" },
+    { hoursAgo: 2, table: table9, items: [{ m: spritz, q: 3 }], method: "card", operator: "Marko" },
+    { hoursAgo: 1, table: table10, items: [{ m: biftek, q: 2 }, { m: refoškLocal, q: 2 }, { m: gibanicaLocal, q: 2 }], method: "card", operator: "Ana" },
+  ];
+
+  let seq = 1;
+  for (const r of demoReceipts) {
+    if (!r.table) continue;
+    const paidAt = new Date();
+    paidAt.setHours(paidAt.getHours() - r.hoursAgo);
+
+    const items = r.items.filter((i) => i.m);
+    if (items.length === 0) continue;
+    const total = items.reduce((s, i) => s + i.m!.price * i.q, 0);
+    const vatTotal = items.reduce(
+      (s, i) => s + i.m!.price * i.q * i.m!.vatRate,
+      0
+    );
+
+    const invNum = `PREVOZ11-BLAG01-${String(seq).padStart(10, "0")}`;
+    const order = await db.order.create({
+      data: {
+        tableId: r.table.id,
+        status: "paid",
+        total,
+        vatTotal,
+        paidAt,
+        paymentMethod: r.method,
+        receiptNo: invNum,
+        invoiceNumber: invNum,
+        zoi: fakeZoi(seq),
+        eor: fakeEor(seq),
+        fursXml: `<demo/>`,
+        operator: r.operator,
+        businessUnit: "PREVOZ11",
+        cashRegister: "BLAG01",
+      },
+    });
+    await db.orderItem.createMany({
+      data: items.map((i) => ({
+        orderId: order.id,
+        menuItemId: i.m!.id,
+        quantity: i.q,
+        unitPrice: i.m!.price,
+        vatRate: i.m!.vatRate,
+      })),
+    });
+    seq++;
+  }
+  console.log(`✅ ${seq - 1} plačanih demo računov ustvarjenih`);
 }
 
 main()

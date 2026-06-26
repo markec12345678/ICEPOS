@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePosStore } from "@/stores/pos-store";
 import { useFetch } from "@/hooks/use-fetch";
 import { formatEUR, formatDateTime, type Order, type Table } from "@/lib/types";
@@ -27,11 +27,23 @@ import {
 import { cn } from "@/lib/utils";
 
 type TableWithOrders = Table & {
-  orders: (Order & { items: { id: string; menuItem: { id: string; name: string; price: number; vatRate: number }; quantity: number; unitPrice: number; vatRate: number; note?: string | null }[] })[];
+  orders: (Order & {
+    items: {
+      id: string;
+      menuItem: { id: string; name: string; price: number; vatRate: number };
+      quantity: number;
+      unitPrice: number;
+      vatRate: number;
+      note?: string | null;
+    }[];
+  })[];
 };
 
 interface PaidResult extends Order {
-  zoi: string;
+  zoi: string | null;
+  eor: string | null;
+  invoiceNumber: string | null;
+  fursXmlPreview?: string;
 }
 
 export function PaymentDialog() {
@@ -63,13 +75,19 @@ export function PaymentDialog() {
   const tenderedNum = parseFloat(tendered) || 0;
   const change = tenderedNum - total;
 
+  // Počisti paid ob zaprtju
+  useEffect(() => {
+    if (!paymentOpen) {
+      const t = setTimeout(() => setPaid(null), 200);
+      return () => clearTimeout(t);
+    }
+  }, [paymentOpen]);
+
   function close() {
     setPaymentOpen(false);
     if (paid) {
-      // Po uspešnem plačilu: počisti in nazaj na mize
       clearCart();
       selectTable(null);
-      setPaid(null);
       setTendered("");
       refetch();
     }
@@ -91,22 +109,28 @@ export function PaymentDialog() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ paymentMethod: method }),
       });
-      if (!res.ok) throw new Error("Napaka");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Napaka");
+      }
       const result = (await res.json()) as PaidResult;
       setPaid(result);
-      toast.success("Račun zaključen in poslan v SRS", {
-        description: `Št. ${result.receiptNo}`,
+      toast.success("Račun fiskaliziran preko FURS", {
+        description: `ZOI: ${result.zoi?.slice(0, 16)}...`,
       });
-    } catch {
-      toast.error("Napaka pri zaključevanju plačila");
+    } catch (e) {
+      toast.error((e as Error).message || "Napaka pri plačilu");
     } finally {
       setProcessing(false);
     }
   }
 
-  const quickAmounts = [total, Math.ceil(total / 5) * 5, Math.ceil(total / 10) * 10, Math.ceil(total / 20) * 20].filter(
-    (v, i, a) => a.indexOf(v) === i
-  );
+  const quickAmounts = [
+    total,
+    Math.ceil(total / 5) * 5,
+    Math.ceil(total / 10) * 10,
+    Math.ceil(total / 20) * 20,
+  ].filter((v, i, a) => a.indexOf(v) === i);
 
   return (
     <Dialog
@@ -116,7 +140,7 @@ export function PaymentDialog() {
         else setPaymentOpen(true);
       }}
     >
-      <DialogContent className="max-w-md overflow-hidden p-0 sm:max-w-lg">
+      <DialogContent className="max-w-md overflow-hidden p-0 sm:max-w-lg print:block print:max-w-none print:p-0 print:shadow-none">
         {paid ? (
           <ReceiptView paid={paid} onClose={close} />
         ) : (
@@ -133,7 +157,6 @@ export function PaymentDialog() {
             </DialogHeader>
 
             <div className="space-y-4 px-5 py-4">
-              {/* Povzetek */}
               <div className="rounded-lg bg-muted/50 p-3 text-sm">
                 <div className="flex justify-between text-muted-foreground">
                   <span>Vrednost (brez DDV)</span>
@@ -152,7 +175,6 @@ export function PaymentDialog() {
                 </div>
               </div>
 
-              {/* Način plačila */}
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setMethod("cash")}
@@ -180,7 +202,6 @@ export function PaymentDialog() {
                 </button>
               </div>
 
-              {/* Gotovina: prejeto / vračilo */}
               {method === "cash" && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Prejeto</label>
@@ -224,15 +245,17 @@ export function PaymentDialog() {
 
               <Button
                 onClick={processPayment}
-                disabled={processing || (method === "cash" && tenderedNum < total)}
+                disabled={
+                  processing || (method === "cash" && tenderedNum < total)
+                }
                 className="w-full bg-amber-600 py-3 text-base font-semibold text-white hover:bg-amber-700"
               >
                 {processing ? (
-                  "Obdelava..."
+                  "Fiskaliziram..."
                 ) : (
                   <>
                     <CheckCircle2 className="mr-2 h-5 w-5" />
-                    Zaključi račun ({formatEUR(total)})
+                    Fiskaliziraj in zaključi ({formatEUR(total)})
                   </>
                 )}
               </Button>
@@ -244,32 +267,45 @@ export function PaymentDialog() {
   );
 }
 
-function ReceiptView({ paid, onClose }: { paid: PaidResult; onClose: () => void }) {
+function ReceiptView({
+  paid,
+  onClose,
+}: {
+  paid: PaidResult;
+  onClose: () => void;
+}) {
   return (
-    <div>
-      <div className="flex items-center justify-between border-b border-border bg-emerald-50 px-5 py-4 dark:bg-emerald-950/30">
+    <div className="print:block">
+      <div className="flex items-center justify-between border-b border-border bg-emerald-50 px-5 py-4 print:hidden dark:bg-emerald-950/30">
         <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
           <CheckCircle2 className="h-5 w-5" />
-          <span className="font-semibold">Račun zaključen</span>
+          <span className="font-semibold">Račun fiskaliziran</span>
         </div>
         <button onClick={onClose} className="rounded p-1 hover:bg-muted">
           <X className="h-4 w-4" />
         </button>
       </div>
 
-      <div className="max-h-[60vh] overflow-y-auto px-5 py-4">
-        {/* Račun */}
-        <div className="mx-auto max-w-sm rounded-lg border border-dashed border-border bg-white p-4 font-mono text-xs text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100">
+      <div className="max-h-[60vh] overflow-y-auto px-5 py-4 print:max-h-none print:overflow-visible print:px-0 print:py-0">
+        <div
+          id="printable-receipt"
+          className="mx-auto max-w-sm rounded-lg border border-dashed border-border bg-white p-4 font-mono text-xs text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100 print:border-0 print:bg-white print:p-2 print:text-neutral-900 print:dark:bg-white print:dark:text-neutral-900"
+        >
           <div className="text-center">
-            <p className="font-bold">GOSTILNA PRI MARKU</p>
+            <p className="font-bold">GOSTILNA PRI MARKU, d.o.o.</p>
             <p>Glavni trg 1, 1000 Ljubljana</p>
             <p>Davčna št.: SI12345678</p>
-            <p className="mt-1">*** BLAGAJNA 1 ***</p>
+            <p className="mt-1">
+              Poslovni prostor: {paid.businessUnit} &middot; Blagajna:{" "}
+              {paid.cashRegister}
+            </p>
+            <Separator className="my-2 border-dashed" />
+            <p className="font-bold">RAČUN</p>
           </div>
           <Separator className="my-2 border-dashed" />
           <div className="flex justify-between">
-            <span>Račun št.:</span>
-            <span className="font-bold">{paid.receiptNo}</span>
+            <span>Št. računa:</span>
+            <span className="font-bold">{paid.invoiceNumber || paid.receiptNo}</span>
           </div>
           <div className="flex justify-between">
             <span>Datum:</span>
@@ -277,7 +313,7 @@ function ReceiptView({ paid, onClose }: { paid: PaidResult; onClose: () => void 
           </div>
           <div className="flex justify-between">
             <span>Miza:</span>
-            <span>{paid.table.name}</span>
+            <span>{paid.table?.name}</span>
           </div>
           <div className="flex justify-between">
             <span>Blagajnik:</span>
@@ -324,7 +360,10 @@ function ReceiptView({ paid, onClose }: { paid: PaidResult; onClose: () => void 
               <span>
                 {paid.items
                   .filter((i) => i.vatRate < 0.2)
-                  .reduce((s, i) => s + i.unitPrice * i.quantity * i.vatRate, 0)
+                  .reduce(
+                    (s, i) => s + i.unitPrice * i.quantity * i.vatRate,
+                    0
+                  )
                   .toFixed(2)}{" "}
                 €
               </span>
@@ -334,7 +373,10 @@ function ReceiptView({ paid, onClose }: { paid: PaidResult; onClose: () => void 
               <span>
                 {paid.items
                   .filter((i) => i.vatRate >= 0.2)
-                  .reduce((s, i) => s + i.unitPrice * i.quantity * i.vatRate, 0)
+                  .reduce(
+                    (s, i) => s + i.unitPrice * i.quantity * i.vatRate,
+                    0
+                  )
                   .toFixed(2)}{" "}
                 €
               </span>
@@ -347,27 +389,66 @@ function ReceiptView({ paid, onClose }: { paid: PaidResult; onClose: () => void 
           </div>
           <div className="flex justify-between">
             <span>Plačilo:</span>
-            <span>{paid.paymentMethod === "card" ? "Kartica" : "Gotovina"}</span>
+            <span>
+              {paid.paymentMethod === "card" ? "Kartica" : "Gotovina"}
+            </span>
           </div>
+
+          {/* FURS podatki */}
           <Separator className="my-2 border-dashed" />
-          <div className="break-all text-[9px] text-neutral-600">
-            <p>ZOI: {paid.zoi}</p>
-            <p className="mt-1">EOR: SI{paid.id.slice(0, 8).toUpperCase()}</p>
+          <div className="space-y-1">
+            <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-500">
+              <ShieldCheck className="h-3 w-3" />
+              FURS — SRS fiskaliziran
+            </div>
+            <div className="break-all text-[9px] text-neutral-600">
+              <p>
+                ZOI:{" "}
+                <span className="font-mono">
+                  {paid.zoi || "-"}
+                </span>
+              </p>
+              <p className="mt-1">
+                EOR:{" "}
+                <span className="font-mono">{paid.eor || "-"}</span>
+              </p>
+            </div>
+            {/* QR mesto */}
+            <div className="mt-2 flex flex-col items-center">
+              <div className="flex h-16 w-16 items-center justify-center border border-neutral-300 bg-neutral-100 text-[8px] text-neutral-400">
+                [QR]
+              </div>
+              <p className="mt-0.5 text-[8px] text-neutral-500">
+                Skeniraj za preverbo
+              </p>
+            </div>
           </div>
+
           <Separator className="my-2 border-dashed" />
           <div className="text-center text-[10px] text-neutral-600">
             <p>Hvala za obisk in lep pozdrav!</p>
             <p className="mt-1">www.gostilnaprimarku.si</p>
+            <p className="mt-1 text-[8px]">
+              Račun je bil fiskaliziran pri FURS. Fiskalni podatki so zakonsko
+              zaščiteni.
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="flex gap-2 border-t border-border px-5 py-4">
-        <Button variant="outline" className="flex-1" onClick={onClose}>
+      <div className="flex gap-2 border-t border-border px-5 py-4 print:hidden">
+        <Button
+          variant="outline"
+          className="flex-1"
+          onClick={() => window.print()}
+        >
           <Printer className="mr-2 h-4 w-4" />
           Natisni
         </Button>
-        <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700" onClick={onClose}>
+        <Button
+          className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+          onClick={onClose}
+        >
           <CheckCircle2 className="mr-2 h-4 w-4" />
           Zaključi
         </Button>

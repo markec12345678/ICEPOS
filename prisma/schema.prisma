@@ -36,15 +36,28 @@ model Order {
   id            String    @id @default(cuid())
   tableId       String
   table         Table     @relation(fields: [tableId], references: [id])
-  status        String    @default("open") // "open" | "paid" | "cancelled"
+  status        String    @default("open") // "open" | "paid" | "cancelled" | "storno"
   items         OrderItem[]
   total         Float     @default(0)
   vatTotal      Float     @default(0)
   createdAt     DateTime  @default(now())
   paidAt        DateTime?
   paymentMethod String? // "cash" | "card"
-  receiptNo     String? // SRS številka računa (demo)
+  receiptNo     String? // SRS številka računa (npr. 1, 2, 3 ...)
+  zoi           String? // Zaščitna oznaka izdajatelja (ZOI) — 32 hex znakov
+  eor           String? // Enkratna identifikacija računa (EOR) — UUID
+  fursXml       String? // Podpisan XML računa za FURS (audit)
+  businessUnit  String   @default("PREVOZ11") // Oznaka poslovnega prostora
+  cashRegister  String   @default("BLAG01") // Oznaka elektronske naprave
+  invoiceNumber String? // Celotna številka računa: PP-EN-ŠT
   operator      String   @default("Blagajnik")
+  operatorTaxNo String   @default("SI12345678") // Davčna št. blagajnika
+  // Storno
+  stornoOf      String? // ID izvirnega računa, če je to storno
+  stornoReason  String?
+  stornoAt      DateTime?
+  stornoZoi     String?
+  stornoEor     String?
 }
 
 model OrderItem {

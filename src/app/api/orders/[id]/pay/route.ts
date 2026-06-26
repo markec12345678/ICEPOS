@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import {
+  calculateZOI,
+  generateEOR,
+  buildInvoiceXml,
+  buildInvoiceNumber,
+  ISSUER,
+} from "@/lib/furs";
 
 export const dynamic = "force-dynamic";
 
-// Zaključi (plača) naročilo — generira demo SRS številko računa
+// Zaključi (plača) naročilo — fiskalizira preko FURS modula
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -16,7 +23,7 @@ export async function POST(
 
     const order = await db.order.findUnique({
       where: { id },
-      include: { items: true },
+      include: { items: { include: { menuItem: true } } },
     });
 
     if (!order) {
@@ -32,21 +39,54 @@ export async function POST(
       );
     }
 
-    // Demo SRS številka računa (v realni implementaciji: FURS XML podpis)
-    const receiptNo = `SI-${new Date().getFullYear()}-${String(
-      Math.floor(Math.random() * 9000000) + 1000000
-    )}`;
-    const zoi = Array.from({ length: 32 }, () =>
-      "0123456789ABCDEF"[Math.floor(Math.random() * 16)]
-    ).join("");
+    // Določi naslednjo zaporedno številko računa
+    // Štejemo vse plačane + stornirane račune (FURS zahteva neprekinjeno zaporedje)
+    const paidCount = await db.order.count({
+      where: { status: { in: ["paid", "storno"] } },
+    });
+    const invoiceSeq = paidCount + 1;
+    const invoiceNumberStr = buildInvoiceNumber(invoiceSeq);
+
+    const issueDate = new Date();
+
+    // Izračun ZOI (zaščitna oznaka izdajatelja)
+    const zoi = calculateZOI({
+      taxNumber: ISSUER.taxNumber,
+      issueDate,
+      invoiceNumber: invoiceSeq,
+      businessPremiseID: ISSUER.businessPremiseID,
+      electronicDeviceID: ISSUER.electronicDeviceID,
+    });
+
+    // EOR (v produkciji: vrne FURS po oddaji XML-a; tukaj demo UUID)
+    const eor = generateEOR();
+
+    // Zgradi XML račun (shranjen za audit)
+    const fursXml = buildInvoiceXml({
+      invoiceNumber: invoiceSeq,
+      issueDateTime: issueDate,
+      zoi,
+      items: order.items.map((it) => ({
+        name: it.menuItem.name,
+        quantity: it.quantity,
+        unitPrice: it.unitPrice,
+        vatRate: it.vatRate,
+      })),
+      paymentMethod,
+      operator: order.operator,
+    });
 
     const paid = await db.order.update({
       where: { id },
       data: {
         status: "paid",
         paymentMethod,
-        paidAt: new Date(),
-        receiptNo,
+        paidAt: issueDate,
+        receiptNo: invoiceNumberStr,
+        invoiceNumber: invoiceNumberStr,
+        zoi,
+        eor,
+        fursXml,
       },
       include: {
         table: true,
@@ -54,8 +94,11 @@ export async function POST(
       },
     });
 
-    // Vrnemo tudi ZOI (zaščitna oznaka izdajatelja) za demo
-    return NextResponse.json({ ...paid, zoi });
+    return NextResponse.json({
+      ...paid,
+      // Vrnemo tudi XML za prikaz (debug) in QR payload za prikaz na računu
+      fursXmlPreview: fursXml.slice(0, 800) + "...(skrajšano)",
+    });
   } catch (e) {
     console.error("POST /api/orders/[id]/pay error:", e);
     return NextResponse.json(
