@@ -29,7 +29,9 @@ interface PosState {
     | "dashboard"
     | "monthly"
     | "zreport"
-    | "settings";
+    | "settings"
+    | "operators"
+    | "tables-admin";
   setActiveView: (
     v:
       | "tables"
@@ -43,6 +45,8 @@ interface PosState {
       | "monthly"
       | "zreport"
       | "settings"
+      | "operators"
+      | "tables-admin"
   ) => void;
 
   // Selected table
@@ -71,6 +75,10 @@ interface PosState {
   // Payment dialog
   paymentOpen: boolean;
   setPaymentOpen: (open: boolean) => void;
+
+  // Discount
+  discountPercent: number;
+  setDiscountPercent: (p: number) => void;
 }
 
 export const usePosStore = create<PosState>((set) => ({
@@ -149,4 +157,7 @@ export const usePosStore = create<PosState>((set) => ({
 
   paymentOpen: false,
   setPaymentOpen: (open) => set({ paymentOpen: open }),
+
+  discountPercent: 0,
+  setDiscountPercent: (p) => set({ discountPercent: Math.min(100, Math.max(0, p)) }),
 }));

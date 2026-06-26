@@ -16,6 +16,8 @@ import { DashboardView } from "@/components/pos/dashboard-view";
 import { MonthlyReportView } from "@/components/pos/monthly-report-view";
 import { ZReportView } from "@/components/pos/z-report-view";
 import { SettingsView } from "@/components/pos/settings-view";
+import { OperatorsAdminView } from "@/components/pos/operators-admin-view";
+import { TablesAdminView } from "@/components/pos/tables-admin-view";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { PinLoginDialog, getStoredOperator, type Operator } from "@/components/pos/pin-login";
 import { Toaster } from "sonner";
@@ -36,9 +38,7 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const stored = getStoredOperator();
-    console.log("[DEBUG] mounted, stored:", stored);
     if (stored) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOperator(stored);
     }
   }, []);
@@ -96,6 +96,8 @@ export default function Home() {
             {activeView === "monthly" && <MonthlyReportView />}
             {activeView === "zreport" && <ZReportView />}
             {activeView === "settings" && <SettingsView />}
+            {activeView === "operators" && <OperatorsAdminView />}
+            {activeView === "tables-admin" && <TablesAdminView />}
           </div>
         </main>
       </div>

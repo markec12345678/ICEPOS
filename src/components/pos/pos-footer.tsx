@@ -16,6 +16,7 @@ import {
   CalendarDays,
   UserCircle,
   CalendarRange,
+  Users,
 } from "lucide-react";
 import {
   Sheet,
@@ -42,12 +43,14 @@ export function PosFooter() {
     { id: "reservations" as const, label: "Rezervacije", desc: "Koledar miz", icon: CalendarDays },
     { id: "shift" as const, label: "Smena", desc: "Blagajnikova smena", icon: UserCircle },
     { id: "menu" as const, label: "Meni", desc: "Urejanje postavk", icon: BookOpen },
+    { id: "tables-admin" as const, label: "Mize admin", desc: "Urejanje miz", icon: LayoutGrid },
+    { id: "operators" as const, label: "Operaterji", desc: "Blagajniki (FURS)", icon: Users },
     { id: "monthly" as const, label: "Mesečno poročilo", desc: "Statistika meseca", icon: CalendarRange },
     { id: "zreport" as const, label: "Z-report", desc: "Dnevni zaključek", icon: FileBarChart },
     { id: "settings" as const, label: "Nastavitve", desc: "Podjetje in FURS", icon: Settings },
   ];
 
-  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly"].includes(activeView);
+  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "operators", "tables-admin"].includes(activeView);
 
   return (
     <footer className="sticky bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:hidden print:hidden">
@@ -199,6 +202,18 @@ export function PosSidebar() {
       label: "Nastavitve",
       desc: "Podjetje in FURS",
       icon: Settings,
+    },
+    {
+      id: "operators" as const,
+      label: "Operaterji",
+      desc: "Blagajniki (FURS)",
+      icon: Users,
+    },
+    {
+      id: "tables-admin" as const,
+      label: "Mize admin",
+      desc: "Urejanje miz",
+      icon: LayoutGrid,
     },
   ];
 

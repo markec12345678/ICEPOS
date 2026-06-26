@@ -71,6 +71,8 @@ export function OrderView() {
     clearCart,
     loadCartFromOrder,
     setPaymentOpen,
+    discountPercent,
+    setDiscountPercent,
   } = usePosStore();
 
   // Modifier dialog state
@@ -161,6 +163,10 @@ export function OrderView() {
   }, [cart]);
 
   const cartCount = cart.reduce((s, c) => s + c.quantity, 0);
+
+  // Popust in končna cena
+  const discountAmount = (cartTotals.total * discountPercent) / 100;
+  const finalTotal = cartTotals.total - discountAmount;
 
   async function handleSave() {
     if (!selectedTableId || cart.length === 0) {
@@ -545,12 +551,55 @@ export function OrderView() {
               <span>DDV</span>
               <span>{formatEUR(cartTotals.vat)}</span>
             </div>
+            {/* Popust */}
+            {discountPercent > 0 && (
+              <div className="flex justify-between text-rose-600 dark:text-rose-400">
+                <span>Popust ({discountPercent}%)</span>
+                <span>-{formatEUR(discountAmount)}</span>
+              </div>
+            )}
             <Separator className="my-2" />
             <div className="flex justify-between text-base font-bold">
               <span>Za plačilo</span>
               <span className="text-amber-700 dark:text-amber-400">
-                {formatEUR(cartTotals.total)}
+                {formatEUR(finalTotal)}
               </span>
+            </div>
+          </div>
+
+          {/* Popust gumb */}
+          <div className="mt-2 flex items-center gap-2">
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              value={discountPercent || ""}
+              onChange={(e) => setDiscountPercent(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+              placeholder="0"
+              className="h-8 w-16 text-center"
+            />
+            <span className="text-xs text-muted-foreground">%</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => setDiscountPercent(0)}
+              disabled={discountPercent === 0}
+            >
+              Ponastovi
+            </Button>
+            <div className="ml-auto flex gap-1">
+              {[5, 10, 15].map((p) => (
+                <Button
+                  key={p}
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-2 text-xs"
+                  onClick={() => setDiscountPercent(p)}
+                >
+                  {p}%
+                </Button>
+              ))}
             </div>
           </div>
 

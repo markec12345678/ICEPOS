@@ -73,7 +73,6 @@ export function PinLoginDialog({
 
   useEffect(() => {
     if (open) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPin("");
       setError(false);
       setVerifying(false);

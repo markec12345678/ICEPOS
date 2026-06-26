@@ -58,6 +58,8 @@ export function PaymentDialog() {
     cart,
     clearCart,
     selectTable,
+    discountPercent,
+    setDiscountPercent,
   } = usePosStore();
 
   const { data: tables, refetch } = useFetch<TableWithOrders[]>("/api/tables");
@@ -70,11 +72,15 @@ export function PaymentDialog() {
   const selectedTable = tables?.find((t) => t.id === selectedTableId);
   const openOrder = selectedTable?.orders.find((o) => o.status === "open");
 
-  const total = cart.reduce((s, c) => s + c.menuItem.price * c.quantity, 0);
-  const vat = cart.reduce(
+  const grossTotal = cart.reduce((s, c) => s + c.menuItem.price * c.quantity, 0);
+  const grossVat = cart.reduce(
     (s, c) => s + c.menuItem.price * c.quantity * c.menuItem.vatRate,
     0
   );
+  const discountAmount = (grossTotal * discountPercent) / 100;
+  const total = grossTotal - discountAmount;
+  // Popust se proporcionalno porazdeli na DDV
+  const vat = grossVat * (1 - discountPercent / 100);
   const subtotal = total - vat;
 
   const tenderedNum = parseFloat(tendered) || 0;
@@ -94,6 +100,7 @@ export function PaymentDialog() {
       clearCart();
       selectTable(null);
       setTendered("");
+      setDiscountPercent(0);
       refetch();
     }
   }
@@ -171,6 +178,12 @@ export function PaymentDialog() {
                   <span>DDV</span>
                   <span>{formatEUR(vat)}</span>
                 </div>
+                {discountPercent > 0 && (
+                  <div className="flex justify-between text-rose-600 dark:text-rose-400">
+                    <span>Popust ({discountPercent}%)</span>
+                    <span>-{formatEUR(discountAmount)}</span>
+                  </div>
+                )}
                 <Separator className="my-2" />
                 <div className="flex justify-between text-base font-bold">
                   <span>Skupaj</span>

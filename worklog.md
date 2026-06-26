@@ -472,3 +472,36 @@ Stage Summary:
 - "Sedi" opcija za rezervacije na mizah
 - 3 demo operaterji v bazi (Ana, Marko, Admin)
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 12
+Agent: Z.ai Code (main)
+Task: Admin operaterjev (CRUD), Admin miz (CRUD), Popusti na naročilu.
+
+Work Log:
+- Backend API:
+  * /api/operators (GET, POST) + /api/operators/[id] (PATCH, DELETE) — admin-only (role check)
+  * /api/tables-admin (POST) + /api/tables-admin/[id] (PATCH, DELETE) — login required
+  * Operator: ne vrne PIN-a v odgovoru (varnost), unikaten PIN, ne more brisati sebe
+  * Tables: unikatna številka, ne more brisati z odprtim naročilom
+- Frontend:
+  * OperatorsAdminView: seznam z role badge-i (admin/cashier), active/inactive toggle, CRUD dialog
+  * TablesAdminView: grid layout, CRUD dialog s sekcijo (Dvorana/Terasa/Zasebna/Bar)
+  * Oba dostopna iz sidebar "Sistem" skupine in mobile "Več" sheet
+- Popusti:
+  * discountPercent v Zustand store (shared OrderView ↔ PaymentDialog)
+  * OrderView: % input + hitri gumbi (5/10/15%), real-time posodobitev skupaj
+  * PaymentDialog: prikaz popusta v summary, total vključuje popust
+  * Popust se ponastavi po plačilu
+- Navigacija razširjena na 13 view-ov
+- Lint: 0 errorjev
+- API verification:
+  * Operators: GET (3), POST admin-only (cashier → 403), DELETE (not self)
+  * Tables: POST (Bar section), PATCH (seats 3), DELETE
+- Push na GitHub: commit e216f39
+
+Stage Summary:
+- 3 nove funkcionalnosti: operaterji admin, mize admin, popusti
+- Aplikacija zdaj omogoča polno upravljanje: operaterje (FURS), mize, meni, rezervacije, smene
+- 13 view-ov total
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
