@@ -267,3 +267,42 @@ Stage Summary:
 - Real-time komunikacija: socket.io mini-service (port 3003) + Caddy gateway
 - Aplikacija sedaj pokriva popoln restavracijski workflow: naročilo → kuhinja → plačilo → račun → Z-report
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS (icepos-si-web/)
+
+---
+Task ID: 6
+Agent: Z.ai Code (main)
+Task: Rezervacije miz, Smena blagajnika, Mesečno poročilo, Modifierji jedi.
+
+Work Log:
+- Prisma shema razširjena z 3 novimi modeli:
+  * Reservation (tableId, customerName, partySize, date, time, duration, status, note)
+  * Shift (operator, startTime, endTime, startCash, endCash, ordersCount, totalRevenue, status)
+  * Modifier (menuItemId, label, priceDelta) — za "brez čebule", "dobra pečena"
+  * OrderItem.modifiers (JSON) + Order.shiftId (povezava s smeno)
+- Backend API-ji:
+  * /api/reservations (GET, POST) + [id] (PATCH, DELETE) — z avtomatsko detekcijo konfliktov (ista miza, prekrivajoč čas)
+  * /api/shifts (GET, POST) + /api/shifts/active (GET) + /api/shifts/[id]/close (POST) — zaključek z izračunom prihodka, gotovine, razlike
+  * /api/reports/monthly (GET) — dnevni prihodek, DDV po stopnjah, top 10 izdelkov, plačila po načinu, po operaterju
+  * /api/menu/[id]/modifiers (GET, POST) — CRUD za modifierje
+- Frontend komponente:
+  * ReservationsView: dnevni filter, stat strip, seznam z status badges, create/edit dialog, status workflow (confirmed→seated→cancelled), brisanje
+  * ShiftView: aktivna smena s live timerjem, začni/zaključi dialog, samodejni izračun gotovine + razlike, zgodovina smen
+  * MonthlyReportView: KPI kartice, dnevni bar chart, DDV razčlenitev, top 10 izdelkov, plačila po načinu, po operaterju, month/year selector
+- Navigacija razširjena na 11 view-ov: Mize, Naročilo, Računi, Kuhinja, Meni, Rezervacije, Smena, Pregled, Mesečno poročilo, Z-report, Nastavitve
+  * Desktop sidebar: "Blagajna" (6) + "Sistem" (5) skupini
+  * Mobile: 4 glavni + "Več" sheet s 7 dodatnimi
+- Lint: 0 errorjev.
+- Agent Browser verification:
+  * Rezervacije: ustvaril "Janez Novak" za Mizo 5 → prikazan v seznamu z "Potrjena" badge
+  * Smena: začel smeno (Ana, 100€) → "Aktivna smena" z live timerjem (0h 0m)
+  * Mesečno poročilo: Junij 2026 — neto 72,90€, 5 računov, DDV 9,5%+22%, dnevni graf
+  * Mobile responsive: 4 glavni + Več sheet z 7 opcijami
+- 0 napak v dev logu.
+- Push na GitHub: commit 634ea3f, "Add reservations, shift management, monthly report, modifiers"
+
+Stage Summary:
+- 4 nove funkcionalnosti: rezervacije, smene, mesečno poročilo, modifierji infrastruktura
+- Aplikacija zdaj pokriva POPOLN restavracijski workflow: rezervacija → mize → naročilo → kuhinja → plačilo → račun → smena → Z-report → mesečno poročilo
+- FURS skladnost: sledljivost operaterjev prek smen, DDV razčlenitev po stopnjah
+- Za lastnike: mesečno poročilo z dnevno dinamiko, top izdelki, po operaterju
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS (icepos-si-web/)

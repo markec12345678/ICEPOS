@@ -13,6 +13,9 @@ import {
   Settings,
   MoreHorizontal,
   ChefHat,
+  CalendarDays,
+  UserCircle,
+  CalendarRange,
 } from "lucide-react";
 import {
   Sheet,
@@ -36,12 +39,15 @@ export function PosFooter() {
 
   const moreNav = [
     { id: "kitchen" as const, label: "Kuhinja", desc: "Real-time naročila", icon: ChefHat },
+    { id: "reservations" as const, label: "Rezervacije", desc: "Koledar miz", icon: CalendarDays },
+    { id: "shift" as const, label: "Smena", desc: "Blagajnikova smena", icon: UserCircle },
     { id: "menu" as const, label: "Meni", desc: "Urejanje postavk", icon: BookOpen },
+    { id: "monthly" as const, label: "Mesečno poročilo", desc: "Statistika meseca", icon: CalendarRange },
     { id: "zreport" as const, label: "Z-report", desc: "Dnevni zaključek", icon: FileBarChart },
     { id: "settings" as const, label: "Nastavitve", desc: "Podjetje in FURS", icon: Settings },
   ];
 
-  const isMoreActive = ["menu", "zreport", "settings", "kitchen"].includes(activeView);
+  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly"].includes(activeView);
 
   return (
     <footer className="sticky bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:hidden print:hidden">
@@ -159,10 +165,28 @@ export function PosSidebar() {
     },
     { id: "menu" as const, label: "Meni", desc: "Urejanje postavk", icon: BookOpen },
     {
+      id: "reservations" as const,
+      label: "Rezervacije",
+      desc: "Koledar miz",
+      icon: CalendarDays,
+    },
+    {
+      id: "shift" as const,
+      label: "Smena",
+      desc: "Blagajnikova smena",
+      icon: UserCircle,
+    },
+    {
       id: "dashboard" as const,
       label: "Pregled",
       desc: "Statistika dneva",
       icon: BarChart3,
+    },
+    {
+      id: "monthly" as const,
+      label: "Mesečno poročilo",
+      desc: "Statistika meseca",
+      icon: CalendarRange,
     },
     {
       id: "zreport" as const,
@@ -184,7 +208,7 @@ export function PosSidebar() {
         <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Blagajna
         </p>
-        {navItems.slice(0, 5).map((item) => {
+        {navItems.slice(0, 6).map((item) => {
           const Icon = item.icon;
           const active = activeView === item.id;
           return (
@@ -226,7 +250,7 @@ export function PosSidebar() {
         <p className="px-3 pb-2 pt-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Sistem
         </p>
-        {navItems.slice(5).map((item) => {
+        {navItems.slice(6).map((item) => {
           const Icon = item.icon;
           const active = activeView === item.id;
           return (

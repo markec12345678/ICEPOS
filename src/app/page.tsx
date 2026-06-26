@@ -9,7 +9,10 @@ import { OrderView } from "@/components/pos/order-view";
 import { ReceiptsView } from "@/components/pos/receipts-view";
 import { KitchenDisplayView } from "@/components/pos/kitchen-display-view";
 import { MenuAdminView } from "@/components/pos/menu-admin-view";
+import { ReservationsView } from "@/components/pos/reservations-view";
+import { ShiftView } from "@/components/pos/shift-view";
 import { DashboardView } from "@/components/pos/dashboard-view";
+import { MonthlyReportView } from "@/components/pos/monthly-report-view";
 import { ZReportView } from "@/components/pos/z-report-view";
 import { SettingsView } from "@/components/pos/settings-view";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
@@ -33,7 +36,10 @@ export default function Home() {
             {activeView === "receipts" && <ReceiptsView />}
             {activeView === "kitchen" && <KitchenDisplayView />}
             {activeView === "menu" && <MenuAdminView />}
+            {activeView === "reservations" && <ReservationsView />}
+            {activeView === "shift" && <ShiftView />}
             {activeView === "dashboard" && <DashboardView />}
+            {activeView === "monthly" && <MonthlyReportView />}
             {activeView === "zreport" && <ZReportView />}
             {activeView === "settings" && <SettingsView />}
           </div>

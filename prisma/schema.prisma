@@ -20,6 +20,16 @@ model MenuItem {
   desc      String?
   createdAt DateTime @default(now())
   orderItems OrderItem[]
+  modifiers Modifier[]
+}
+
+model Modifier {
+  id         String   @id @default(cuid())
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  label      String // npr. "Brez čebule", "Dobra pečena", "Bez glutena"
+  priceDelta Float    @default(0) // sprememba cene ( Lahko negativna za popust)
+  createdAt  DateTime @default(now())
 }
 
 model Table {
@@ -30,6 +40,7 @@ model Table {
   section   String   @default("Dvorana") // "Dvorana" | "Terasa" | "Zasebna"
   createdAt DateTime @default(now())
   orders    Order[]
+  reservations Reservation[]
 }
 
 model Order {
@@ -52,6 +63,7 @@ model Order {
   invoiceNumber String? // Celotna številka računa: PP-EN-ŠT
   operator      String   @default("Blagajnik")
   operatorTaxNo String   @default("SI12345678") // Davčna št. blagajnika
+  shiftId       String? // povezava s Smeno (FURS zahteva sledljivost)
   // Storno
   stornoOf      String? // ID izvirnega računa, če je to storno
   stornoReason  String?
@@ -67,7 +79,39 @@ model OrderItem {
   menuItemId String
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
   quantity   Int      @default(1)
-  unitPrice  Float // snapshot cene ob naročilu
+  unitPrice  Float // snapshot cene ob naročilu (vključno z modifierji)
   vatRate    Float // snapshot DDV stopnje
-  note       String?
+  note       String? // prosto besedilo (npr. "brez čebule")
+  modifiers  String? // JSON array izbranih modifierjev (label + priceDelta)
+}
+
+model Reservation {
+  id         String   @id @default(cuid())
+  tableId    String
+  table      Table    @relation(fields: [tableId], references: [id])
+  customerName String
+  customerPhone String?
+  partySize  Int // število oseb
+  date       String // YYYY-MM-DD
+  time       String // HH:mm
+  duration   Int      @default(120) // minute
+  status     String   @default("confirmed") // "confirmed" | "seated" | "cancelled" | "no_show"
+  note       String? // alergije, priložnosti (rojstni dan), posebne zahteve
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Shift {
+  id         String   @id @default(cuid())
+  operator   String // ime blagajnika
+  operatorTaxNo String
+  startTime  DateTime @default(now())
+  endTime    DateTime?
+  startCash  Float    @default(0) // gotovina na začetku smene
+  endCash    Float? // gotovina na koncu smene
+  status     String   @default("open") // "open" | "closed"
+  ordersCount Int     @default(0)
+  totalRevenue Float  @default(0)
+  note       String? // opomba ob zaključku
+  createdAt  DateTime @default(now())
 }

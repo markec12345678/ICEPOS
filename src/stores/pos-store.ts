@@ -9,7 +9,10 @@ interface PosState {
     | "receipts"
     | "kitchen"
     | "menu"
+    | "reservations"
+    | "shift"
     | "dashboard"
+    | "monthly"
     | "zreport"
     | "settings";
   setActiveView: (
@@ -19,7 +22,10 @@ interface PosState {
       | "receipts"
       | "kitchen"
       | "menu"
+      | "reservations"
+      | "shift"
       | "dashboard"
+      | "monthly"
       | "zreport"
       | "settings"
   ) => void;
