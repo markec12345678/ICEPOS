@@ -66,10 +66,17 @@ export interface Order {
   stornoEor: string | null;
 }
 
+export interface Modifier {
+  id: string;
+  label: string;
+  priceDelta: number;
+}
+
 export interface CartItem {
   menuItem: MenuItem;
   quantity: number;
   note?: string;
+  modifiers?: Modifier[];
 }
 
 export interface DashboardStats {

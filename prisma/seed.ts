@@ -74,9 +74,12 @@ const tablesData = [
 async function main() {
   console.log("🌱 Seeding slovenskega menija in miz...");
 
-  // Počisti
+  // Počisti (vrstni red pomemben zaradi foreign key constraints)
+  await db.modifier.deleteMany();
   await db.orderItem.deleteMany();
   await db.order.deleteMany();
+  await db.reservation.deleteMany();
+  await db.shift.deleteMany();
   await db.menuItem.deleteMany();
   await db.table.deleteMany();
 
@@ -123,7 +126,111 @@ async function main() {
   // Demo: nekaj plačanih računov iz današnjega dne (za dnevnik + statistiko)
   await seedPaidReceipts(db);
 
+  // Demo: modifierji za nekaj jedi
+  await seedModifiers(db);
+
+  // Demo: rezervacije za danes in jutri
+  await seedReservations(db);
+
+  // Demo: ena zaprta smena včerajšnji dan
+  await seedShifts(db);
+
   console.log("🎉 Seed končan!");
+}
+
+async function seedModifiers(db: import("@prisma/client").PrismaClient) {
+  const biftek = await db.menuItem.findFirst({ where: { name: "Biftek z gobovo omako" } });
+  const zlikrofi = await db.menuItem.findFirst({ where: { name: "Žlikrofi s pečenico" } });
+  const pivo = await db.menuItem.findFirst({ where: { name: "Pivo Laško" } });
+
+  const mods = [
+    biftek && { menuItemId: biftek.id, label: "Dobra pečena", priceDelta: 0 },
+    biftek && { menuItemId: biftek.id, label: "Medium", priceDelta: 0 },
+    biftek && { menuItemId: biftek.id, label: "Srednje pečena", priceDelta: 0 },
+    biftek && { menuItemId: biftek.id, label: "Gobe dodaj", priceDelta: 2.5 },
+    zlikrofi && { menuItemId: zlikrofi.id, label: "Brez zaliva", priceDelta: 0 },
+    zlikrofi && { menuItemId: zlikrofi.id, label: "Dvojna porcija", priceDelta: 6.0 },
+    zlikrofi && { menuItemId: zlikrofi.id, label: "Brez čebule", priceDelta: 0 },
+    pivo && { menuItemId: pivo.id, label: "Veliko (0,5l)", priceDelta: 0.8 },
+    pivo && { menuItemId: pivo.id, label: "Hladno", priceDelta: 0 },
+  ].filter(Boolean) as { menuItemId: string; label: string; priceDelta: number }[];
+
+  for (const m of mods) {
+    await db.modifier.create({ data: m });
+  }
+  console.log(`✅ ${mods.length} modifierjev ustvarjenih`);
+}
+
+async function seedReservations(db: import("@prisma/client").PrismaClient) {
+  const today = new Date().toISOString().slice(0, 10);
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+
+  const table3 = await db.table.findFirst({ where: { number: 3 } });
+  const table6 = await db.table.findFirst({ where: { number: 6 } });
+  const table9 = await db.table.findFirst({ where: { number: 9 } });
+  const table11 = await db.table.findFirst({ where: { number: 11 } });
+
+  const reservations = [
+    { tableId: table3?.id, customerName: "Janez Novak", customerPhone: "031 234 567", partySize: 4, date: today, time: "19:00", duration: 120, note: "Alergija na gluten" },
+    { tableId: table6?.id, customerName: "Familija Horvat", customerPhone: "041 555 333", partySize: 6, date: today, time: "20:00", duration: 150, note: "Rojstni dan — torta v hladilniku" },
+    { tableId: table9?.id, customerName: "Gospod Kovač", customerPhone: null, partySize: 2, date: today, time: "12:30", duration: 90, note: null },
+    { tableId: table11?.id, customerName: "Skupina 8 oseb", customerPhone: "051 999 888", partySize: 8, date: tomorrow, time: "19:30", duration: 180, note: "Poslovno srečanje" },
+  ].filter((r) => r.tableId) as { tableId: string; customerName: string; customerPhone: string | null; partySize: number; date: string; time: string; duration: number; note: string | null }[];
+
+  for (const r of reservations) {
+    await db.reservation.create({
+      data: { ...r, status: "confirmed" },
+    });
+  }
+  console.log(`✅ ${reservations.length} rezervacij ustvarjenih`);
+}
+
+async function seedShifts(db: import("@prisma/client").PrismaClient) {
+  // Včerajšnja zaprta smena (Ana)
+  const yesterday = new Date(Date.now() - 86400000);
+  const start = new Date(yesterday);
+  start.setHours(10, 0, 0, 0);
+  const end = new Date(yesterday);
+  end.setHours(22, 0, 0, 0);
+
+  await db.shift.create({
+    data: {
+      operator: "Ana",
+      operatorTaxNo: "SI12345678",
+      startTime: start,
+      endTime: end,
+      startCash: 150,
+      endCash: 420,
+      status: "closed",
+      ordersCount: 8,
+      totalRevenue: 234.5,
+      note: "Mirna smena, vse OK",
+    },
+  });
+
+  // Predvčerajšnja zaprta smena (Marko)
+  const dayBefore = new Date(Date.now() - 2 * 86400000);
+  const start2 = new Date(dayBefore);
+  start2.setHours(14, 0, 0, 0);
+  const end2 = new Date(dayBefore);
+  end2.setHours(23, 0, 0, 0);
+
+  await db.shift.create({
+    data: {
+      operator: "Marko",
+      operatorTaxNo: "SI87654321",
+      startTime: start2,
+      endTime: end2,
+      startCash: 200,
+      endCash: 380,
+      status: "closed",
+      ordersCount: 5,
+      totalRevenue: 178.3,
+      note: null,
+    },
+  });
+
+  console.log("✅ 2 zaprti smeni ustvarjeni");
 }
 
 async function seedPaidReceipts(db: import("@prisma/client").PrismaClient) {

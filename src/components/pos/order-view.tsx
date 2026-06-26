@@ -49,9 +49,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ModifierDialog } from "@/components/pos/modifier-dialog";
 
 type TableWithOrders = Table & {
-  orders: (Order & { items: { id: string; menuItem: MenuItem; quantity: number; unitPrice: number; vatRate: number; note?: string | null }[] })[];
+  orders: (Order & { items: { id: string; menuItem: MenuItem; quantity: number; unitPrice: number; vatRate: number; note?: string | null; modifiers?: string | null }[] })[];
 };
 
 export function OrderView() {
@@ -63,14 +64,17 @@ export function OrderView() {
     searchQuery,
     setSearch,
     cart,
-    addToCart,
-    incrementQty,
-    decrementQty,
-    removeFromCart,
+    addCartItem,
+    updateLineQty,
+    removeLine,
     clearCart,
     loadCartFromOrder,
     setPaymentOpen,
   } = usePosStore();
+
+  // Modifier dialog state
+  const [modifierItem, setModifierItem] = useState<MenuItem | null>(null);
+  const [modifierOpen, setModifierOpen] = useState(false);
 
   const { data: tables, refetch: refetchTables } = useFetch<TableWithOrders[]>("/api/tables");
   const { data: menu, loading: menuLoading } = useFetch<MenuItem[]>("/api/menu");
@@ -84,11 +88,28 @@ export function OrderView() {
     if (openOrder && loadedOrderId.current !== openOrder.id) {
       loadedOrderId.current = openOrder.id;
       loadCartFromOrder(
-        openOrder.items.map((it) => ({
-          menuItem: it.menuItem,
-          quantity: it.quantity,
-          note: it.note || undefined,
-        }))
+        openOrder.items.map((it) => {
+          // Parsaj modifierje iz JSON stringa (shranjeni v bazi)
+          let modifiers: { id: string; label: string; priceDelta: number }[] | undefined;
+          if (it.modifiers) {
+            try {
+              const parsed = JSON.parse(it.modifiers) as { label: string; priceDelta: number }[];
+              modifiers = parsed.map((m, i) => ({
+                id: `loaded_${i}`,
+                label: m.label,
+                priceDelta: m.priceDelta,
+              }));
+            } catch {
+              // ignore parse error
+            }
+          }
+          return {
+            menuItem: it.menuItem,
+            quantity: it.quantity,
+            note: it.note || undefined,
+            modifiers,
+          };
+        })
       );
     }
     if (!openOrder && selectedTableId) {
@@ -101,6 +122,12 @@ export function OrderView() {
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferTarget, setTransferTarget] = useState<string>("");
   const [transferring, setTransferring] = useState(false);
+
+  // Cena postavke z modifierji (za prikaz v vozičku)
+  function lineUnitPrice(c: (CartItem & { lineId: string })): number {
+    const modDelta = (c.modifiers || []).reduce((s, m) => s + m.priceDelta, 0);
+    return c.menuItem.price + modDelta;
+  }
 
   const filteredMenu = useMemo(() => {
     if (!menu) return [];
@@ -121,11 +148,11 @@ export function OrderView() {
 
   const cartTotals = useMemo(() => {
     const subtotal = cart.reduce(
-      (s, c) => s + c.menuItem.price * c.quantity,
+      (s, c) => s + lineUnitPrice(c) * c.quantity,
       0
     );
     const vat = cart.reduce(
-      (s, c) => s + c.menuItem.price * c.quantity * c.menuItem.vatRate,
+      (s, c) => s + lineUnitPrice(c) * c.quantity * c.menuItem.vatRate,
       0
     );
     const total = subtotal;
@@ -150,6 +177,16 @@ export function OrderView() {
             menuItemId: c.menuItem.id,
             quantity: c.quantity,
             note: c.note,
+            modifiers: c.modifiers
+              ? JSON.stringify(
+                  c.modifiers.map((m) => ({
+                    label: m.label,
+                    priceDelta: m.priceDelta,
+                  }))
+                )
+              : null,
+            // unitPrice vključuje modifierje
+            unitPrice: lineUnitPrice(c),
           })),
         }),
       });
@@ -341,13 +378,17 @@ export function OrderView() {
             {filteredMenu.map((m) => (
               <Card
                 key={m.id}
-                onClick={() => addToCart(m)}
+                onClick={() => {
+                  setModifierItem(m);
+                  setModifierOpen(true);
+                }}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    addToCart(m);
+                    setModifierItem(m);
+                    setModifierOpen(true);
                   }
                 }}
                 className="group cursor-pointer p-3 transition-all duration-200 hover:-translate-y-1 hover:border-amber-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.98] dark:hover:border-amber-700"
@@ -402,55 +443,92 @@ export function OrderView() {
         ) : (
           <ScrollArea className="flex-1">
             <div className="space-y-2 p-3">
-              {cart.map((c) => (
-                <div
-                  key={c.menuItem.id}
-                  className="rounded-lg border border-border bg-background p-2.5"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">
-                        {c.menuItem.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatEUR(c.menuItem.price)} &middot; DDV{" "}
-                        {(c.menuItem.vatRate * 100).toFixed(1)}%
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => removeFromCart(c.menuItem.id)}
-                      className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      aria-label="Odstrani"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <div className="flex items-center gap-1">
+              {cart.map((c) => {
+                const unitPrice = lineUnitPrice(c);
+                const hasMods =
+                  c.modifiers && c.modifiers.length > 0;
+                return (
+                  <div
+                    key={c.lineId}
+                    className="rounded-lg border border-border bg-background p-2.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">
+                          {c.menuItem.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatEUR(unitPrice)}
+                          {hasMods && (
+                            <span className="ml-1 text-amber-600 dark:text-amber-400">
+                              +dodatki
+                            </span>
+                          )}{" "}
+                          &middot; DDV{" "}
+                          {(c.menuItem.vatRate * 100).toFixed(1)}%
+                        </p>
+                        {/* Modifierji */}
+                        {hasMods && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {c.modifiers!.map((mod) => (
+                              <Badge
+                                key={mod.id}
+                                variant="outline"
+                                className="bg-amber-50 px-1.5 py-0 text-[10px] text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
+                              >
+                                {mod.label}
+                                {mod.priceDelta !== 0 && (
+                                  <span className="ml-0.5 font-mono">
+                                    {mod.priceDelta > 0 ? "+" : ""}
+                                    {mod.priceDelta.toFixed(2)}
+                                  </span>
+                                )}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        {/* Note */}
+                        {c.note && (
+                          <p className="mt-1 text-xs italic text-amber-700 dark:text-amber-400">
+                            📝 {c.note}
+                          </p>
+                        )}
+                      </div>
                       <button
-                        onClick={() => decrementQty(c.menuItem.id)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md border border-border transition-colors hover:bg-muted hover:text-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                        aria-label="Zmanjšaj"
+                        onClick={() => removeLine(c.lineId)}
+                        className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        aria-label="Odstrani"
                       >
-                        <Minus className="h-3.5 w-3.5" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
-                      <span className="w-8 text-center text-sm font-semibold">
-                        {c.quantity}
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => updateLineQty(c.lineId, -1)}
+                          className="flex h-7 w-7 items-center justify-center rounded-md border border-border transition-colors hover:bg-muted hover:text-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          aria-label="Zmanjšaj"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </button>
+                        <span className="w-8 text-center text-sm font-semibold">
+                          {c.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateLineQty(c.lineId, 1)}
+                          className="flex h-7 w-7 items-center justify-center rounded-md border border-border transition-colors hover:bg-amber-50 hover:border-amber-300 hover:text-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-amber-950/30"
+                          aria-label="Povečaj"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <span className="text-sm font-bold">
+                        {formatEUR(unitPrice * c.quantity)}
                       </span>
-                      <button
-                        onClick={() => incrementQty(c.menuItem.id)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md border border-border transition-colors hover:bg-amber-50 hover:border-amber-300 hover:text-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-amber-950/30"
-                        aria-label="Povečaj"
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                      </button>
                     </div>
-                    <span className="text-sm font-bold">
-                      {formatEUR(c.menuItem.price * c.quantity)}
-                    </span>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </ScrollArea>
         )}
@@ -530,6 +608,16 @@ export function OrderView() {
           )}
         </div>
       </Card>
+
+      {/* Modifier dialog (odpre se ob kliku na jed) */}
+      <ModifierDialog
+        item={modifierItem}
+        open={modifierOpen}
+        onOpenChange={setModifierOpen}
+        onConfirm={(item, quantity, modifiers, note) => {
+          addCartItem(item, quantity, modifiers, note);
+        }}
+      />
 
       {/* Transfer mize dialog */}
       <Dialog open={transferOpen} onOpenChange={setTransferOpen}>

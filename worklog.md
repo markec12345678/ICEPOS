@@ -360,3 +360,41 @@ Stage Summary:
 - Vse slike (19) prikazane v README galeriji
 - Originalni kitajski README ohranjen kot ICE.POS-README-zh.md
 - Repo: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 9
+Agent: Z.ai Code (main)
+Task: Modifierji jedi (UI), PWA podpora, demo seed (rezervacije/smene/modifierji).
+
+Work Log:
+- Modifierji jedi ( Modifierji UI):
+  * ModifierDialog komponenta: odpre se ob kliku na jed, izbira modifierjev + note + količina
+  * Store refaktoriran z lineId konceptom za pravilno grupiranje postavk z modifierji
+  * addCartItem(item, quantity, modifiers, note) — grupira enake postavke
+  * updateLineQty(lineId, delta), removeLine(lineId) — delata po lineId
+  * Voziček prikazuje modifierje kot badge-e (z priceDelta) + note kot italic tekst
+  * Backend /api/orders POST posodobljen: sprejema modifiers (JSON) + unitPrice (z delta)
+  * loadCartFromOrder parsira modifierje iz DB JSON stringa
+- PWA podpora (offline blagajna — kritično za delo brez interneta):
+  * public/manifest.json: app name, ikone (SVG € simbol), shortcuts (Mize/Naročilo/Računi/Kuhinja), theme color
+  * public/sw.js: service worker — network-first za API (z cache fallback), cache-first za statične datoteke
+  * layout.tsx: manifest link + SW registracija + viewport themeColor + appleWebApp
+  * Instalabilna kot standalone aplikacija na mobilnih/namiznih napravah
+- Seed demo podatki:
+  * 9 modifierjev: Biftek (4: pečena stopnje + gobe +2.50€), Žlikrofi (3: brez zaliva/čebule, dvojna +6€), Pivo (2: veliko +0.80€, hladno)
+  * 4 rezervacije: Janez Novak (alergija gluten), Familija Horvat (rojstni dan), Kovač, skupina 8 oseb (poslovno)
+  * 2 zaprti smeni: Ana (234.50€, 8 računov), Marko (178.30€, 5 računov)
+- Lint: 0 errorjev.
+- Agent Browser verification:
+  * ModifierDialog: Biftek 24,90€ → klik "Gobe dodaj" +2,50€ → cena 27,40€ → note "Brez čebule" → Dodaj → voziček prikazuje Biftek + "Gobe dodaj" badge + "Brez čebule" note
+  * Rezervacije: 4 prikazane z status badges (Janez Novak, Horvat, Kovač)
+  * Smene: Ana + Marko v zgodovini, 234,50€ prihodek
+  * PWA: service worker registriran (scope localhost:3000), manifest link prisoten, 0 napak
+- Push na GitHub: commit f5fe20c
+
+Stage Summary:
+- 3 nove funkcionalnosti: modifierji UI, PWA, demo seed
+- Aplikacija sedaj deluje tudi offline (PWA + service worker)
+- Modifierji omogočajo "brez čebule", "dobra pečena", "gobe dodaj" +2.50€ itd.
+- Demo podatki naredijo aplikacijo realno za predstavitev (4 rezervacije, 2 smeni, 9 modifierjev)
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS

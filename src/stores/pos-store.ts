@@ -1,5 +1,20 @@
 import { create } from "zustand";
-import type { CartItem, MenuItem } from "@/lib/types";
+import type { CartItem, MenuItem, Modifier } from "@/lib/types";
+
+// Helper: generira unikaten lineId za cart postavko
+function genLineId(): string {
+  return `line_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+// Helper: ključ za grupiranje (isti menuItem + isti modifierji + isti note = ista postavka)
+function cartItemKey(
+  item: MenuItem,
+  modifiers: Modifier[],
+  note: string
+): string {
+  const modIds = modifiers.map((m) => m.id).sort().join(",");
+  return `${item.id}|${modIds}|${note}`;
+}
 
 interface PosState {
   // Navigation
@@ -40,13 +55,16 @@ interface PosState {
   setCategory: (c: string) => void;
   setSearch: (q: string) => void;
 
-  // Cart (draft order for selected table)
-  cart: CartItem[];
-  addToCart: (item: MenuItem) => void;
-  removeFromCart: (menuItemId: string) => void;
-  incrementQty: (menuItemId: string) => void;
-  decrementQty: (menuItemId: string) => void;
-  updateNote: (menuItemId: string, note: string) => void;
+  // Cart (draft order for selected table) — vsaka postavka ima lineId za pravilno delo z modifierji
+  cart: (CartItem & { lineId: string })[];
+  addCartItem: (
+    item: MenuItem,
+    quantity?: number,
+    modifiers?: Modifier[],
+    note?: string
+  ) => void;
+  updateLineQty: (lineId: string, delta: number) => void;
+  removeLine: (lineId: string) => void;
   clearCart: () => void;
   loadCartFromOrder: (items: CartItem[]) => void;
 
@@ -73,42 +91,61 @@ export const usePosStore = create<PosState>((set) => ({
   setSearch: (q) => set({ searchQuery: q }),
 
   cart: [],
-  addToCart: (item) =>
+
+  addCartItem: (item, quantity = 1, modifiers = [], note = "") =>
     set((s) => {
-      const existing = s.cart.find((c) => c.menuItem.id === item.id);
+      const key = cartItemKey(item, modifiers, note);
+      const existing = s.cart.find(
+        (c) =>
+          cartItemKey(c.menuItem, c.modifiers || [], c.note || "") === key
+      );
       if (existing) {
         return {
           cart: s.cart.map((c) =>
-            c.menuItem.id === item.id ? { ...c, quantity: c.quantity + 1 } : c
+            c.lineId === existing.lineId
+              ? { ...c, quantity: c.quantity + quantity }
+              : c
           ),
         };
       }
-      return { cart: [...s.cart, { menuItem: item, quantity: 1 }] };
+      return {
+        cart: [
+          ...s.cart,
+          {
+            lineId: genLineId(),
+            menuItem: item,
+            quantity,
+            modifiers: modifiers.length > 0 ? modifiers : undefined,
+            note: note || undefined,
+          },
+        ],
+      };
     }),
-  removeFromCart: (menuItemId) =>
-    set((s) => ({ cart: s.cart.filter((c) => c.menuItem.id !== menuItemId) })),
-  incrementQty: (menuItemId) =>
-    set((s) => ({
-      cart: s.cart.map((c) =>
-        c.menuItem.id === menuItemId ? { ...c, quantity: c.quantity + 1 } : c
-      ),
-    })),
-  decrementQty: (menuItemId) =>
+
+  updateLineQty: (lineId, delta) =>
     set((s) => ({
       cart: s.cart
         .map((c) =>
-          c.menuItem.id === menuItemId ? { ...c, quantity: c.quantity - 1 } : c
+          c.lineId === lineId ? { ...c, quantity: c.quantity + delta } : c
         )
         .filter((c) => c.quantity > 0),
     })),
-  updateNote: (menuItemId, note) =>
-    set((s) => ({
-      cart: s.cart.map((c) =>
-        c.menuItem.id === menuItemId ? { ...c, note } : c
-      ),
-    })),
+
+  removeLine: (lineId) =>
+    set((s) => ({ cart: s.cart.filter((c) => c.lineId !== lineId) })),
+
   clearCart: () => set({ cart: [] }),
-  loadCartFromOrder: (items) => set({ cart: items }),
+
+  loadCartFromOrder: (items) =>
+    set({
+      cart: items.map((item) => ({
+        lineId: genLineId(),
+        menuItem: item.menuItem,
+        quantity: item.quantity,
+        note: item.note,
+        modifiers: item.modifiers,
+      })),
+    }),
 
   paymentOpen: false,
   setPaymentOpen: (open) => set({ paymentOpen: open }),

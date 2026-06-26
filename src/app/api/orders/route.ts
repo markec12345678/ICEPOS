@@ -32,7 +32,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { tableId, items } = body as {
       tableId: string;
-      items: { menuItemId: string; quantity: number; note?: string }[];
+      items: {
+        menuItemId: string;
+        quantity: number;
+        note?: string;
+        modifiers?: string | null;
+        unitPrice?: number;
+      }[];
     };
 
     if (!tableId || !Array.isArray(items)) {
@@ -69,16 +75,22 @@ export async function POST(req: NextRequest) {
       .filter((i) => menuMap.has(i.menuItemId) && i.quantity > 0)
       .map((i) => {
         const m = menuMap.get(i.menuItemId)!;
-        const lineTotal = m.price * i.quantity;
+        // unitPrice iz requesta (vključuje modifierje) ali fallback na osnovno ceno
+        const unitPrice =
+          typeof i.unitPrice === "number" && i.unitPrice > 0
+            ? i.unitPrice
+            : m.price;
+        const lineTotal = unitPrice * i.quantity;
         total += lineTotal;
         vatTotal += lineTotal * m.vatRate;
         return {
           orderId: order!.id,
           menuItemId: i.menuItemId,
           quantity: i.quantity,
-          unitPrice: m.price,
+          unitPrice,
           vatRate: m.vatRate,
           note: i.note || null,
+          modifiers: i.modifiers || null,
         };
       });
 
