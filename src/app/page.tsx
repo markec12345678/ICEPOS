@@ -7,6 +7,7 @@ import { PosSidebar, PosFooter } from "@/components/pos/pos-footer";
 import { TablesView } from "@/components/pos/tables-view";
 import { OrderView } from "@/components/pos/order-view";
 import { ReceiptsView } from "@/components/pos/receipts-view";
+import { KitchenDisplayView } from "@/components/pos/kitchen-display-view";
 import { MenuAdminView } from "@/components/pos/menu-admin-view";
 import { DashboardView } from "@/components/pos/dashboard-view";
 import { ZReportView } from "@/components/pos/z-report-view";
@@ -30,6 +31,7 @@ export default function Home() {
             {activeView === "tables" && <TablesView />}
             {activeView === "order" && <OrderView />}
             {activeView === "receipts" && <ReceiptsView />}
+            {activeView === "kitchen" && <KitchenDisplayView />}
             {activeView === "menu" && <MenuAdminView />}
             {activeView === "dashboard" && <DashboardView />}
             {activeView === "zreport" && <ZReportView />}

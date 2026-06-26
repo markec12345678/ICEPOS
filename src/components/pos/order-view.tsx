@@ -32,7 +32,23 @@ import {
   Printer,
   ShoppingCart,
   UtensilsCrossed,
+  ChefHat,
+  ArrowRightLeft,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type TableWithOrders = Table & {
   orders: (Order & { items: { id: string; menuItem: MenuItem; quantity: number; unitPrice: number; vatRate: number; note?: string | null }[] })[];
@@ -81,6 +97,10 @@ export function OrderView() {
   }, [selectedTableId, openOrder, loadCartFromOrder]);
 
   const [saving, setSaving] = useState(false);
+  const [sendingKitchen, setSendingKitchen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [transferTarget, setTransferTarget] = useState<string>("");
+  const [transferring, setTransferring] = useState(false);
 
   const filteredMenu = useMemo(() => {
     if (!menu) return [];
@@ -152,6 +172,54 @@ export function OrderView() {
     const saved = await handleSave();
     if (saved) {
       setPaymentOpen(true);
+    }
+  }
+
+  async function handleSendToKitchen() {
+    // Najprej shrani naročilo
+    const saved = await handleSave();
+    if (!saved) return;
+
+    setSendingKitchen(true);
+    try {
+      const res = await fetch(`/api/orders/${saved.id}/send-to-kitchen`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Napaka");
+      toast.success("Naročilo poslano v kuhinjo", {
+        description: `${data.itemCount} postavk → Miza ${selectedTable?.name}`,
+      });
+    } catch (e) {
+      toast.error((e as Error).message || "Napaka pri pošiljanju v kuhinjo");
+    } finally {
+      setSendingKitchen(false);
+    }
+  }
+
+  async function handleTransfer() {
+    if (!openOrder || !transferTarget) {
+      toast.error("Izberi ciljno mizo");
+      return;
+    }
+    setTransferring(true);
+    try {
+      const res = await fetch(`/api/orders/${openOrder.id}/transfer-table`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetTableId: transferTarget }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Napaka");
+      toast.success(data.message);
+      setTransferOpen(false);
+      setTransferTarget("");
+      refetchTables();
+      selectTable(transferTarget);
+    } catch (e) {
+      toast.error((e as Error).message || "Napaka pri preselitvi");
+    } finally {
+      setTransferring(false);
     }
   }
 
@@ -425,6 +493,30 @@ export function OrderView() {
               Plačaj
             </Button>
           </div>
+
+          {/* Kuhinja + Preseli mizo */}
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSendToKitchen}
+              disabled={sendingKitchen || cart.length === 0}
+              className="border-sky-300 text-sky-700 hover:bg-sky-50 hover:text-sky-800 dark:border-sky-800 dark:text-sky-400 dark:hover:bg-sky-950/30"
+            >
+              <ChefHat className="mr-1.5 h-4 w-4" />
+              {sendingKitchen ? "Pošiljam..." : "Kuhinja"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTransferOpen(true)}
+              disabled={!openOrder}
+            >
+              <ArrowRightLeft className="mr-1.5 h-4 w-4" />
+              Preseli
+            </Button>
+          </div>
+
           {cart.length > 0 && (
             <button
               onClick={() => {
@@ -438,6 +530,66 @@ export function OrderView() {
           )}
         </div>
       </Card>
+
+      {/* Transfer mize dialog */}
+      <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ArrowRightLeft className="h-5 w-5 text-amber-600" />
+              Preseli naročilo
+            </DialogTitle>
+            <DialogDescription>
+              Preseli odprto naročilo z mize{" "}
+              <strong>{selectedTable?.name}</strong> na drugo mizo.
+              Ciljna miza mora biti prosta.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <label className="text-sm font-medium">Ciljna miza</label>
+            <Select value={transferTarget} onValueChange={setTransferTarget}>
+              <SelectTrigger>
+                <SelectValue placeholder="Izberi prosto mizo..." />
+              </SelectTrigger>
+              <SelectContent>
+                {tables
+                  ?.filter(
+                    (t) =>
+                      t.id !== selectedTableId &&
+                      !t.orders.some((o) => o.status === "open")
+                  )
+                  .map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name} ({t.seats} oseb)
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                setTransferOpen(false);
+                setTransferTarget("");
+              }}
+              disabled={transferring}
+            >
+              Prekliči
+            </Button>
+            <Button
+              className="flex-1 bg-amber-600 hover:bg-amber-700"
+              onClick={handleTransfer}
+              disabled={transferring || !transferTarget}
+            >
+              {transferring ? "Prešeljam..." : "Preseli"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

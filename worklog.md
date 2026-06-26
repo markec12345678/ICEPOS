@@ -219,3 +219,51 @@ Stage Summary:
 - Settings omogoča konfiguracijo podjetja/FURS brez hardcoded vrednosti
 - UX: dark mode za nočne smene, bližnjice za hitrost, split bill za skupine
 - Lint čist, 0 napak, dev server stabilen (HTTP 200)
+
+---
+Task ID: 5
+Agent: Z.ai Code (main)
+Task: Kuhinja display (WebSocket), CSV izvoz, preselitev mize, FURS REST API, dark mode + push.
+
+Work Log:
+- Kuhinja Display (KOT) — real-time naročila v kuhinji:
+  * Mini-service: mini-services/kitchen-service/ (socket.io na portu 3003, bun --hot)
+  * Backend API: POST /api/orders/[id]/send-to-kitchen (poveže se direktno na kitchen service)
+  * Frontend: KitchenDisplayView (Kanban 3 stolpci: Nova/V pripravi/Pripravljeno)
+  * Eventi: order:new, order:status, kitchen:sync, kitchen:stats, order:recall
+  * Live stat kartice, timer za vsako naročilo, opozorilo če >10min, recall notifications
+  * start.sh skripta za robusten daemon zagon
+- CSV izvoz za računovodstvo: GET /api/orders/export?from=&to=
+  * 17 stolpcev: številka, datum, čas, miza, artikel, količina, cena, DDV, ZOI, EOR...
+  * BOM prefix za Excel, pravilen CSV escaping
+  * Gumb "Izvozi CSV" v ReceiptsView header
+- Preselitev mize (table transfer): POST /api/orders/[id]/transfer-table
+  * Validacija: samo odprta naročila, ciljna miza mora biti prosta
+  * Dialog v OrderView z Select komponento (filtrira proste mize)
+  * Po transferu: auto-select nove mize + refetch tables
+- FURS REST API struktura: src/lib/furs-api.ts
+  * sendInvoiceToFurs() — POC vrača demo EOR, produkcija zakomentirana (potreben certifikat)
+  * registerDeviceToFurs() — INI postopek (placeholder)
+  * checkFursHealth() — preveri dosegljivost FURS strežnika
+  * Reference na FURS test/prod endpointe (blagajne-test.fu.gov.si:9002)
+- Dark mode toggle: next-themes + ThemeToggle (Moon/Sun) v headerju
+- Tipkovnične bližnjice: useKeyboardShortcuts hook (1-5 za views, Esc nazaj)
+- Split bill (iz prejšnje faze že dodan, omenjam za kontekst)
+- Backend API popravil: send-to-kitchen se poveže direktno na localhost:3003 (backend-backend), frontend KitchenDisplayView pa prek Caddy (:81, XTransformPort=3003)
+- Lint: 0 errorjev.
+- Agent Browser end-to-end verification:
+  * Kitchen display: povezan (badge "Povezano"), 3 stolpci prikazani
+  * Send to kitchen: POST API → kitchen log "Novo naročilo: Miza 2 (3 postavk)" → order se prikaže v "Nova" stolpcu
+  * Status change: klik "Začni pripravo" → order se premakne v "V pripravi" stolpec (real-time prek WS)
+  * CSV export: 17 vrstic, BOM, pravi FURS podatki (ZOI, EOR, DDV)
+  * Transfer: API test → "Naročilo preseljeno: Miza 2 → Miza 4" (uspešno, validacije delujejo)
+- 0 napak v dev logu.
+- Push na GitHub: commit 78017eb, "Add kitchen display (WebSocket), CSV export, table transfer, FURS API, dark mode"
+  * Vključil mini-services/kitchen-service/ v icepos-si-web/ podmapo
+  * 8 view-ov total: Mize, Naročilo, Računi, Kuhinja, Meni, Pregled, Z-report, Nastavitve
+
+Stage Summary:
+- 4 nove funkcionalnosti: kitchen display (WS), CSV export, transfer mize, FURS REST API struktura
+- Real-time komunikacija: socket.io mini-service (port 3003) + Caddy gateway
+- Aplikacija sedaj pokriva popoln restavracijski workflow: naročilo → kuhinja → plačilo → račun → Z-report
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS (icepos-si-web/)

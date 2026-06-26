@@ -12,6 +12,7 @@ import {
   FileBarChart,
   Settings,
   MoreHorizontal,
+  ChefHat,
 } from "lucide-react";
 import {
   Sheet,
@@ -34,12 +35,13 @@ export function PosFooter() {
   ];
 
   const moreNav = [
+    { id: "kitchen" as const, label: "Kuhinja", desc: "Real-time naročila", icon: ChefHat },
     { id: "menu" as const, label: "Meni", desc: "Urejanje postavk", icon: BookOpen },
     { id: "zreport" as const, label: "Z-report", desc: "Dnevni zaključek", icon: FileBarChart },
     { id: "settings" as const, label: "Nastavitve", desc: "Podjetje in FURS", icon: Settings },
   ];
 
-  const isMoreActive = ["menu", "zreport", "settings"].includes(activeView);
+  const isMoreActive = ["menu", "zreport", "settings", "kitchen"].includes(activeView);
 
   return (
     <footer className="sticky bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:hidden print:hidden">
@@ -149,6 +151,12 @@ export function PosSidebar() {
       badge: cartCount,
     },
     { id: "receipts" as const, label: "Računi", desc: "Dnevnik izdanih", icon: Receipt },
+    {
+      id: "kitchen" as const,
+      label: "Kuhinja",
+      desc: "Real-time naročila",
+      icon: ChefHat,
+    },
     { id: "menu" as const, label: "Meni", desc: "Urejanje postavk", icon: BookOpen },
     {
       id: "dashboard" as const,

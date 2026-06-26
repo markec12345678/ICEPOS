@@ -31,6 +31,7 @@ import {
   XCircle,
   AlertCircle,
   Eye,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FursQrCode } from "@/components/pos/furs-qr-code";
@@ -113,6 +114,31 @@ export function ReceiptsView() {
 
   return (
     <div className="space-y-4 animate-fade-in">
+      {/* Header z izvozom */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold tracking-tight">Računi</h2>
+          <p className="text-xs text-muted-foreground">
+            Dnevnik izdanih računov z FURS podatki
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            const today = new Date().toISOString().slice(0, 10);
+            window.open(
+              `/api/orders/export?from=${today}&to=${today}`,
+              "_blank"
+            );
+            toast.success("Pripravljam CSV izvoz za računovodstvo");
+          }}
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Izvozi CSV
+        </Button>
+      </div>
+
       {/* Stat strip */}
       <div className="grid grid-cols-3 gap-3">
         <Card className="p-3">
