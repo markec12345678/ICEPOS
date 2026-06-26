@@ -33,6 +33,7 @@ import {
   Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FursQrCode } from "@/components/pos/furs-qr-code";
 
 type Receipt = Order & {
   items: { id: string; menuItem: { id: string; name: string; price: number; vatRate: number }; quantity: number; unitPrice: number; vatRate: number; note?: string | null }[];
@@ -353,6 +354,16 @@ export function ReceiptsView() {
                         value={selected.stornoReason}
                       />
                     )}
+                    <div className="mt-3 flex flex-col items-center border-t border-dashed border-border pt-3">
+                      <FursQrCode
+                        orderId={selected.id}
+                        className="h-24 w-24"
+                        alt="FURS QR koda"
+                      />
+                      <p className="mt-1 text-[10px] text-muted-foreground">
+                        Skeniraj za preverbo na FURS
+                      </p>
+                    </div>
                   </div>
                 </div>
               </ScrollArea>
@@ -454,6 +465,17 @@ export function ReceiptsView() {
                   <p className="font-bold text-emerald-700">FURS — SRS fiskaliziran</p>
                   <p className="mt-1 break-all">ZOI: {selected.zoi}</p>
                   <p className="mt-1 break-all">EOR: {selected.eor}</p>
+                </div>
+                <div className="my-2 border-t border-dashed border-neutral-400" />
+                <div className="flex flex-col items-center">
+                  <FursQrCode
+                    orderId={selected.id}
+                    className="h-24 w-24"
+                    alt="FURS QR"
+                  />
+                  <p className="mt-1 text-[8px] text-neutral-500">
+                    Skeniraj za preverbo
+                  </p>
                 </div>
                 <div className="my-2 border-t border-dashed border-neutral-400" />
                 <div className="text-center text-[10px] text-neutral-600">

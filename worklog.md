@@ -71,3 +71,34 @@ Stage Summary:
   * Tiskanje na termalni tiskalnik (80mm, print CSS)
 - 5 glavnih pogledov: Mize, Naročilo, Računi, Meni, Pregled
 - Pripravljeno za produkcijo: zamenjati demo RSA ključ s FURS certifikatom (.p12) in dodati klic FURS REST API-ja za EOR.
+
+---
+Task ID: 3
+Agent: Z.ai Code (main)
+Task: Dodaj dejansko FURS QR kodo na račun in pushaj celoten POS demo na GitHub ICEPOS repo.
+
+Work Log:
+- Namestil `qrcode` knjižnico (1.5.4) + `@types/qrcode`.
+- Backend API: `GET /api/orders/[id]/qr` — generira SVG data URL po FURS specifikaciji (ZOI + datum + davčna + kontrolna), errorCorrectionLevel M, 160px.
+- Frontend: `FursQrCode` reusable komponenta (fetcha SVG data URL, AbortController, loading/error state).
+- Integriral QR v PaymentDialog (success view, 20×20) in ReceiptsView (dialog podrobnosti 24×24 + print-only blok 24×24).
+- Popravil React 19 lint pravilo (set-state-in-effect) z AbortController + setState v async run().
+- Lint čist (0 errorjev).
+- Agent Browser verification:
+  * QR API vrača pravi SVG data URL: `data:image/svg+xml;base64,...`
+  * FURS payload: `5C3A18F6D4B2907E20260626091708123456781` (ZOI 32 + datum 14 + davčna 8 + kontrolna 1) — pravi FURS format
+  * Dialog podrobnosti: 2 QR sliki (dialog + print-only), loaded: true, 160×160
+  * Print PDF (91K) vsebuje "FURS — SRS fiskaliziran", ZOI, EOR, "Skeniraj za preverbo"
+- Push na GitHub:
+  * Skopiral POS demo v `icepos-si-web/` podmapo ICEPOS repozitorija (624K, brez node_modules/.next/db)
+  * Napisal podroben README.md (lastnosti, tech stack, struktura, namestitev, FURS produkcija notes, TODO)
+  * .env.example + .gitignore (SQLite, logi, certifikati)
+  * Commit: "Add ICEPOS SI — Slovenian POS with FURS module (Next.js 16)" (SHA: de92878f)
+  * Push uspešen na main branch: https://github.com/markec12345678/ICEPOS
+
+Stage Summary:
+- FURS QR koda funkcionalna na računu (SVG, FURS format, tiskanje)
+- POS demo pushan na GitHub v `icepos-si-web/` podmapo
+- Repo sedaj vsebuje: originalni ICEPOS C# klient + PHP admin backend + slovenski Next.js POS s FURS
+- 0 napak v dev logu, lint čist, dev server stabilen (HTTP 200)
+- Pripravljeno za produkcijsko nadgradnjo (FURS certifikat + REST API klic za pravi EOR)

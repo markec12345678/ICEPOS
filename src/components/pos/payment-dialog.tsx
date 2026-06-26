@@ -25,6 +25,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FursQrCode } from "@/components/pos/furs-qr-code";
 
 type TableWithOrders = Table & {
   orders: (Order & {
@@ -413,11 +414,13 @@ function ReceiptView({
                 <span className="font-mono">{paid.eor || "-"}</span>
               </p>
             </div>
-            {/* QR mesto */}
+            {/* QR koda (FURS) */}
             <div className="mt-2 flex flex-col items-center">
-              <div className="flex h-16 w-16 items-center justify-center border border-neutral-300 bg-neutral-100 text-[8px] text-neutral-400">
-                [QR]
-              </div>
+              <FursQrCode
+                orderId={paid.id}
+                className="h-20 w-20"
+                alt="FURS QR koda"
+              />
               <p className="mt-0.5 text-[8px] text-neutral-500">
                 Skeniraj za preverbo
               </p>
