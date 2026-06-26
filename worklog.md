@@ -333,3 +333,30 @@ Stage Summary:
 - README.md posodobljen z galerijo — vredi za predstavitev strankam
 - Repo: https://github.com/markec12345678/ICEPOS (icepos-si-web/docs/screenshots/)
 - Slike pokrivajo vseh 11 view-ov + dark mode + mobile responsive
+
+---
+Task ID: 8
+Agent: Z.ai Code (main)
+Task: Popravi kitajski README v root repozitorija — zamenjaj s slovenskim + galerija screenshotov.
+
+Work Log:
+- Problem: uporabnik je videl kitajski jezik na GitHub repozitoriju. Vzrok: root README.md je bil še vedno originalni kitajski ICEPOS README (prekopiran iz Gitee v Task 1).
+- Preveril slike z VLM (glm-4.6v) — vse 19 slik je v slovenščini, brez kitajskih znakov. Problem je bil izključno v root README.md.
+- Akcije:
+  * Preimenoval README.md → ICE.POS-README-zh.md (ohranjen za referenco, HTTP 200 potrjen)
+  * Napisal nov README.md v slovenščini (7912 bajtov) z:
+    - Galerijo vseh 19 screenshotov (organiziranih v 6 tabel)
+    - Strukturo repozitorija (3 komponente: C# klient, PHP admin, Next.js POS)
+    - Seznamom 12 pogledov + FURS funkcionalnosti
+    - Tech stack + namestitvena navodila
+    - Povezavami na podrejene README-je
+  * Preveril icepos-si-web/ kodo — 0 kitajskih znakov (grep potrdil)
+- Commit: 0f6131b "Replace Chinese root README with Slovenian README + screenshot gallery"
+- Push na GitHub uspešen.
+- Preverjeno prek GitHub API: nov README.md je slovenski, ICE.POS-README-zh.md obstaja (HTTP 200).
+
+Stage Summary:
+- GitHub repozitorij se sedaj odpre v slovenščini (prej kitajščina)
+- Vse slike (19) prikazane v README galeriji
+- Originalni kitajski README ohranjen kot ICE.POS-README-zh.md
+- Repo: https://github.com/markec12345678/ICEPOS
