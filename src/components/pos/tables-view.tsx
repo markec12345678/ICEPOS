@@ -8,11 +8,21 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Receipt, AlertCircle, LayoutGrid } from "lucide-react";
+import { Users, Receipt, AlertCircle, LayoutGrid, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
+
+interface Reservation {
+  id: string;
+  customerName: string;
+  partySize: number;
+  time: string;
+  status: string;
+  note: string | null;
+}
 
 type TableWithOrders = Table & {
   orders: (Order & { items: { id: string }[] })[];
+  reservations: Reservation[];
 };
 
 export function TablesView() {
@@ -45,6 +55,10 @@ export function TablesView() {
   const openCount = tables.filter((t) =>
     t.orders.some((o) => o.status === "open")
   ).length;
+  const reservationsToday = tables.reduce(
+    (s, t) => s + (t.reservations?.length || 0),
+    0
+  );
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -53,7 +67,7 @@ export function TablesView() {
         <StatCard label="Skupaj miz" value={String(tables.length)} accent="neutral" />
         <StatCard label="Zasedene" value={String(openCount)} accent="amber" />
         <StatCard label="Proste" value={String(tables.length - openCount)} accent="emerald" />
-        <StatCard label="Sekcije" value={String(sections.length - 1)} accent="neutral" />
+        <StatCard label="Rezervacije danes" value={String(reservationsToday)} accent="amber" />
       </div>
 
       {/* Section filter */}
@@ -109,6 +123,15 @@ export function TablesView() {
             const openOrder = t.orders.find((o) => o.status === "open");
             const occupied = !!openOrder;
             const itemsCount = openOrder?.items.length || 0;
+            // Najdi naslednjo prihajajočo rezervacijo (time >= now)
+            const now = new Date();
+            const nowStr = `${String(now.getHours()).padStart(2, "0")}:${String(
+              now.getMinutes()
+            ).padStart(2, "0")}`;
+            const nextReservation = (t.reservations || [])
+              .filter((r) => r.time >= nowStr)
+              .sort((a, b) => a.time.localeCompare(b.time))[0];
+            const hasReservationSoon = !!nextReservation;
             return (
               <Card
                 key={t.id}
@@ -125,6 +148,8 @@ export function TablesView() {
                   "group relative cursor-pointer overflow-hidden p-4 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.98]",
                   occupied
                     ? "border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50 dark:border-amber-800 dark:from-amber-950/40 dark:to-orange-950/30"
+                    : hasReservationSoon
+                    ? "border-sky-300 bg-gradient-to-br from-sky-50 to-blue-50 dark:border-sky-800 dark:from-sky-950/30 dark:to-blue-950/20"
                     : "border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 dark:border-emerald-900 dark:from-emerald-950/30 dark:to-green-950/20"
                 )}
               >
@@ -142,6 +167,8 @@ export function TablesView() {
                       "flex h-2.5 w-2.5 rounded-full",
                       occupied
                         ? "bg-amber-500 shadow-[0_0_0_4px_rgba(245,158,11,0.2)]"
+                        : hasReservationSoon
+                        ? "bg-sky-500 shadow-[0_0_0_4px_rgba(14,165,233,0.2)]"
                         : "bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.2)]"
                     )}
                   />
@@ -164,6 +191,24 @@ export function TablesView() {
                     {openOrder && (
                       <p className="text-xs text-muted-foreground">
                         Od {formatTime(openOrder.createdAt)}
+                      </p>
+                    )}
+                  </div>
+                ) : hasReservationSoon ? (
+                  <div className="mt-3 space-y-1">
+                    <Badge
+                      variant="outline"
+                      className="gap-1 border-sky-300 bg-sky-100 text-sky-800 dark:border-sky-800 dark:bg-sky-950/50 dark:text-sky-300"
+                    >
+                      <CalendarDays className="h-3 w-3" />
+                      {nextReservation.time}
+                    </Badge>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {nextReservation.customerName} ({nextReservation.partySize})
+                    </p>
+                    {nextReservation.note && (
+                      <p className="truncate text-[10px] italic text-amber-700 dark:text-amber-400">
+                        📝 {nextReservation.note}
                       </p>
                     )}
                   </div>

@@ -16,6 +16,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DashboardHeader } from "@/components/pos/dashboard-header";
 
 export function DashboardView() {
   const { data, loading, error } = useFetch<DashboardStats>("/api/stats");
@@ -48,6 +49,9 @@ export function DashboardView() {
 
   return (
     <div className="space-y-4">
+      {/* Header: aktivna smena + rezervacije + hitre akcije */}
+      <DashboardHeader />
+
       {/* KPI kartice */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard

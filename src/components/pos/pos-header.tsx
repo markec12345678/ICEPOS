@@ -2,16 +2,52 @@
 
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Store, Clock, ShieldCheck, Wifi } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Store, Clock, ShieldCheck, Wifi, UserCircle, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import {
+  getStoredOperator,
+  clearStoredOperator,
+  type Operator,
+} from "@/components/pos/pin-login";
+import { toast } from "sonner";
 
 export function PosHeader() {
   const [now, setNow] = useState(new Date());
+  const [operator, setOperator] = useState<Operator | null>(null);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  // Lazy initial state — prebere localStorage enkrat
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLoaded(true);
+    setOperator(getStoredOperator());
+  }, []);
+
+  // Poslušaj spremembe operatorja (login/logout)
+  useEffect(() => {
+    function handler() {
+      setOperator(getStoredOperator());
+    }
+    window.addEventListener("storage", handler);
+    window.addEventListener("operator-changed", handler);
+    return () => {
+      window.removeEventListener("storage", handler);
+      window.removeEventListener("operator-changed", handler);
+    };
+  });
+
+  function logout() {
+    clearStoredOperator();
+    setOperator(null);
+    window.dispatchEvent(new Event("operator-changed"));
+    toast.info("Odjava uspešna");
+  }
 
   const time = new Intl.DateTimeFormat("sl-SI", {
     hour: "2-digit",
@@ -61,6 +97,19 @@ export function PosHeader() {
             <Clock className="h-3.5 w-3.5" />
             {time}
           </Badge>
+          {loaded && operator && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400"
+              onClick={logout}
+              title="Odjava"
+            >
+              <UserCircle className="h-4 w-4" />
+              {operator.name}
+              <LogOut className="h-3 w-3 opacity-60" />
+            </Button>
+          )}
           <ThemeToggle />
         </div>
 
@@ -69,6 +118,17 @@ export function PosHeader() {
             <Clock className="h-3 w-3" />
             {time}
           </Badge>
+          {loaded && operator && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1 px-2"
+              onClick={logout}
+            >
+              <UserCircle className="h-4 w-4" />
+              {operator.name}
+            </Button>
+          )}
           <ThemeToggle />
         </div>
       </div>

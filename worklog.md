@@ -398,3 +398,39 @@ Stage Summary:
 - Modifierji omogočajo "brez čebule", "dobra pečena", "gobe dodaj" +2.50€ itd.
 - Demo podatki naredijo aplikacijo realno za predstavitev (4 rezervacije, 2 smeni, 9 modifierjev)
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 10
+Agent: Z.ai Code (main)
+Task: Rezervacije na mizah, Dashboard header (aktivna smena + rezervacije + hitre akcije), PIN login.
+
+Work Log:
+- Rezervacije na mizah (TablesView):
+  * API /api/tables posodobljen: vrača tudi današnje potrjene rezervacije z mizami
+  * TablesView: za vsako mizo najde naslednjo prihajajočo rezervacijo (time >= now)
+  * Barvno kodiranje: zelena (prosta), oranžna (zasedena), sky blue (rezervirana kmalu)
+  * Badge z uro rezervacije + ime gosta + opomba (alergije, priložnosti)
+  * Stat strip: dodana "Rezervacije danes" kartica
+- Dashboard header (3 kartice nad KPI):
+  * Aktivna smena: prikazuje operater + "V teku" badge, ali "Ni aktivne" + gumb "Začni"
+  * Današnje rezervacije: naslednje 3 z uro + stranko + mizo
+  * Hitre akcije: gumbi za Nov račun, Kuhinja, Z-report
+- PIN login sistem (FURS skladnost — sledljivost operaterjev):
+  * PinLoginDialog z numeričnim numpad (4-mesten PIN)
+  * 3 demo operaterji: Ana (1234), Marko (5678), Admin (9999)
+  * Samodejna verifikacija po 4. številki, error shake ob napačnem PIN
+  * localStorage persistenca, logout gumb v headerju
+  * Alert bar na vrhu ko ni prijavljenega operatorja (FURS opozorilo)
+  * Header prikazuje ime operaterja z ikono za odjavo
+- Lint: 0 errorjev (1 warning - eslint-disable)
+- Agent Browser verification:
+  * PIN 1234 → Ana prijavljena, alert bar izgine, operater prikazan v headerju
+  * Mize prikazujejo badge z rezervacijami (Janez Novak 19:00 na Mizi 3)
+  * Dashboard: "Aktivna smena", "Rezervacije danes", "Hitre akcije" kartice vse prisotne
+- Push na GitHub: commit fd9df78
+
+Stage Summary:
+- 3 nove funkcionalnosti: rezervacije na mizah, dashboard header, PIN login
+- Aplikacija zdaj povezuje vse komponente: mize z rezervacijami, dashboard s smeno/rezervacijami, PIN login za FURS skladnost
+- FURS skladnost: sledljivost operaterjev prek PIN login + smen
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
