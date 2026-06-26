@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getOperatorFromRequest } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -54,8 +55,15 @@ export async function POST(req: NextRequest) {
     });
 
     if (!order) {
+      // Pridobi operaterja iz PIN-a (fallback na "Blagajnik")
+      const operator = await getOperatorFromRequest(req);
       order = await db.order.create({
-        data: { tableId, status: "open", operator: "Ana" },
+        data: {
+          tableId,
+          status: "open",
+          operator: operator?.name || "Blagajnik",
+          operatorTaxNo: operator?.taxNumber || "SI12345678",
+        },
       });
     } else {
       // Počisti stare postavke (nadomestimo z novim vozicom)

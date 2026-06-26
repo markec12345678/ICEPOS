@@ -18,6 +18,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { authHeaders } from "@/components/pos/pin-login";
 import {
   UserCircle,
   Clock,
@@ -287,7 +288,7 @@ function StartShiftDialog({
     try {
       const res = await fetch("/api/shifts", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(),
         body: JSON.stringify({
           operator: operator.trim(),
           startCash: parseFloat(startCash) || 0,
@@ -379,7 +380,7 @@ function EndShiftDialog({
     try {
       const res = await fetch(`/api/shifts/${shift.id}/close`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(),
         body: JSON.stringify({
           endCash: endCash ? parseFloat(endCash) : undefined,
           note: note.trim() || undefined,

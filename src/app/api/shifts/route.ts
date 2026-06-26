@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getOperatorFromRequest } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -42,10 +43,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Pridobi operaterja iz PIN-a (če je prijavljen, uporabi njegove podatke)
+    const authOperator = await getOperatorFromRequest(req);
+    const finalOperator = authOperator?.name || operator.trim();
+    const finalTaxNo = authOperator?.taxNumber || operatorTaxNo || "SI12345678";
+
     const shift = await db.shift.create({
       data: {
-        operator: operator.trim(),
-        operatorTaxNo: operatorTaxNo || "SI12345678",
+        operator: finalOperator,
+        operatorTaxNo: finalTaxNo,
         startCash: startCash || 0,
         status: "open",
       },

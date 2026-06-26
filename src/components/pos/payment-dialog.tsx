@@ -28,6 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 import { FursQrCode } from "@/components/pos/furs-qr-code";
 import { SplitBillDialog } from "@/components/pos/split-bill-dialog";
+import { authHeaders } from "@/components/pos/pin-login";
 
 type TableWithOrders = Table & {
   orders: (Order & {
@@ -110,7 +111,7 @@ export function PaymentDialog() {
     try {
       const res = await fetch(`/api/orders/${openOrder.id}/pay`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(),
         body: JSON.stringify({ paymentMethod: method }),
       });
       if (!res.ok) {

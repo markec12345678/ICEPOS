@@ -115,3 +115,13 @@ model Shift {
   note       String? // opomba ob zaključku
   createdAt  DateTime @default(now())
 }
+
+model Operator {
+  id         String   @id @default(cuid())
+  name       String
+  pin        String   @unique // 4-mesten PIN
+  taxNumber  String   @default("SI12345678")
+  role       String   @default("cashier") // "cashier" | "admin"
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+}

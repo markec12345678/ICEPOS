@@ -50,6 +50,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ModifierDialog } from "@/components/pos/modifier-dialog";
+import { authHeaders } from "@/components/pos/pin-login";
 
 type TableWithOrders = Table & {
   orders: (Order & { items: { id: string; menuItem: MenuItem; quantity: number; unitPrice: number; vatRate: number; note?: string | null; modifiers?: string | null }[] })[];
@@ -170,7 +171,7 @@ export function OrderView() {
     try {
       const res = await fetch("/api/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(),
         body: JSON.stringify({
           tableId: selectedTableId,
           items: cart.map((c) => ({
@@ -243,7 +244,7 @@ export function OrderView() {
     try {
       const res = await fetch(`/api/orders/${openOrder.id}/transfer-table`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(),
         body: JSON.stringify({ targetTableId: transferTarget }),
       });
       const data = await res.json();

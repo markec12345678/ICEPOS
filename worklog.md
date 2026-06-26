@@ -434,3 +434,41 @@ Stage Summary:
 - Aplikacija zdaj povezuje vse komponente: mize z rezervacijami, dashboard s smeno/rezervacijami, PIN login za FURS skladnost
 - FURS skladnost: sledljivost operaterjev prek PIN login + smen
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 11
+Agent: Z.ai Code (main)
+Task: Poveži PIN login z backendom (Operator model + auth API), "Sedi" opcija za rezervacije.
+
+Work Log:
+- Prisma: dodan Operator model (id, name, pin unique, taxNumber, role, active)
+- Backend API:
+  * POST /api/auth/login — preveri PIN, vrne operaterja (401 če napačen)
+  * GET /api/auth/me — vrne operaterja iz x-operator-pin header-ja
+  * src/lib/auth.ts — getOperatorFromRequest() helper
+  * Order POST posodobljen: uporabi operator iz PIN-a (ne hardcoded "Ana")
+  * Shift POST posodobljen: uporabi operator iz PIN-a (override body "operator" field)
+- Frontend:
+  * PinLoginDialog preoblikovan: pošlje PIN na /api/auth/login (backend verify)
+  * Shrani PIN v localStorage (icepos-si-pin)
+  * authHeaders() helper: doda x-operator-pin header vsem API klicem
+  * OrderView, ShiftView, PaymentDialog: uporabljajo authHeaders() za POST/PUT
+- "Sedi" opcija za rezervacije:
+  * TablesView: gumb "✓ Sedi (potrdi rezervacijo)" na mizah z naslednjo rezervacijo
+  * PATCH /api/reservations/[id] s status: "seated"
+  * Po kliku: rezervacija označena kot sede, miza postane "zasedena"
+- Seed: 3 demo operaterji (Ana 1234, Marko 5678, Admin 9999)
+- Lint: 0 errorjev (2 warnings)
+- Agent Browser verification:
+  * /api/auth/login 1234 → Ana (cashier), 5678 → Marko, 9999 → Admin, 0000 → 401 Napačen PIN
+  * PIN login v brskalniku: 1234 → Ana prijavljena, alert bar izgine
+  * Order POST z PIN 1234 → operator: "Ana", taxNumber: "SI12345678"
+  * Shift POST z PIN 5678 → operator: "Marko" (override body "test")
+- Push na GitHub: commit 3d56a9a
+
+Stage Summary:
+- PIN login zdaj povezan z backendom (Operator model + auth API)
+- FURS skladnost: sledljivost operaterjev end-to-end (PIN → Order → Shift)
+- "Sedi" opcija za rezervacije na mizah
+- 3 demo operaterji v bazi (Ana, Marko, Admin)
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS

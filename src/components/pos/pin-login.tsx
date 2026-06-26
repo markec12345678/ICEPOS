@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePosStore } from "@/stores/pos-store";
 import {
   Dialog,
   DialogContent,
@@ -10,23 +9,17 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Lock, UserCircle } from "lucide-react";
+import { Lock } from "lucide-react";
 
 const STORAGE_KEY = "icepos-si-operator";
-
-// Demo operaterji (v produkciji: backend z pravo avtentikacijo)
-const OPERATORS = [
-  { pin: "1234", name: "Ana", taxNo: "SI12345678" },
-  { pin: "5678", name: "Marko", taxNo: "SI87654321" },
-  { pin: "9999", name: "Admin", taxNo: "SI11111111" },
-];
+const PIN_KEY = "icepos-si-pin";
 
 export interface Operator {
+  id: string;
   name: string;
-  taxNo: string;
+  taxNumber: string;
+  role: string;
   loginAt: string;
 }
 
@@ -41,9 +34,28 @@ export function getStoredOperator(): Operator | null {
   }
 }
 
+export function getStoredPin(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(PIN_KEY);
+}
+
 export function clearStoredOperator() {
   if (typeof window === "undefined") return;
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(PIN_KEY);
+}
+
+// Helper: pošlji PIN v header za avtorizirane API klice
+export function authHeaders(extra?: Record<string, string>): Record<string, string> {
+  const pin = getStoredPin();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...extra,
+  };
+  if (pin) {
+    headers["x-operator-pin"] = pin;
+  }
+  return headers;
 }
 
 export function PinLoginDialog({
@@ -57,42 +69,60 @@ export function PinLoginDialog({
 }) {
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
+  const [verifying, setVerifying] = useState(false);
 
   useEffect(() => {
     if (open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setPin("");
       setError(false);
+      setVerifying(false);
     }
   }, [open]);
 
   function handlePinDigit(d: string) {
-    if (pin.length >= 4) return;
+    if (pin.length >= 4 || verifying) return;
     const newPin = pin + d;
     setPin(newPin);
     setError(false);
 
     if (newPin.length === 4) {
-      // Samodejno preveri po 4. števki
+      // Samodejno preveri po 4. številki
       setTimeout(() => verifyPin(newPin), 150);
     }
   }
 
-  function verifyPin(p: string) {
-    const op = OPERATORS.find((o) => o.pin === p);
-    if (op) {
+  async function verifyPin(p: string) {
+    setVerifying(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin: p }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Napačen PIN");
+      }
+      // Uspeh — shrani PIN + operator v localStorage
       const operator: Operator = {
-        name: op.name,
-        taxNo: op.taxNo,
-        loginAt: new Date().toISOString(),
+        id: data.id,
+        name: data.name,
+        taxNumber: data.taxNumber,
+        role: data.role,
+        loginAt: data.loginAt,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(operator));
+      localStorage.setItem(PIN_KEY, p);
       onLogin(operator);
       onOpenChange(false);
-      toast.success(`Dobrodošli, ${op.name}`);
-    } else {
+      toast.success(`Dobrodošli, ${data.name}`);
+    } catch (e) {
       setError(true);
       setPin("");
+      toast.error((e as Error).message || "Napaka pri prijavi");
+    } finally {
+      setVerifying(false);
     }
   }
 
@@ -120,6 +150,8 @@ export function PinLoginDialog({
                 className={`flex h-12 w-12 items-center justify-center rounded-lg border-2 text-2xl font-bold transition-colors ${
                   error
                     ? "border-rose-400 bg-rose-50 text-rose-600"
+                    : verifying
+                    ? "border-amber-400 bg-amber-50 text-amber-600 animate-pulse"
                     : pin.length > i
                     ? "border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
                     : "border-border bg-muted/30"
@@ -135,6 +167,11 @@ export function PinLoginDialog({
               Napačen PIN. Poskusite znova.
             </p>
           )}
+          {verifying && (
+            <p className="text-center text-sm text-amber-600">
+              Preverjam PIN...
+            </p>
+          )}
 
           {/* Numpad */}
           <div className="grid grid-cols-3 gap-2">
@@ -146,6 +183,7 @@ export function PinLoginDialog({
                     key={i}
                     variant="outline"
                     className="h-14 text-lg"
+                    disabled={verifying}
                     onClick={() => {
                       setPin((p) => p.slice(0, -1));
                       setError(false);
@@ -160,6 +198,7 @@ export function PinLoginDialog({
                   key={i}
                   variant="outline"
                   className="h-14 text-lg font-semibold hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950/30"
+                  disabled={verifying}
                   onClick={() => handlePinDigit(key)}
                 >
                   {key}

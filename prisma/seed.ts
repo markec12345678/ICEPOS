@@ -80,6 +80,7 @@ async function main() {
   await db.order.deleteMany();
   await db.reservation.deleteMany();
   await db.shift.deleteMany();
+  await db.operator.deleteMany();
   await db.menuItem.deleteMany();
   await db.table.deleteMany();
 
@@ -135,7 +136,23 @@ async function main() {
   // Demo: ena zaprta smena včerajšnji dan
   await seedShifts(db);
 
+  // Demo: operaterji s PIN-i
+  await seedOperators(db);
+
   console.log("🎉 Seed končan!");
+}
+
+async function seedOperators(db: import("@prisma/client").PrismaClient) {
+  const operators = [
+    { name: "Ana", pin: "1234", taxNumber: "SI12345678", role: "cashier" },
+    { name: "Marko", pin: "5678", taxNumber: "SI87654321", role: "cashier" },
+    { name: "Admin", pin: "9999", taxNumber: "SI11111111", role: "admin" },
+  ];
+
+  for (const op of operators) {
+    await db.operator.create({ data: op });
+  }
+  console.log(`✅ ${operators.length} operaterjev ustvarjenih (PIN: 1234, 5678, 9999)`);
 }
 
 async function seedModifiers(db: import("@prisma/client").PrismaClient) {

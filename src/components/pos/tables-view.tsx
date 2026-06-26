@@ -30,6 +30,21 @@ export function TablesView() {
   const selectTable = usePosStore((s) => s.selectTable);
   const [section, setSection] = useState<string>("Vse");
 
+  async function handleSeatReservation(reservationId: string, tableName: string) {
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "seated" }),
+      });
+      if (!res.ok) throw new Error("Napaka");
+      toast.success(`Rezervacija potrjena — miza ${tableName} je sedela`);
+      refetch();
+    } catch {
+      toast.error("Napaka pri potrjevanju rezervacije");
+    }
+  }
+
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
@@ -211,6 +226,15 @@ export function TablesView() {
                         📝 {nextReservation.note}
                       </p>
                     )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSeatReservation(nextReservation.id, t.name);
+                      }}
+                      className="mt-1 w-full rounded-md border border-sky-300 bg-sky-100 px-2 py-1 text-[10px] font-semibold text-sky-800 transition-colors hover:bg-sky-200 dark:border-sky-800 dark:bg-sky-950/50 dark:text-sky-300 dark:hover:bg-sky-900/50"
+                    >
+                      ✓ Sedi (potrdi rezervacijo)
+                    </button>
                   </div>
                 ) : (
                   <p className="mt-3 text-xs font-medium text-emerald-700 dark:text-emerald-400">
