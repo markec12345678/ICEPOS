@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Prisma schema za slovensko restavracijsko blagajno (POS)
+// Navdihnjeno po ICEPOS arhitekturi, prilagojeno za slovenski trg (EUR, DDV)
 
 generator client {
   provider = "prisma-client-js"
@@ -13,20 +10,51 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
+model MenuItem {
   id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
+  name      String
+  category  String // "predjedi" | "glavne_jedi" | "brezalkoholne" | "alkoholne" | "sladice"
+  price     Float // EUR
+  vatRate   Float // 0.095 (znižana - hrana) | 0.22 (splošna - alkohol)
+  available Boolean  @default(true)
+  desc      String?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  orderItems OrderItem[]
 }
 
-model Post {
+model Table {
   id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+  number    Int      @unique
+  name      String
+  seats     Int      @default(4)
+  section   String   @default("Dvorana") // "Dvorana" | "Terasa" | "Zasebna"
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+model Order {
+  id            String    @id @default(cuid())
+  tableId       String
+  table         Table     @relation(fields: [tableId], references: [id])
+  status        String    @default("open") // "open" | "paid" | "cancelled"
+  items         OrderItem[]
+  total         Float     @default(0)
+  vatTotal      Float     @default(0)
+  createdAt     DateTime  @default(now())
+  paidAt        DateTime?
+  paymentMethod String? // "cash" | "card"
+  receiptNo     String? // SRS številka računa (demo)
+  operator      String   @default("Blagajnik")
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  quantity   Int      @default(1)
+  unitPrice  Float // snapshot cene ob naročilu
+  vatRate    Float // snapshot DDV stopnje
+  note       String?
 }
