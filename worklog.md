@@ -306,3 +306,30 @@ Stage Summary:
 - FURS skladnost: sledljivost operaterjev prek smen, DDV razčlenitev po stopnjah
 - Za lastnike: mesečno poročilo z dnevno dinamiko, top izdelki, po operaterju
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS (icepos-si-web/)
+
+---
+Task ID: 7
+Agent: Z.ai Code (main)
+Task: Naredi screenshots vseh pogledov in dodaj na GitHub z README galerijo.
+
+Work Log:
+- Naredil 19 profesionalnih screenshots z Agent Browser:
+  * Desktop (1440x900): 12 glavnih pogledov + 1 FURS detail
+  * Dark mode: 2 slike (Nastavitve + Mize)
+  * Mobile (390x844): 4 ključni pogledi (Mize, Več meni, Naročilo, Pregled)
+- Ustvaril docs/screenshots/ mapo v icepos-si-web/ podmapi GitHub repozitorija
+- Skopiral vseh 19 slik (skupaj 3.4MB) v repo
+- Posodobil README.md z galerijo slik:
+  * 4 tabele za glavne poglede (3x3 mreža)
+  * 1 tabela za FURS & dark mode (1x3)
+  * 1 tabela za mobile (1x4)
+  * Vse slike z alt text in povezavami na relativne poti
+- Commit: 6d4a9c0 "Add documentation screenshots (19 images) + README gallery"
+- Push na GitHub uspešen
+- Preverjeno prek GitHub API: vseh 19 slik prisotnih na repozitoriju
+
+Stage Summary:
+- 19 screenshots dodanih na GitHub (docs/screenshots/)
+- README.md posodobljen z galerijo — vredi za predstavitev strankam
+- Repo: https://github.com/markec12345678/ICEPOS (icepos-si-web/docs/screenshots/)
+- Slike pokrivajo vseh 11 view-ov + dark mode + mobile responsive
