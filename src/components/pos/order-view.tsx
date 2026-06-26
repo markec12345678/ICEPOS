@@ -31,6 +31,7 @@ import {
   Save,
   Printer,
   ShoppingCart,
+  UtensilsCrossed,
 } from "lucide-react";
 
 type TableWithOrders = Table & {
@@ -156,11 +157,18 @@ export function OrderView() {
 
   if (!selectedTableId || !selectedTable) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
-        <ShoppingCart className="h-12 w-12 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">
-          Najprej izberite mizo na zavihku &laquo;Mize&raquo;.
-        </p>
+      <div className="flex flex-col items-center justify-center gap-3 py-20 text-center animate-fade-in">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <ShoppingCart className="h-8 w-8" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-foreground">
+            Ni izbrane mize
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Najprej izberite mizo na zavihku &laquo;Mize&raquo;.
+          </p>
+        </div>
         <Button variant="outline" onClick={() => selectTable(null)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Nazaj na mize
@@ -170,7 +178,7 @@ export function OrderView() {
   }
 
   return (
-    <div className="flex flex-col gap-4 lg:flex-row">
+    <div className="flex flex-col gap-4 lg:flex-row animate-fade-in">
       {/* LEVO: Meni */}
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="mb-3 flex items-center gap-2">
@@ -185,7 +193,7 @@ export function OrderView() {
           </Button>
           <Separator orientation="vertical" className="h-6" />
           <div className="min-w-0">
-            <h2 className="truncate text-lg font-bold">{selectedTable.name}</h2>
+            <h2 className="truncate text-xl font-bold tracking-tight">{selectedTable.name}</h2>
             <p className="flex items-center gap-2 text-xs text-muted-foreground">
               <Users className="h-3 w-3" />
               {selectedTable.seats} oseb
@@ -216,10 +224,10 @@ export function OrderView() {
           <button
             onClick={() => setCategory("vse")}
             className={cn(
-              "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+              "rounded-full px-3.5 py-1.5 text-sm font-medium transition-all hover:-translate-y-0.5",
               activeCategory === "vse"
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/70"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground"
             )}
           >
             Vse
@@ -229,10 +237,10 @@ export function OrderView() {
               key={c.id}
               onClick={() => setCategory(c.id)}
               className={cn(
-                "flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+                "flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all hover:-translate-y-0.5",
                 activeCategory === c.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/70"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground"
               )}
             >
               <span>{c.icon}</span>
@@ -249,8 +257,16 @@ export function OrderView() {
             ))}
           </div>
         ) : filteredMenu.length === 0 ? (
-          <div className="py-16 text-center text-sm text-muted-foreground">
-            Ni najdenih postavk.
+          <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/20 py-16 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <UtensilsCrossed className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-medium text-foreground">
+              Ni najdenih postavk
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Poskusite spremeniti iskalni niz ali kategorijo.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
@@ -266,7 +282,7 @@ export function OrderView() {
                     addToCart(m);
                   }
                 }}
-                className="group cursor-pointer p-3 transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="group cursor-pointer p-3 transition-all duration-200 hover:-translate-y-1 hover:border-amber-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.98] dark:hover:border-amber-700"
               >
                 <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 text-lg dark:from-amber-950/40 dark:to-orange-950/40">
                   {CATEGORIES.find((c) => c.id === m.category)?.icon || "🍽️"}
@@ -283,7 +299,7 @@ export function OrderView() {
                   <span className="text-sm font-bold text-amber-700 dark:text-amber-400">
                     {formatEUR(m.price)}
                   </span>
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 text-white opacity-0 shadow-sm transition-all duration-200 group-hover:scale-110 group-hover:opacity-100 group-focus-visible:opacity-100">
                     <Plus className="h-3.5 w-3.5" />
                   </span>
                 </div>
@@ -298,16 +314,18 @@ export function OrderView() {
         <div className="flex items-center justify-between border-b border-border p-4">
           <div className="flex items-center gap-2">
             <ShoppingCart className="h-5 w-5 text-amber-600" />
-            <h3 className="font-bold">Račun</h3>
+            <h3>Račun</h3>
           </div>
           <Badge variant="secondary">{cartCount} postavk</Badge>
         </div>
 
         {cart.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 p-6 text-center">
-            <Receipt className="h-10 w-10 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground">
-              Voziček je prazen.
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground/60">
+              <Receipt className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-medium text-foreground">
+              Voziček je prazen
             </p>
             <p className="text-xs text-muted-foreground/70">
               Kliknite jedi na levi za dodajanje.
@@ -333,7 +351,7 @@ export function OrderView() {
                     </div>
                     <button
                       onClick={() => removeFromCart(c.menuItem.id)}
-                      className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       aria-label="Odstrani"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -343,7 +361,8 @@ export function OrderView() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => decrementQty(c.menuItem.id)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md border border-border hover:bg-muted"
+                        className="flex h-7 w-7 items-center justify-center rounded-md border border-border transition-colors hover:bg-muted hover:text-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        aria-label="Zmanjšaj"
                       >
                         <Minus className="h-3.5 w-3.5" />
                       </button>
@@ -352,7 +371,8 @@ export function OrderView() {
                       </span>
                       <button
                         onClick={() => incrementQty(c.menuItem.id)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md border border-border hover:bg-muted"
+                        className="flex h-7 w-7 items-center justify-center rounded-md border border-border transition-colors hover:bg-amber-50 hover:border-amber-300 hover:text-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-amber-950/30"
+                        aria-label="Povečaj"
                       >
                         <Plus className="h-3.5 w-3.5" />
                       </button>
@@ -411,7 +431,7 @@ export function OrderView() {
                 clearCart();
                 toast.info("Voziček počiščen");
               }}
-              className="mt-2 w-full text-center text-xs text-muted-foreground hover:text-destructive"
+              className="mt-2 w-full rounded py-1 text-center text-xs text-muted-foreground transition-colors hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Počisti voziček
             </button>

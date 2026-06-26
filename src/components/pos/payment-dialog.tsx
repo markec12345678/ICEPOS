@@ -23,9 +23,11 @@ import {
   Printer,
   X,
   ShieldCheck,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FursQrCode } from "@/components/pos/furs-qr-code";
+import { SplitBillDialog } from "@/components/pos/split-bill-dialog";
 
 type TableWithOrders = Table & {
   orders: (Order & {
@@ -62,6 +64,7 @@ export function PaymentDialog() {
   const [tendered, setTendered] = useState<string>("");
   const [processing, setProcessing] = useState(false);
   const [paid, setPaid] = useState<PaidResult | null>(null);
+  const [splitOpen, setSplitOpen] = useState(false);
 
   const selectedTable = tables?.find((t) => t.id === selectedTableId);
   const openOrder = selectedTable?.orders.find((o) => o.status === "open");
@@ -180,10 +183,10 @@ export function PaymentDialog() {
                 <button
                   onClick={() => setMethod("cash")}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 transition-colors",
+                    "flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 transition-all hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                     method === "cash"
                       ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
-                      : "border-border hover:bg-muted"
+                      : "border-border hover:bg-muted hover:border-amber-200"
                   )}
                 >
                   <Banknote className="h-6 w-6" />
@@ -192,10 +195,10 @@ export function PaymentDialog() {
                 <button
                   onClick={() => setMethod("card")}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 transition-colors",
+                    "flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 transition-all hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                     method === "card"
                       ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
-                      : "border-border hover:bg-muted"
+                      : "border-border hover:bg-muted hover:border-amber-200"
                   )}
                 >
                   <CreditCard className="h-6 w-6" />
@@ -218,7 +221,7 @@ export function PaymentDialog() {
                       <button
                         key={amt}
                         onClick={() => setTendered(amt.toFixed(2))}
-                        className="rounded-md border border-border px-2.5 py-1 text-xs font-medium hover:bg-muted"
+                        className="rounded-md border border-border px-2.5 py-1 text-xs font-medium transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-amber-950/30 dark:hover:text-amber-400"
                       >
                         {formatEUR(amt)}
                       </button>
@@ -244,26 +247,47 @@ export function PaymentDialog() {
                 </div>
               )}
 
-              <Button
-                onClick={processPayment}
-                disabled={
-                  processing || (method === "cash" && tenderedNum < total)
-                }
-                className="w-full bg-amber-600 py-3 text-base font-semibold text-white hover:bg-amber-700"
-              >
-                {processing ? (
-                  "Fiskaliziram..."
-                ) : (
-                  <>
-                    <CheckCircle2 className="mr-2 h-5 w-5" />
-                    Fiskaliziraj in zaključi ({formatEUR(total)})
-                  </>
-                )}
-              </Button>
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="col-span-1"
+                  onClick={() => setSplitOpen(true)}
+                  disabled={cart.length === 0}
+                  title="Razdeli račun med več oseb"
+                >
+                  <Users className="mr-1.5 h-4 w-4" />
+                  Razdeli
+                </Button>
+                <Button
+                  onClick={processPayment}
+                  disabled={
+                    processing ||
+                    (method === "cash" && tenderedNum < total) ||
+                    cart.length === 0
+                  }
+                  className="col-span-2 bg-amber-600 py-3 text-sm font-semibold text-white hover:bg-amber-700"
+                >
+                  {processing ? (
+                    "Fiskaliziram..."
+                  ) : (
+                    <>
+                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                      Plačaj ({formatEUR(total)})
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </>
         )}
       </DialogContent>
+
+      <SplitBillDialog
+        open={splitOpen}
+        onOpenChange={setSplitOpen}
+        total={total}
+      />
     </Dialog>
   );
 }
@@ -277,12 +301,12 @@ function ReceiptView({
 }) {
   return (
     <div className="print:block">
-      <div className="flex items-center justify-between border-b border-border bg-emerald-50 px-5 py-4 print:hidden dark:bg-emerald-950/30">
+      <div className="flex items-center justify-between border-b border-border bg-emerald-50 px-5 py-4 print:hidden animate-fade-in dark:bg-emerald-950/30">
         <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
           <CheckCircle2 className="h-5 w-5" />
           <span className="font-semibold">Račun fiskaliziran</span>
         </div>
-        <button onClick={onClose} className="rounded p-1 hover:bg-muted">
+        <button onClick={onClose} className="rounded p-1 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <X className="h-4 w-4" />
         </button>
       </div>

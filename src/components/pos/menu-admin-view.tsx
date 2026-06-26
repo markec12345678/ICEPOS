@@ -38,6 +38,7 @@ import {
   UtensilsCrossed,
   Search,
   AlertCircle,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -110,11 +111,11 @@ export function MenuAdminView() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold">Urejanje menija</h2>
+          <h2>Urejanje menija</h2>
           <p className="text-xs text-muted-foreground">
             {items.length} postavk &middot;{" "}
             {items.filter((m) => m.available).length} aktivnih
@@ -159,6 +160,31 @@ export function MenuAdminView() {
             <Skeleton key={i} className="h-16 rounded-lg" />
           ))}
         </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-muted/30 py-16 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <BookOpen className="h-7 w-7" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              {items.length === 0 ? "Meni je prazen" : "Ni najdenih postavk"}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {items.length === 0
+                ? "Dodajte prvo postavko da začnete z gradnjo menija."
+                : "Poskusite spremeniti iskalni niz ali kategorijo."}
+            </p>
+          </div>
+          {items.length === 0 || search.trim() || catFilter !== "vse" ? (
+            <Button
+              onClick={() => setCreating(true)}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              <Plus className="mr-1.5 h-4 w-4" />
+              Nova postavka
+            </Button>
+          ) : null}
+        </div>
       ) : (
         <Card className="overflow-hidden p-0">
           <div className="divide-y divide-border">
@@ -174,7 +200,7 @@ export function MenuAdminView() {
               return (
                 <div
                   key={m.id}
-                  className="grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm transition-colors hover:bg-muted/30"
+                  className="grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm transition-colors hover:bg-muted/40"
                 >
                   <div className="col-span-12 sm:col-span-5">
                     <div className="flex items-center gap-2">

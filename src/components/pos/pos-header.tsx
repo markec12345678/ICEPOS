@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Store, Clock, ShieldCheck, Wifi } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function PosHeader() {
   const [now, setNow] = useState(new Date());
@@ -60,6 +61,7 @@ export function PosHeader() {
             <Clock className="h-3.5 w-3.5" />
             {time}
           </Badge>
+          <ThemeToggle />
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
@@ -67,6 +69,7 @@ export function PosHeader() {
             <Clock className="h-3 w-3" />
             {time}
           </Badge>
+          <ThemeToggle />
         </div>
       </div>
       <div className="border-t border-border/60 bg-muted/30 px-4 py-1.5 md:px-6">

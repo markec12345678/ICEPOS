@@ -13,6 +13,7 @@ import {
   Banknote,
   CreditCard,
   Trophy,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,8 +35,11 @@ export function DashboardView() {
 
   if (error || !data) {
     return (
-      <div className="py-20 text-center text-sm text-muted-foreground">
-        Napaka pri nalaganju statistike.
+      <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
+        <AlertCircle className="h-10 w-10 text-destructive" />
+        <p className="text-sm text-muted-foreground">
+          Napaka pri nalaganju statistike.
+        </p>
       </div>
     );
   }
@@ -77,7 +81,7 @@ export function DashboardView() {
         <Card className="p-5 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h3 className="font-bold">Prihodek po urah</h3>
+              <h3>Prihodek po urah</h3>
               <p className="text-xs text-muted-foreground">
                 Današnji dan (8:00 – 23:00)
               </p>
@@ -114,12 +118,18 @@ export function DashboardView() {
         <Card className="p-5">
           <div className="mb-4 flex items-center gap-2">
             <Trophy className="h-4 w-4 text-amber-500" />
-            <h3 className="font-bold">Top izdelki</h3>
+            <h3>Top izdelki</h3>
           </div>
           {data.topItems.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              Še ni prodaje danes.
-            </p>
+            <div className="flex flex-col items-center gap-2 py-8 text-center">
+              <Trophy className="h-8 w-8 text-muted-foreground/40" />
+              <p className="text-sm text-muted-foreground">
+                Še ni prodaje danes.
+              </p>
+              <p className="text-xs text-muted-foreground/70">
+                Top izdelki se bodo prikazali po prvem plačilu.
+              </p>
+            </div>
           ) : (
             <div className="space-y-3">
               {data.topItems.map((item, i) => (
@@ -149,11 +159,14 @@ export function DashboardView() {
 
       {/* Delitev plačil */}
       <Card className="p-5">
-        <h3 className="mb-4 font-bold">Načini plačila</h3>
+        <h3 className="mb-4">Načini plačila</h3>
         {data.paymentSplit.length === 0 ? (
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            Ni zaključenih računov.
-          </p>
+          <div className="flex flex-col items-center gap-2 py-6 text-center">
+            <Wallet className="h-8 w-8 text-muted-foreground/40" />
+            <p className="text-sm text-muted-foreground">
+              Ni zaključenih računov.
+            </p>
+          </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {data.paymentSplit.map((p) => {
@@ -166,9 +179,9 @@ export function DashboardView() {
                 >
                   <div
                     className={cn(
-                      "flex h-10 w-10 items-center justify-center rounded-lg",
+                      "flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
                       isCard
-                        ? "bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400"
+                        ? "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
                         : "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400"
                     )}
                   >

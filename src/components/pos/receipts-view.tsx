@@ -112,7 +112,7 @@ export function ReceiptsView() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in">
       {/* Stat strip */}
       <div className="grid grid-cols-3 gap-3">
         <Card className="p-3">
@@ -150,9 +150,20 @@ export function ReceiptsView() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="py-20 text-center text-sm text-muted-foreground">
-          <Receipt className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
-          Ni najdenih računov.
+        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-muted/30 py-16 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <Receipt className="h-7 w-7" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              {search.trim() ? "Ni najdenih računov" : "Še ni izdanih računov"}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {search.trim()
+                ? "Poskusite spremeniti iskalni niz."
+                : "Računi se bodo prikazali po prvem zaključenem plačilu."}
+            </p>
+          </div>
         </div>
       ) : (
         <div className="space-y-2">
@@ -163,7 +174,7 @@ export function ReceiptsView() {
               <Card
                 key={r.id}
                 className={cn(
-                  "p-3 transition-colors",
+                  "p-3 transition-all duration-200 hover:shadow-sm",
                   isStorno && "border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20",
                   storniran && !isStorno && "opacity-60"
                 )}

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Receipt, AlertCircle } from "lucide-react";
+import { Users, Receipt, AlertCircle, LayoutGrid } from "lucide-react";
 import { toast } from "sonner";
 
 type TableWithOrders = Table & {
@@ -47,7 +47,7 @@ export function TablesView() {
   ).length;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in">
       {/* Stat strip */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Skupaj miz" value={String(tables.length)} accent="neutral" />
@@ -63,10 +63,10 @@ export function TablesView() {
             key={s}
             onClick={() => setSection(s)}
             className={cn(
-              "rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+              "rounded-full px-3.5 py-1.5 text-sm font-medium transition-all hover:-translate-y-0.5",
               section === s
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/70"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground"
             )}
           >
             {s}
@@ -82,8 +82,26 @@ export function TablesView() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="py-20 text-center text-sm text-muted-foreground">
-          V tej sekciji ni miz.
+        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-muted/30 py-16 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <LayoutGrid className="h-7 w-7" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              V tej sekciji ni miz
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Izberite drugo sekcijo zgoraj ali preverite tloris lokala.
+            </p>
+          </div>
+          {section !== "Vse" && (
+            <button
+              onClick={() => setSection("Vse")}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Prikaži vse mize
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -104,7 +122,7 @@ export function TablesView() {
                   }
                 }}
                 className={cn(
-                  "group relative cursor-pointer overflow-hidden p-4 transition-all hover:shadow-lg hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "group relative cursor-pointer overflow-hidden p-4 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.98]",
                   occupied
                     ? "border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50 dark:border-amber-800 dark:from-amber-950/40 dark:to-orange-950/30"
                     : "border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 dark:border-emerald-900 dark:from-emerald-950/30 dark:to-green-950/20"
@@ -179,7 +197,7 @@ function StatCard({
   return (
     <Card
       className={cn(
-        "p-3",
+        "p-3 transition-shadow hover:shadow-sm",
         accent === "amber" && "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20",
         accent === "emerald" && "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20"
       )}

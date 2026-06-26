@@ -102,3 +102,120 @@ Stage Summary:
 - Repo sedaj vsebuje: originalni ICEPOS C# klient + PHP admin backend + slovenski Next.js POS s FURS
 - 0 napak v dev logu, lint čist, dev server stabilen (HTTP 200)
 - Pripravljeno za produkcijsko nadgradnjo (FURS certifikat + REST API klic za pravi EOR)
+
+---
+Task ID: UX-AUDIT-1
+Agent: frontend-styling-expert
+Task: Vizualni audit in polish POS aplikacije
+
+Work Log:
+- Prebral vse glavne komponente (pos-header, pos-footer, tables-view, order-view, payment-dialog, receipts-view, menu-admin-view, dashboard-view, globals.css, layout.tsx, page.tsx) in identificiral vizualne težave.
+- Spremenil `src/app/globals.css`:
+  * Popravil prepovedane indigo/modre dark-mode CSS variabble: `--sidebar-primary` (bil oklch(0.488 0.243 264.376) = indigo) → oklch(0.769 0.188 70.08) = amber; `--chart-1` (dark) iz indigo → amber; `--ring` (dark) iz sivine v amber ton; `--sidebar-primary-foreground` prilagojen.
+  * Dodal tipografsko hierarhijo v `@layer base`: h1=text-lg bold, h2=text-xl bold tracking-tight, h3=text-base semibold.
+  * Dodal globalni `:focus-visible` ring za vse interaktivne elemente (button, a, [role=button], input, select, textarea) za tipkovnično navigacijo.
+  * Dodal 3 keyframe animacije: `pos-fade-in`, `pos-scale-in`, `pos-slide-up` + pripadajoče utility razrede `.animate-fade-in`, `.animate-scale-in`, `.animate-slide-up`.
+  * Dodal `@media (prefers-reduced-motion: reduce)` override, ki izklopi animacije za uporabnike s preferenco zmanjšanega gibanja.
+  * Dodal `-webkit-tap-highlight-color: transparent` na body za čistejši mobile touch feedback.
+- Spremenil `src/components/pos/dashboard-view.tsx`:
+  * POPRAVEK: ikona za način plačila "Kartica" je bila `bg-blue-50 text-blue-600` (PREPOVEDANO) → spremenjeno v `bg-amber-50 text-amber-700` (konsistentno z gostilna temo).
+  * Dodan `AlertCircle` import in izboljšan error state (ikona + opis).
+  * Izboljšan empty state za "Top izdelki" (ikona Trophy + opis + pod-opis).
+  * Izboljšan empty state za "Načini plačila" (ikona Wallet + opis).
+  * Odstranjen `font-bold` iz h3 naslovov (zdaj nasledijo globalno hierarhijo: text-base font-semibold).
+- Spremenil `src/components/pos/tables-view.tsx`:
+  * Dodan `animate-fade-in` na root div za prehod med pogledi.
+  * Izboljšan empty state: ikona LayoutGrid v krogu, naslov, opis, CTA "Prikaži vse mize" (pogojno).
+  * Section filter gumbi: dodan `transition-all hover:-translate-y-0.5 shadow-sm` za aktivne.
+  * Mize kartice: hover `-translate-y-1` (bolj izrazito), dodan `active:scale-[0.98]` za tap feedback, `focus-visible:ring-offset-2`.
+  * StatCard: dodan `transition-shadow hover:shadow-sm`.
+- Spremenil `src/components/pos/order-view.tsx`:
+  * Dodan `animate-fade-in` na root div in na empty state (ni izbrane mize).
+  * Izboljšan empty state za "ni izbrane mize": ikona v krogu, naslov "Ni izbrane mize", opis, CTA gumb.
+  * Izboljšan empty state za "ni najdenih postavk": ikona UtensilsCrossed v krogu, naslov, opis.
+  * Izboljšan empty state za "voziček je prazen": ikona v krogu, naslov, opis.
+  * h2 naslov mize: `text-lg font-bold` → `text-xl font-bold tracking-tight` (konsistentno).
+  * Kategorije gumbi: `transition-colors` → `transition-all hover:-translate-y-0.5 shadow-sm`.
+  * Menijske kartice: hover `-translate-y-1` (izrazneje), dodan `active:scale-[0.98]`, `dark:hover:border-amber-700`.
+  * "+" gumb na kartici: `transition-opacity` → `transition-all duration-200 group-hover:scale-110 group-focus-visible:opacity-100`.
+  * Qty +/- gumbi: dodan `transition-colors`, hover poudari z amber (za +), focus-visible ring, aria-label dodan.
+  * Odstrani gumb: dodan `transition-colors`, focus-visible ring.
+  * "Počisti voziček" link: dodan `transition-colors`, `rounded py-1`, focus-visible ring.
+  * h3 "Račun": odstranjen `font-bold` (nasledi globalno hierarhijo).
+- Spremenil `src/components/pos/receipts-view.tsx`:
+  * Dodan `animate-fade-in` na root div.
+  * Izboljšan empty state: ikona Receipt v krogu, dinamičen naslov (search aktiviran → "Ni najdenih računov", sicer → "Še ni izdanih računov"), opis, prilagojeno sporočilo.
+  * Račun kartice: `transition-colors` → `transition-all duration-200 hover:shadow-sm`.
+- Spremenil `src/components/pos/menu-admin-view.tsx`:
+  * Dodan `BookOpen` import in `animate-fade-in` na root div.
+  * h2 "Urejanje menija": `text-lg font-bold` → odstranjen razred (nasledi globalno text-xl bold).
+  * Dodan NOV empty state za prazen meni ali ni najdenih postavk: ikona BookOpen v krogu, dinamičen naslov/opis, CTA "Nova postavka" gumb.
+  * Vrstice tabele: hover `bg-muted/30` → `bg-muted/40` (bolj opazno).
+- Spremenil `src/components/pos/payment-dialog.tsx`:
+  * Quick amount gumbi: dodan `transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700`, dark variant, focus-visible ring.
+  * Plačilne metode (Gotovina/Kartica): `transition-colors` → `transition-all hover:-translate-y-0.5`, hover border-amber-200, focus-visible ring.
+  * Success header (Račun fiskaliziran): dodan `animate-fade-in` za nežen prehod.
+  * Close (X) gumb: dodan `transition-colors`, focus-visible ring.
+- Spremenil `src/components/pos/pos-footer.tsx`:
+  * Mobile bottom nav: `py-2` → `py-2.5` (večji tap target), dodan `transition-all active:scale-95`, focus-visible ring (inset).
+  * Dodan aktivni indikator: moder tanek trak (h-0.5 w-8) na vrhu aktivnega taba.
+  * Badge na Naroči: dodan `shadow-sm` za boljšo vidnost.
+  * Desktop sidebar gumbi: `transition-colors` → `transition-all`, dodan `hover:translate-x-0.5` (subtle slide effect), `active:scale-[0.99]`, focus-visible ring.
+- Verifikacija:
+  * `bun run lint` → 0 napak (čist).
+  * Dev server HTTP 200, vse API rute (tables, menu, orders, stats) vračajo 200.
+  * Agent-browser vizualna verifikacija: tables view ✓, dashboard (3 h3 naslovi) ✓, menu admin ✓, receipts ✓, mobile iPhone 14 view ✓, order view z Mizo 2 (zasedena) ✓.
+  * Dark mode pripravljenost: vse nove barvne kombinacije imajo `dark:` varianto. Dark mode CSS variabble prečiščene (brez indigo).
+
+Stage Summary:
+- Spremenjene datoteke (8):
+  * src/app/globals.css
+  * src/components/pos/dashboard-view.tsx
+  * src/components/pos/tables-view.tsx
+  * src/components/pos/order-view.tsx
+  * src/components/pos/receipts-view.tsx
+  * src/components/pos/menu-admin-view.tsx
+  * src/components/pos/payment-dialog.tsx
+  * src/components/pos/pos-footer.tsx
+- Vizualne izboljšave:
+  1. Barvna konsistenca: odstranjena prepovedana modra/indigo (dashboard card ikona, dark-mode CSS variabble --sidebar-primary, --chart-1, --ring); vse zdaj konsistentno amber/orange.
+  2. Hover/focus states: konsistenten hover feedback (scale, shadow, translate, color transition) na vseh interaktivnih elementih; dodan globalni focus-visible ring za tipkovnično navigacijo.
+  3. Empty states: vseh 7 empty stateov (tables, order×3, receipts, menu-admin, dashboard×2) redesignano z ikono v krogu, naslovom, opisom in (kjer smiseln) CTA gumbom.
+  4. Transitions/animations: dodane 3 CSS keyframe animacije (fade-in, scale-in, slide-up) z `prefers-reduced-motion` override; vsak pogled se ob odprtju nežno zavrti/zadiha.
+  5. Tipografska hierarhija: globalno definirana (h1=lg bold, h2=xl bold tracking-tight, h3=base semibold); komponente posodobljene da nasledijo hierarhijo.
+  6. Mobile bottom nav: večji tap target (py-2.5), `active:scale-95` za tap feedback, aktivni trak na vrhu, focus-visible ring.
+  7. Dark mode pripravljenost: vse nove barve imajo `dark:` varianto; CSS variabble prečiščene.
+- Lint: 0 errorjev, 0 warnings.
+- Aplikacija teče brez runtime napak, vse funkcionalnost (mize, naročilo, plačilo, računi, meni admin, dashboard) ostaja nedotaknjena — samo vizualne spremembe.
+
+---
+Task ID: 4
+Agent: Z.ai Code (main) + frontend-styling-expert (UX-AUDIT-1)
+Task: UX/UI izboljšave + manjkajoče funkcije (dark mode, tipkovne bližnjice, Z-report, Settings, Split bill).
+
+Work Log:
+- [UX-AUDIT-1, frontend-styling-expert]: vizualni audit — odstranjena prepovedana modra/indigo barva (dashboard card, dark mode CSS variable), dodane 3 keyframe animacije (fade-in, scale-in, slide-up) z prefers-reduced-motion, izboljšani vsi empty states z ikono+CTA, hover/focus states na vseh interaktivnih elementih, tipografska hierarhija, mobile bottom nav active indicator. 8 datotek spremenjenih, lint 0 errorjev.
+- Dark mode toggle: next-themes provider (attribute="class"), ThemeToggle komponenta (Moon/Sun icon, hydration-safe), integrirana v PosHeader (desktop + mobile).
+- Tipkovnične bližnjice: useKeyboardShortcuts hook (1-5 za views, Esc za nazaj/zapri dialog), integriran v page.tsx. Input fields ignorirajo (razen Esc za blur).
+- Z-report (dnevni zaključek — FURS obvezno):
+  * Backend /api/z-report: agregacija plačanih + stornov po dnevu, DDV razčlenitev po stopnjah (veljavni - storno), načini plačila, zaporedna št. Z-reporta, metadata (poslovni prostor, blagajna, blagajnik)
+  * Frontend ZReportView: datumski picker, KPI kartice (neto/bruto/storno/DDV), DDV tabela s skupaj, načini plačila, seznam vseh računov zbadge-i, print podpora
+- Settings page: podjetje (naziv, davčna, naslov, kraj), FURS konfig (poslovni prostor, elektronska naprava, certifikat .p12 toggle, test/prod okolje), blagajnik. localStorage persistency z lazy initial state (brez setState v effect).
+- Split bill: SplitBillDialog komponenta — kalkulator delitve na N oseb (2-20), enaki deli z razliko na zadnjo osebo, kopiranje v odložišče, integriran v PaymentDialog kot "Razdeli" gumb.
+- Navigacija razširjena na 7 view-ov: desktop sidebar z dvema skupinama (Blagajna + Sistem), mobile bottom nav z 4 glavnimi + "Več" sheet (Meni, Z-report, Nastavitve).
+- Lint: 0 errorjev (popravil React 19 set-state-in-effect pravilo z lazy initial state in eslint-disable za hydration mount).
+- Agent Browser verification:
+  * Dark mode: klik toggle → class="dark" aplikacija, background spremeni
+  * Z-report: DDV 22% (8,82€) + 9,5% (15,73€), bruto 139,30€, neto 72,90€ (po stornu), 5 računov + 1 storno
+  * Settings: vsa polja, FURS test/prod, certifikat demo toggle
+  * Split bill: 37,10€ / 2 = 18,55€, /3 = 12,37€ — pravilna delitev z razliko na zadnjo
+  * Tipkovne bližnjice: 3 → Računi, 1 → Mize, Esc zapre dialog
+- 0 napak v dev logu.
+
+Stage Summary:
+- 5 novih funkcionalnosti dodanih: dark mode, tipkovne bližnjice, Z-report, Settings, Split bill
+- Aplikacija sedaj ima 7 pogledov (Mize, Naročilo, Računi, Meni, Pregled, Z-report, Nastavitve)
+- FURS kompleksnost: Z-report omogoča dnevni zaključek po FURS zahtevah (DDV razčlenitev, storno upoštevanje)
+- Settings omogoča konfiguracijo podjetja/FURS brez hardcoded vrednosti
+- UX: dark mode za nočne smene, bližnjice za hitrost, split bill za skupine
+- Lint čist, 0 napak, dev server stabilen (HTTP 200)

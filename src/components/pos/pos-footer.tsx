@@ -9,24 +9,42 @@ import {
   UtensilsCrossed,
   BarChart3,
   BookOpen,
+  FileBarChart,
+  Settings,
+  MoreHorizontal,
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 export function PosFooter() {
   const { activeView, setActiveView, cart } = usePosStore();
   const cartCount = cart.reduce((s, c) => s + c.quantity, 0);
 
-  const navItems = [
+  const mainNav = [
     { id: "tables" as const, label: "Mize", icon: LayoutGrid },
     { id: "order" as const, label: "Naroči", icon: UtensilsCrossed, badge: cartCount },
     { id: "receipts" as const, label: "Računi", icon: Receipt },
-    { id: "menu" as const, label: "Meni", icon: BookOpen },
     { id: "dashboard" as const, label: "Pregled", icon: BarChart3 },
   ];
+
+  const moreNav = [
+    { id: "menu" as const, label: "Meni", desc: "Urejanje postavk", icon: BookOpen },
+    { id: "zreport" as const, label: "Z-report", desc: "Dnevni zaključek", icon: FileBarChart },
+    { id: "settings" as const, label: "Nastavitve", desc: "Podjetje in FURS", icon: Settings },
+  ];
+
+  const isMoreActive = ["menu", "zreport", "settings"].includes(activeView);
 
   return (
     <footer className="sticky bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:hidden print:hidden">
       <nav className="grid grid-cols-5">
-        {navItems.map((item) => {
+        {mainNav.map((item) => {
           const Icon = item.icon;
           const active = activeView === item.id;
           return (
@@ -34,12 +52,15 @@ export function PosFooter() {
               key={item.id}
               onClick={() => setActiveView(item.id)}
               className={cn(
-                "flex flex-col items-center gap-1 py-2 text-[11px] font-medium transition-colors",
+                "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-all active:scale-95",
                 active
                   ? "text-amber-600 dark:text-amber-400"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
+              {active && (
+                <span className="absolute top-0 h-0.5 w-8 rounded-full bg-amber-500" />
+              )}
               <span className="relative">
                 <Icon className="h-5 w-5" />
                 {item.badge ? (
@@ -52,6 +73,63 @@ export function PosFooter() {
             </button>
           );
         })}
+
+        <Sheet>
+          <SheetTrigger asChild>
+            <button
+              className={cn(
+                "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-all active:scale-95",
+                isMoreActive
+                  ? "text-amber-600 dark:text-amber-400"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {isMoreActive && (
+                <span className="absolute top-0 h-0.5 w-8 rounded-full bg-amber-500" />
+              )}
+              <MoreHorizontal className="h-5 w-5" />
+              Več
+            </button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="rounded-t-2xl">
+            <SheetHeader>
+              <SheetTitle>Dodatno</SheetTitle>
+            </SheetHeader>
+            <div className="mt-4 space-y-1">
+              {moreNav.map((item) => {
+                const Icon = item.icon;
+                const active = activeView === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveView(item.id)}
+                    className={cn(
+                      "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors",
+                      active
+                        ? "bg-amber-50 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200"
+                        : "hover:bg-muted"
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        "h-5 w-5",
+                        active
+                          ? "text-amber-600 dark:text-amber-400"
+                          : "text-muted-foreground"
+                      )}
+                    />
+                    <div>
+                      <p className="text-sm font-medium">{item.label}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.desc}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </SheetContent>
+        </Sheet>
       </nav>
     </footer>
   );
@@ -78,6 +156,18 @@ export function PosSidebar() {
       desc: "Statistika dneva",
       icon: BarChart3,
     },
+    {
+      id: "zreport" as const,
+      label: "Z-report",
+      desc: "Dnevni zaključek",
+      icon: FileBarChart,
+    },
+    {
+      id: "settings" as const,
+      label: "Nastavitve",
+      desc: "Podjetje in FURS",
+      icon: Settings,
+    },
   ];
 
   return (
@@ -86,7 +176,7 @@ export function PosSidebar() {
         <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Blagajna
         </p>
-        {navItems.map((item) => {
+        {navItems.slice(0, 5).map((item) => {
           const Icon = item.icon;
           const active = activeView === item.id;
           return (
@@ -94,7 +184,7 @@ export function PosSidebar() {
               key={item.id}
               onClick={() => setActiveView(item.id)}
               className={cn(
-                "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
+                "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all hover:translate-x-0.5",
                 active
                   ? "bg-amber-50 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200"
                   : "text-foreground hover:bg-muted"
@@ -124,6 +214,41 @@ export function PosSidebar() {
             </button>
           );
         })}
+
+        <p className="px-3 pb-2 pt-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Sistem
+        </p>
+        {navItems.slice(5).map((item) => {
+          const Icon = item.icon;
+          const active = activeView === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveView(item.id)}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all hover:translate-x-0.5",
+                active
+                  ? "bg-amber-50 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200"
+                  : "text-foreground hover:bg-muted"
+              )}
+            >
+              <Icon
+                className={cn(
+                  "h-5 w-5 shrink-0",
+                  active
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-muted-foreground"
+                )}
+              />
+              <div className="min-w-0 flex-1">
+                <span className="text-sm font-medium">{item.label}</span>
+                <p className="truncate text-xs text-muted-foreground">
+                  {item.desc}
+                </p>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
       <div className="border-t border-border p-3">
@@ -132,8 +257,10 @@ export function PosSidebar() {
             ICEPOS SI — FURS POC
           </p>
           <p className="mt-1 text-[11px] text-amber-700/80 dark:text-amber-400/70">
-            Odprtokodna blagajna s fiskalizacijo (ZOI, EOR, XML) in storno
-            računi po FURS specifikaciji.
+            ZOI, EOR, XML, QR, storno, Z-report
+          </p>
+          <p className="mt-1 text-[10px] text-amber-600/60 dark:text-amber-500/50">
+            Bližnjice: 1-5 pogledi, Esc nazaj
           </p>
         </div>
       </div>
