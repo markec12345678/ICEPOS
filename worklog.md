@@ -596,3 +596,35 @@ Stage Summary:
 - Iskalnik za hitro iskanje mize po imenu/številki
 - Screenshot 01-tables.png posodobljen
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 16
+Agent: Z.ai Code (main)
+Task: Statistika po kategorijah na dashboardu + hitri ponovitev zadnjega naročila.
+
+Work Log:
+- Backend /api/stats razširjen z categoryStats:
+  * Agregacija po kategorijah (count, revenue, items)
+  * Sortirano po prihodku (najbolj prodajane prve)
+- Backend /api/orders/last — vrne zadnje plačano naročilo (za quick reorder)
+- Dashboard:
+  * Nova kartica "Prodaja po kategorijah" z horizontalnim bar chart
+  * Vsaka kategorija: ikona + label + prihodek + število + postavke
+  * Barve: emerald (predjedi), amber (glavne jedi), rose (sladice), sky (brezalkoholne), purple (alkoholne)
+  * Kartica zavzema 2/3 širine (lg:col-span-2), plačila 1/3
+- OrderView — hitri ponovitev zadnjega naročila:
+  * Gumb "Ponovi zadnje naročilo" (samo ko je voziček prazen)
+  * Fetch-a /api/orders/last, doda vse postavke v voziček
+  * Sky blue barva, RotateCcw ikona
+  * Pogosta operacija v barih (stalne stranke)
+- Lint: 0 errorjev
+- Agent Browser verification:
+  * Kategorije: 4 prikazane (Glavne jedi 81.5€, Alkoholne 32.5€, Sladice 21.3€, Brezalkoholne 4€)
+  * Quick reorder: klik → voziček napolnjen z 6 postavkami iz zadnjega naročila (Terasa 2)
+- Push na GitHub: commit 6b56c61
+
+Stage Summary:
+- 2 novi funkcionalnosti: statistika po kategorijah + quick reorder
+- Dashboard zdaj prikazuje prodajo po kategorijah (lastniki vidijo kaj najbolj prodaja)
+- Blagajnik lahko z enim klikom ponovi zadnje naročilo (pogosto v barih)
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS

@@ -82,6 +82,35 @@ export async function GET() {
       ...v,
     }));
 
+    // Statistika po kategorijah
+    const categoryMap = new Map<string, { count: number; revenue: number; items: number }>();
+    for (const o of paidOrders) {
+      for (const it of o.items) {
+        const cat = it.menuItem.category;
+        const lineRev = it.unitPrice * it.quantity;
+        const existing = categoryMap.get(cat);
+        if (existing) {
+          existing.count += it.quantity;
+          existing.revenue += lineRev;
+          existing.items += 1;
+        } else {
+          categoryMap.set(cat, {
+            count: it.quantity,
+            revenue: lineRev,
+            items: 1,
+          });
+        }
+      }
+    }
+    const categoryStats = [...categoryMap.entries()]
+      .map(([category, v]) => ({
+        category,
+        count: v.count,
+        revenue: Math.round(v.revenue * 100) / 100,
+        items: v.items,
+      }))
+      .sort((a, b) => b.revenue - a.revenue);
+
     return NextResponse.json({
       todayRevenue,
       todayOrders,
@@ -91,6 +120,7 @@ export async function GET() {
       topItems,
       hourly,
       paymentSplit,
+      categoryStats,
     });
   } catch (e) {
     console.error("GET /api/stats error:", e);

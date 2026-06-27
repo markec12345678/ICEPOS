@@ -90,6 +90,12 @@ export interface DashboardStats {
   topItems: { name: string; count: number; revenue: number }[];
   hourly: { hour: string; revenue: number }[];
   paymentSplit: { method: string; count: number; total: number }[];
+  categoryStats: {
+    category: string;
+    count: number;
+    revenue: number;
+    items: number;
+  }[];
 }
 
 export const CATEGORIES: { id: MenuCategory; label: string; icon: string }[] = [

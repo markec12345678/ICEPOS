@@ -35,6 +35,7 @@ import {
   ChefHat,
   ArrowRightLeft,
   Star,
+  RotateCcw,
 } from "lucide-react";
 import {
   Dialog,
@@ -706,6 +707,46 @@ export function OrderView() {
               className="mt-2 w-full rounded py-1 text-center text-xs text-muted-foreground transition-colors hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Počisti voziček
+            </button>
+          )}
+
+          {/* Ponovi zadnje naročilo */}
+          {cart.length === 0 && (
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/orders/last");
+                  const data = await res.json();
+                  if (!data.order) {
+                    toast.info("Ni prejšnjih naročil");
+                    return;
+                  }
+                  // Dodaj vse postavke v voziček
+                  for (const it of data.order.items) {
+                    if (it.available) {
+                      addCartItem(
+                        {
+                          id: it.menuItemId,
+                          name: it.name,
+                          category: "glavne_jedi", // fallback
+                          price: it.unitPrice,
+                          vatRate: 0.095, // fallback
+                          available: true,
+                          createdAt: "",
+                        } as MenuItem,
+                        it.quantity
+                      );
+                    }
+                  }
+                  toast.success(`Ponovljeno: ${data.order.tableName} (${data.order.items.length} postavk)`);
+                } catch {
+                  toast.error("Napaka pri ponavljanju naročila");
+                }
+              }}
+              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-md border border-sky-200 bg-sky-50 py-1.5 text-xs font-medium text-sky-700 transition-colors hover:bg-sky-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-400 dark:hover:bg-sky-900/30"
+            >
+              <RotateCcw className="h-3 w-3" />
+              Ponovi zadnje naročilo
             </button>
           )}
         </div>

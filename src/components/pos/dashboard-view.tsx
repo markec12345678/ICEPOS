@@ -161,9 +161,13 @@ export function DashboardView() {
         </Card>
       </div>
 
-      {/* Delitev plačil */}
-      <Card className="p-5">
-        <h3 className="mb-4">Načini plačila</h3>
+      {/* Statistika po kategorijah + Načini plačila */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <CategoryBreakdown categories={data.categoryStats} />
+
+        {/* Delitev plačil */}
+        <Card className="p-5">
+          <h3 className="mb-4">Načini plačila</h3>
         {data.paymentSplit.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-6 text-center">
             <Wallet className="h-8 w-8 text-muted-foreground/40" />
@@ -206,7 +210,68 @@ export function DashboardView() {
           </div>
         )}
       </Card>
+      </div>
     </div>
+  );
+}
+
+function CategoryBreakdown({
+  categories,
+}: {
+  categories: { category: string; count: number; revenue: number; items: number }[];
+}) {
+  const categoryLabels: Record<string, { label: string; icon: string; color: string }> = {
+    predjedi: { label: "Predjedi", icon: "🥗", color: "bg-emerald-500" },
+    glavne_jedi: { label: "Glavne jedi", icon: "🍽️", color: "bg-amber-500" },
+    sladice: { label: "Sladice", icon: "🍰", color: "bg-rose-500" },
+    brezalkoholne: { label: "Brezalkoholne", icon: "🥤", color: "bg-sky-500" },
+    alkoholne: { label: "Alkoholne", icon: "🍷", color: "bg-purple-500" },
+  };
+
+  const maxRevenue = Math.max(...categories.map((c) => c.revenue), 1);
+
+  return (
+    <Card className="p-5 lg:col-span-2">
+      <h3 className="mb-4 font-bold">Prodaja po kategorijah</h3>
+      {categories.length === 0 ? (
+        <p className="py-6 text-center text-sm text-muted-foreground">
+          Ni prodaje danes.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {categories.map((cat) => {
+            const cfg = categoryLabels[cat.category] || {
+              label: cat.category,
+              icon: "🍴",
+              color: "bg-neutral-500",
+            };
+            const pct = (cat.revenue / maxRevenue) * 100;
+            return (
+              <div key={cat.category}>
+                <div className="mb-1 flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <span>{cfg.icon}</span>
+                    {cfg.label}
+                  </span>
+                  <span className="font-bold">{formatEUR(cat.revenue)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={cn("h-full rounded-full transition-all", cfg.color)}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="w-20 text-right text-xs text-muted-foreground">
+                    {cat.count}× ({cat.items} post.)
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Card>
   );
 }
 
