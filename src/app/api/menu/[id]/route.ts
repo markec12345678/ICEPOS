@@ -17,6 +17,8 @@ export async function PATCH(
     if (typeof body.vatRate === "number") data.vatRate = body.vatRate;
     if (typeof body.desc === "string") data.desc = body.desc;
     if (typeof body.available === "boolean") data.available = body.available;
+    if (typeof body.isFavorite === "boolean") data.isFavorite = body.isFavorite;
+    if (typeof body.isDailySpecial === "boolean") data.isDailySpecial = body.isDailySpecial;
 
     const updated = await db.menuItem.update({
       where: { id },

@@ -11,16 +11,18 @@ datasource db {
 }
 
 model MenuItem {
-  id        String   @id @default(cuid())
-  name      String
-  category  String // "predjedi" | "glavne_jedi" | "brezalkoholne" | "alkoholne" | "sladice"
-  price     Float // EUR
-  vatRate   Float // 0.095 (znižana - hrana) | 0.22 (splošna - alkohol)
-  available Boolean  @default(true)
-  desc      String?
-  createdAt DateTime @default(now())
-  orderItems OrderItem[]
-  modifiers Modifier[]
+  id              String   @id @default(cuid())
+  name            String
+  category        String // "predjedi" | "glavne_jedi" | "brezalkoholne" | "alkoholne" | "sladice"
+  price           Float // EUR
+  vatRate         Float // 0.095 (znižana - hrana) | 0.22 (splošna - alkohol)
+  available       Boolean  @default(true)
+  desc            String?
+  isFavorite      Boolean  @default(false) // priljubljene jedi (hitri dostop)
+  isDailySpecial  Boolean  @default(false) // dnevna ponudba (menu dneva)
+  createdAt       DateTime @default(now())
+  orderItems      OrderItem[]
+  modifiers       Modifier[]
 }
 
 model Modifier {

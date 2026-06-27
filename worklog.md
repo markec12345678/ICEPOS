@@ -539,3 +539,32 @@ Stage Summary:
 - Dashboard prikazuje live prihodek aktivne smene (polling 30s)
 - Aplikacija podpira slovenščino in angleščino (za turistične restavracije)
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 14
+Agent: Z.ai Code (main)
+Task: Priljubljene jedi (favorites) + dnevna ponudba (daily specials).
+
+Work Log:
+- Prisma: dodana polja isFavorite + isDailySpecial na MenuItem
+- Backend: PATCH /api/menu/[id] sprejema isFavorite + isDailySpecial
+- Seed: 6 priljubljenih (Kranjska, Žlikrofi, Biftek, Pivo, Cappuccino, Aperol) + 3 dnevne (Jota, Šmarn golaž, Prekmurska gabanica)
+- Frontend OrderView:
+  * Nova filtra: "Priljubljene" (⭐, amber) + "Dnevno" (🍴, rose)
+  * Filter preglasi kategorijo, divider med special filterji in kategorijami
+  * Meni kartice prikazujejo ⭐ badge za priljubljene + "DANA" badge za dnevno
+- Frontend MenuAdminView:
+  * Dva nova toggle-a v edit dialogu: Priljubljena + Dnevna ponudba
+  * Razlagalna besedila za vsak toggle
+- Lint: 0 errorjev
+- Agent Browser verification:
+  * Priljubljene filter: prikazanih 6 postavk (Žlikrofi, Kranjska, Biftek, Pivo, Cappuccino, Aperol)
+  * Jota (dnevna) ni prikazana v priljubljenih ✓
+  * ⭐ badge viden na priljubljenih karticah ✓
+- Push na GitHub: commit f91fc78
+
+Stage Summary:
+- 2 novi funkcionalnosti: priljubljene jedi + dnevna ponudba
+- Hitri filter za najpogosteje naročene jedi (pogosta zahteva v barih/ Hitrih lokaliH)
+- Dnevna ponudba (menu dneva) — slovenska tradicija
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS

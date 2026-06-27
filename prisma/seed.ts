@@ -130,6 +130,9 @@ async function main() {
   // Demo: modifierji za nekaj jedi
   await seedModifiers(db);
 
+  // Demo: označi priljubljene in dnevno ponudbo
+  await seedFavoritesAndSpecials(db);
+
   // Demo: rezervacije za danes in jutri
   await seedReservations(db);
 
@@ -140,6 +143,27 @@ async function main() {
   await seedOperators(db);
 
   console.log("🎉 Seed končan!");
+}
+
+async function seedFavoritesAndSpecials(db: import("@prisma/client").PrismaClient) {
+  // Priljubljene (najpogosteje naročene)
+  const favorites = ["Kranjska klobasa s kislim zeljem", "Žlikrofi s pečenico", "Biftek z gobovo omako", "Pivo Laško", "Cappuccino", "Aperol Spritz"];
+  // Dnevna ponudba (menu dneva)
+  const specials = ["Jota", "Šmarn golaž", "Prekmurska gibanica"];
+
+  for (const name of favorites) {
+    await db.menuItem.updateMany({
+      where: { name },
+      data: { isFavorite: true },
+    });
+  }
+  for (const name of specials) {
+    await db.menuItem.updateMany({
+      where: { name },
+      data: { isDailySpecial: true },
+    });
+  }
+  console.log(`✅ ${favorites.length} priljubljenih + ${specials.length} dnevnih ponudb označenih`);
 }
 
 async function seedOperators(db: import("@prisma/client").PrismaClient) {

@@ -15,6 +15,8 @@ export interface MenuItem {
   vatRate: number;
   available: boolean;
   desc?: string | null;
+  isFavorite?: boolean;
+  isDailySpecial?: boolean;
   createdAt: string;
 }
 

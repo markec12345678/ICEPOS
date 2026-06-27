@@ -313,6 +313,8 @@ function ItemDialog({
   );
   const [desc, setDesc] = useState(item?.desc || "");
   const [available, setAvailable] = useState(item?.available ?? true);
+  const [isFavorite, setIsFavorite] = useState(item?.isFavorite ?? false);
+  const [isDailySpecial, setIsDailySpecial] = useState(item?.isDailySpecial ?? false);
 
   function submit() {
     if (!name.trim() || !price) {
@@ -327,6 +329,8 @@ function ItemDialog({
       vatRate: parseFloat(vatRate),
       desc: desc.trim() || null,
       available,
+      isFavorite,
+      isDailySpecial,
     });
   }
 
@@ -420,6 +424,40 @@ function ItemDialog({
               id="avail"
               checked={available}
               onCheckedChange={setAvailable}
+            />
+          </div>
+
+          {/* Priljubljene */}
+          <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900 dark:bg-amber-950/20">
+            <div>
+              <Label htmlFor="fav" className="cursor-pointer">
+                ⭐ Priljubljena
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Prikazuje se v hitrem filterju "Priljubljene"
+              </p>
+            </div>
+            <Switch
+              id="fav"
+              checked={isFavorite}
+              onCheckedChange={setIsFavorite}
+            />
+          </div>
+
+          {/* Dnevna ponudba */}
+          <div className="flex items-center justify-between rounded-lg border border-rose-200 bg-rose-50/50 p-3 dark:border-rose-900 dark:bg-rose-950/20">
+            <div>
+              <Label htmlFor="spec" className="cursor-pointer">
+                🍽️ Dnevna ponudba
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Menu dneva — prikazuje se v filterju "Dnevno"
+              </p>
+            </div>
+            <Switch
+              id="spec"
+              checked={isDailySpecial}
+              onCheckedChange={setIsDailySpecial}
             />
           </div>
         </div>

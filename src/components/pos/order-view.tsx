@@ -34,6 +34,7 @@ import {
   UtensilsCrossed,
   ChefHat,
   ArrowRightLeft,
+  Star,
 } from "lucide-react";
 import {
   Dialog,
@@ -125,6 +126,7 @@ export function OrderView() {
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferTarget, setTransferTarget] = useState<string>("");
   const [transferring, setTransferring] = useState(false);
+  const [specialFilter, setSpecialFilter] = useState<"none" | "favorite" | "daily">("none");
 
   // Cena postavke z modifierji (za prikaz v vozičku)
   function lineUnitPrice(c: (CartItem & { lineId: string })): number {
@@ -135,7 +137,12 @@ export function OrderView() {
   const filteredMenu = useMemo(() => {
     if (!menu) return [];
     let items = menu.filter((m) => m.available);
-    if (activeCategory !== "vse") {
+    // Filter priljubljene/dnevno
+    if (specialFilter === "favorite") {
+      items = items.filter((m) => m.isFavorite);
+    } else if (specialFilter === "daily") {
+      items = items.filter((m) => m.isDailySpecial);
+    } else if (activeCategory !== "vse") {
       items = items.filter((m) => m.category === activeCategory);
     }
     if (searchQuery.trim()) {
@@ -147,7 +154,7 @@ export function OrderView() {
       );
     }
     return items;
-  }, [menu, activeCategory, searchQuery]);
+  }, [menu, activeCategory, searchQuery, specialFilter]);
 
   const cartTotals = useMemo(() => {
     const subtotal = cart.reduce(
@@ -331,26 +338,59 @@ export function OrderView() {
           />
         </div>
 
-        {/* Kategorije */}
+        {/* Kategorije + priljubljene/dnevno */}
         <div className="mb-3 flex flex-wrap gap-2">
           <button
-            onClick={() => setCategory("vse")}
+            onClick={() => {
+              setCategory("vse");
+              setSpecialFilter("none");
+            }}
             className={cn(
               "rounded-full px-3.5 py-1.5 text-sm font-medium transition-all hover:-translate-y-0.5",
-              activeCategory === "vse"
+              activeCategory === "vse" && specialFilter === "none"
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : "bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground"
             )}
           >
             Vse
           </button>
+          {/* Priljubljene */}
+          <button
+            onClick={() => setSpecialFilter("favorite")}
+            className={cn(
+              "flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all hover:-translate-y-0.5",
+              specialFilter === "favorite"
+                ? "bg-amber-500 text-white shadow-sm"
+                : "bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/30 dark:text-amber-400"
+            )}
+          >
+            <Star className="h-3.5 w-3.5" />
+            Priljubljene
+          </button>
+          {/* Dnevna ponudba */}
+          <button
+            onClick={() => setSpecialFilter("daily")}
+            className={cn(
+              "flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all hover:-translate-y-0.5",
+              specialFilter === "daily"
+                ? "bg-rose-500 text-white shadow-sm"
+                : "bg-rose-50 text-rose-700 hover:bg-rose-100 dark:bg-rose-950/30 dark:text-rose-400"
+            )}
+          >
+            <UtensilsCrossed className="h-3.5 w-3.5" />
+            Dnevno
+          </button>
+          <div className="mx-1 my-auto h-5 w-px bg-border" />
           {CATEGORIES.map((c) => (
             <button
               key={c.id}
-              onClick={() => setCategory(c.id)}
+              onClick={() => {
+                setCategory(c.id);
+                setSpecialFilter("none");
+              }}
               className={cn(
                 "flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all hover:-translate-y-0.5",
-                activeCategory === c.id
+                activeCategory === c.id && specialFilter === "none"
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground"
               )}
@@ -400,8 +440,20 @@ export function OrderView() {
                 }}
                 className="group cursor-pointer p-3 transition-all duration-200 hover:-translate-y-1 hover:border-amber-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.98] dark:hover:border-amber-700"
               >
-                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 text-lg dark:from-amber-950/40 dark:to-orange-950/40">
-                  {CATEGORIES.find((c) => c.id === m.category)?.icon || "🍽️"}
+                <div className="mb-2 flex items-start justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 text-lg dark:from-amber-950/40 dark:to-orange-950/40">
+                    {CATEGORIES.find((c) => c.id === m.category)?.icon || "🍽️"}
+                  </div>
+                  <div className="flex gap-0.5">
+                    {m.isFavorite && (
+                      <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                    )}
+                    {m.isDailySpecial && (
+                      <span className="rounded bg-rose-100 px-1 text-[8px] font-bold uppercase text-rose-700 dark:bg-rose-950/50 dark:text-rose-400">
+                        Dana
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <h4 className="line-clamp-2 text-sm font-semibold leading-tight">
                   {m.name}
