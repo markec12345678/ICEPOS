@@ -4,6 +4,23 @@ import { useState, useEffect } from "react";
 import { formatEUR, type MenuItem, CATEGORIES } from "@/lib/types";
 import { Star, UtensilsCrossed, ShoppingCart } from "lucide-react";
 
+// EU alergeni (1169/2011) z ikonami in prevodi
+const ALLERGEN_INFO: Record<string, { icon: string; sl: string; en: string }> = {
+  gluten: { icon: "🌾", sl: "Gluten", en: "Gluten" },
+  milk: { icon: "🥛", sl: "Mleko", en: "Milk" },
+  eggs: { icon: "🥚", sl: "Jajca", en: "Eggs" },
+  nuts: { icon: "🥜", sl: "Oreški", en: "Nuts" },
+  soy: { icon: "🫘", sl: "Soja", en: "Soy" },
+  fish: { icon: "🐟", sl: "Ribe", en: "Fish" },
+  shellfish: { icon: "🦐", sl: "Rakovci", en: "Shellfish" },
+  sesame: { icon: "⚪", sl: "Sezam", en: "Sesame" },
+  sulfites: { icon: "🍷", sl: "Sulfiti", en: "Sulfites" },
+  celery: { icon: "🥬", sl: "Zelena", en: "Celery" },
+  mustard: { icon: "🟡", sl: "Gorčica", en: "Mustard" },
+  lupin: { icon: "🟠", sl: "Volčji bob", en: "Lupin" },
+  molluscs: { icon: "🦪", sl: "Mehkužci", en: "Molluscs" },
+};
+
 interface MenuClientProps {
   items: MenuItem[];
   tableNumber?: string;
@@ -24,6 +41,25 @@ export function MenuClient({ items, tableNumber, reservations, issuer }: MenuCli
   const [success, setSuccess] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [addedFlash, setAddedFlash] = useState<Set<string>>(new Set());
+  const [lang, setLang] = useState<"sl" | "en">("sl");
+
+  // Helper za prevod
+  function t(item: MenuItem) {
+    if (lang === "en" && item.nameEn) {
+      return { name: item.nameEn, desc: item.descEn || item.desc };
+    }
+    return { name: item.name, desc: item.desc };
+  }
+
+  // Parse alergene iz JSON stringa
+  function getAllergens(item: MenuItem): string[] {
+    if (!item.allergens) return [];
+    try {
+      return JSON.parse(item.allergens) as string[];
+    } catch {
+      return [];
+    }
+  }
 
   function addToCart(item: MenuItem) {
     setCart((prev) => {
@@ -186,6 +222,25 @@ export function MenuClient({ items, tableNumber, reservations, issuer }: MenuCli
       )}
 
       {/* Order hint */}
+      {/* Language toggle + order hint */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+        <button
+          onClick={() => setLang(lang === "sl" ? "en" : "sl")}
+          style={{
+            background: lang === "sl" ? "#f59e0b" : "#0ea5e9",
+            color: "white",
+            border: "none",
+            padding: "6px 16px",
+            borderRadius: 20,
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: "pointer",
+          }}
+        >
+          {lang === "sl" ? "🇸🇮 Slovenščina" : "🇬🇧 English"}
+        </button>
+      </div>
+
       <div
         style={{
           background: "#ecfdf5",
@@ -198,8 +253,12 @@ export function MenuClient({ items, tableNumber, reservations, issuer }: MenuCli
           textAlign: "center",
         }}
       >
-        📱 Izberite jedi spodaj in kliknite <strong>"Oddaj naročilo"</strong> —
-        kuhinja ga bo kmalu pripravila!
+        📱{" "}
+        {lang === "sl" ? (
+          <>Izberite jedi spodaj in kliknite <strong>"Oddaj naročilo"</strong> — kuhinja ga bo kmalu pripravila!</>
+        ) : (
+          <>Select dishes below and click <strong>"Submit order"</strong> — the kitchen will prepare it shortly!</>
+        )}
       </div>
 
       {/* Dnevna ponudba */}
@@ -211,6 +270,7 @@ export function MenuClient({ items, tableNumber, reservations, issuer }: MenuCli
               item={item}
               onAdd={() => addToCart(item)}
               added={addedFlash.has(item.id)}
+              lang={lang}
             />
           ))}
         </Section>
@@ -225,6 +285,7 @@ export function MenuClient({ items, tableNumber, reservations, issuer }: MenuCli
               item={item}
               onAdd={() => addToCart(item)}
               added={addedFlash.has(item.id)}
+              lang={lang}
             />
           ))}
         </Section>
@@ -242,6 +303,7 @@ export function MenuClient({ items, tableNumber, reservations, issuer }: MenuCli
                 item={item}
                 onAdd={() => addToCart(item)}
                 added={addedFlash.has(item.id)}
+              lang={lang}
               />
             ))}
           </Section>
@@ -470,11 +532,27 @@ function ItemCard({
   item,
   onAdd,
   added,
+  lang,
 }: {
   item: MenuItem;
   onAdd: () => void;
   added: boolean;
+  lang: "sl" | "en";
 }) {
+  // Prevod imena in opisa
+  const name = lang === "en" && item.nameEn ? item.nameEn : item.name;
+  const desc = lang === "en" && item.descEn ? item.descEn : item.desc;
+
+  // Parse alergene
+  let allergens: string[] = [];
+  if (item.allergens) {
+    try {
+      allergens = JSON.parse(item.allergens) as string[];
+    } catch {
+      // ignore
+    }
+  }
+
   return (
     <div
       style={{
@@ -499,15 +577,52 @@ function ItemCard({
             flexWrap: "wrap",
           }}
         >
-          {item.name}
+          {name}
           {item.isFavorite && <Badge text="⭐" bg="#fef3c7" color="#92400e" />}
           {item.isDailySpecial && (
-            <Badge text="DANA" bg="#fecdd3" color="#9f1239" />
+            <Badge text={lang === "sl" ? "DANA" : "TODAY"} bg="#fecdd3" color="#9f1239" />
           )}
         </div>
-        {item.desc && (
+        {desc && (
           <div style={{ fontSize: 12, color: "#666", marginTop: 2 }}>
-            {item.desc}
+            {desc}
+          </div>
+        )}
+        {/* Alergeni */}
+        {allergens.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 4,
+              marginTop: 6,
+            }}
+          >
+            <span style={{ fontSize: 11, color: "#9ca3af", marginRight: 2 }}>
+              {lang === "sl" ? "Alergeni:" : "Allergens:"}
+            </span>
+            {allergens.map((a) => {
+              const info = ALLERGEN_INFO[a];
+              if (!info) return null;
+              return (
+                <span
+                  key={a}
+                  title={lang === "sl" ? info.sl : info.en}
+                  style={{
+                    fontSize: 11,
+                    background: "#fef2f2",
+                    color: "#991b1b",
+                    padding: "1px 6px",
+                    borderRadius: 4,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                  }}
+                >
+                  {info.icon} {lang === "sl" ? info.sl : info.en}
+                </span>
+              );
+            })}
           </div>
         )}
         <div

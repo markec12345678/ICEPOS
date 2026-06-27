@@ -96,6 +96,9 @@ async function main() {
   }
   console.log(`✅ ${menuData.length} menijskih postavk ustvarjenih`);
 
+  // Dodaj alergene + angleške prevode
+  await seedAllergensAndTranslations(db);
+
   // Demo: eno odprto naročilo na mizi 2
   const table2 = await db.table.findFirst({ where: { number: 2 } });
   const zlikrofi = await db.menuItem.findFirst({ where: { name: "Žlikrofi s pečenico" } });
@@ -143,6 +146,63 @@ async function main() {
   await seedOperators(db);
 
   console.log("🎉 Seed končan!");
+}
+
+async function seedAllergensAndTranslations(db: import("@prisma/client").PrismaClient) {
+  // Alergeni (EU 1169/2011) + angleški prevodi za slovenske jedi
+  const translations: Record<string, { nameEn: string; descEn?: string; allergens: string[] }> = {
+    "Pršut z melono": { nameEn: "Prosciutto with melon", descEn: "Dried ham, fresh melon, arugula", allergens: ["milk"] },
+    "Sirna deska": { nameEn: "Cheese platter", descEn: "Selection of Slovenian cheeses, walnuts, honey", allergens: ["milk", "nuts"] },
+    "Ocvrte bučke": { nameEn: "Fried zucchini", descEn: "Breaded zucchini, garlic dip", allergens: ["gluten", "milk", "eggs"] },
+    "Juha dneva": { nameEn: "Soup of the day", descEn: "Beef soup with noodles", allergens: ["gluten", "eggs", "celery"] },
+    "Oljke in sirek": { nameEn: "Olives and feta", descEn: "Mixed olives, feta cheese, tomato", allergens: ["milk"] },
+    "Žlikrofi s pečenico": { nameEn: "Idrija dumplings with pork", descEn: "Traditional stuffed dumplings, roast pork, gravy", allergens: ["gluten", "eggs", "celery"] },
+    "Kranjska klobasa s kislim zeljem": { nameEn: "Carniolan sausage with sauerkraut", descEn: "Kranjska sausage, sauerkraut, potatoes", allergens: ["sulfites", "mustard"] },
+    "Jota": { nameEn: "Jota (bean and sauerkraut stew)", descEn: "Traditional stew with beans and sauerkraut", allergens: ["sulfites", "celery"] },
+    "Ajdovi žganci z ocvirki": { nameEn: "Buckwheat mush with cracklings", descEn: "Buckwheat dumplings, pork cracklings", allergens: ["sulfites"] },
+    "Štruklji v skuti": { nameEn: "Cheese dumplings", descEn: "Rolled dumplings in cottage cheese, walnut sauce", allergens: ["gluten", "milk", "eggs", "nuts"] },
+    "Ocvrli piščanec": { nameEn: "Fried chicken", descEn: "Crispy fried chicken, french fries, salad", allergens: ["gluten", "eggs"] },
+    "Šmarn golaž": { nameEn: "Venison goulash", descEn: "Wild game goulash, dumplings", allergens: ["gluten", "celery"] },
+    "Rižota z morskimi sadeži": { nameEn: "Seafood risotto", descEn: "Calamari, shrimp, white wine", allergens: ["shellfish", "molluscs", "milk", "sulfites"] },
+    "Biftek z gobovo omako": { nameEn: "Beefsteak with mushroom sauce", descEn: "Beef 200g, beef broth, french fries", allergens: ["milk", "celery", "sulfites"] },
+    "Prekmurska gibanica": { nameEn: "Prekmurje layer cake", descEn: "Traditional cake with cottage cheese, walnuts", allergens: ["gluten", "milk", "eggs", "nuts"] },
+    "Blediška kremšnita": { nameEn: "Bled cream cake", descEn: "Cream slice, puff pastry", allergens: ["gluten", "milk", "eggs"] },
+    "Potica": { nameEn: "Walnut roll", descEn: "Traditional Slovenian walnut potica", allergens: ["gluten", "milk", "eggs", "nuts"] },
+    "Palačinke z nutello": { nameEn: "Pancakes with Nutella", descEn: "Nutella, banana, whipped cream", allergens: ["gluten", "milk", "eggs", "nuts", "soy"] },
+    "Domnči tiramisu": { nameEn: "Homemade tiramisu", descEn: "Coffee, mascarpone, cocoa", allergens: ["gluten", "milk", "eggs"] },
+    "Kava espresso": { nameEn: "Espresso", allergens: [] },
+    "Cappuccino": { nameEn: "Cappuccino", allergens: ["milk"] },
+    "Topla čokolada": { nameEn: "Hot chocolate", descEn: "Belgian chocolate, cream", allergens: ["milk"] },
+    "Sok pomaranča": { nameEn: "Orange juice", descEn: "Freshly squeezed orange juice", allergens: [] },
+    "Radenska": { nameEn: "Radenska mineral water", descEn: "Mineral water 0.5l", allergens: [] },
+    "Coca-Cola": { nameEn: "Coca-Cola", descEn: "0.33l", allergens: [] },
+    "Čaj": { nameEn: "Tea", descEn: "Selection of teas, honey, lemon", allergens: [] },
+    "Laški beli": { nameEn: "White wine (Laški)", descEn: "0.2l, dry white wine", allergens: ["sulfites"] },
+    "Refošk": { nameEn: "Refosco red wine", descEn: "0.2l, red wine from Primorska", allergens: ["sulfites"] },
+    "Modra Frankinja": { nameEn: "Blaufränkisch red wine", descEn: "0.2l, red wine from Prekmurje", allergens: ["sulfites"] },
+    "Pivo Laško": { nameEn: "Laško beer", descEn: "0.5l, draft", allergens: ["gluten"] },
+    "Pivo Union": { nameEn: "Union beer", descEn: "0.5l, draft", allergens: ["gluten"] },
+    "Aperol Spritz": { nameEn: "Aperol Spritz", descEn: "Aperol, prosecco, soda", allergens: ["sulfites"] },
+    "Žganje slivovko": { nameEn: "Plum brandy (Slivovka)", descEn: "0.04l, homemade plum brandy", allergens: [] },
+    "Žganje hruškovo": { nameEn: "Pear brandy (Viljamovka)", descEn: "0.04l, William pear brandy", allergens: [] },
+  };
+
+  let count = 0;
+  for (const [name, data] of Object.entries(translations)) {
+    const item = await db.menuItem.findFirst({ where: { name } });
+    if (item) {
+      await db.menuItem.update({
+        where: { id: item.id },
+        data: {
+          nameEn: data.nameEn,
+          descEn: data.descEn || null,
+          allergens: data.allergens.length > 0 ? JSON.stringify(data.allergens) : null,
+        },
+      });
+      count++;
+    }
+  }
+  console.log(`✅ ${count} postavk posodobljenih z alergeni + EN prevodi`);
 }
 
 async function seedFavoritesAndSpecials(db: import("@prisma/client").PrismaClient) {

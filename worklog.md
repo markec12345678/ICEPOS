@@ -794,3 +794,31 @@ Stage Summary:
 - Gost flow popoln: QR → meni → naročilo → success → "Sledi naročilu" → live tracking
 - Gost vidi v realnem času: prejeto → v pripravi → pripravljeno → zaključeno
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 22
+Agent: Z.ai Code (main)
+Task: Alergeni (EU 1169/2011) + angleški prevod menija za goste.
+
+Work Log:
+- Prisma: dodana polja allergens (JSON array), nameEn, descEn na MenuItem
+- Seed: vseh 34 postavk opremljenih z alergeni in angleškimi prevodi
+  * 13 EU alergenov z ikonami: 🌾 gluten, 🥛 mleko, 🥚 jajca, 🥜 oreški, 🫘 soja, 🐟 ribe, 🦐 rakovci, ⚪ sezam, 🍷 sulfiti, 🥬 zelena, 🟡 gorčica, 🟠 volčji bob, 🦪 mehkužci
+  * Angleški prevodi za vse slovenske jedi (npr. "Žlikrofi s pečenico" → "Idrija dumplings with pork")
+- Javni meni /meni:
+  * Jezikovno stikalo SI/EN (🇸🇮 Slovenščina / 🇬🇧 English)
+  * Alergeni prikazani kot rdeči badge-i pod vsako postavko
+  * Vsa besedila prevedena (order hint, naslovi sekcij, alergeni, gumbi)
+  * "DANA" badge → "TODAY" v EN načinu
+- Lint: 0 errorjev
+- Agent Browser verification:
+  * SI način: "Alergeni: 🌾 Gluten 🥛 Mleko" viden na postavkah ✓
+  * EN način: "Allergens: 🌾 Gluten 🥛 Milk" + "Submit order" + angleška imena jedi ✓
+  * Jezikovno stikalo preklopi instant med SI/EN ✓
+- Push na GitHub: commit 9c4c701
+
+Stage Summary:
+- 2 kritični funkciji za slovenski trg implementirani:
+  1. Alergeni (EU 1169/2011 skladnost — obvezno za javne menije)
+  2. Angleški prevod (turistične restavracije — Bled, Ljubljana, obala)
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS

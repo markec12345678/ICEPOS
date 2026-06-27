@@ -10,11 +10,14 @@ export type MenuCategory =
 export interface MenuItem {
   id: string;
   name: string;
+  nameEn?: string | null;
   category: MenuCategory;
   price: number;
   vatRate: number;
   available: boolean;
   desc?: string | null;
+  descEn?: string | null;
+  allergens?: string | null;
   isFavorite?: boolean;
   isDailySpecial?: boolean;
   createdAt: string;
