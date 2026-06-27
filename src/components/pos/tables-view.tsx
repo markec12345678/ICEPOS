@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { Users, Receipt, AlertCircle, LayoutGrid, CalendarDays, Search } from "lucide-react";
+import { Users, Receipt, AlertCircle, LayoutGrid, CalendarDays, Search, QrCode } from "lucide-react";
 import { toast } from "sonner";
 
 interface Reservation {
@@ -304,6 +304,17 @@ export function TablesView() {
                           Prosta
                         </p>
                       )}
+                      {/* QR meni link za goste */}
+                      <a
+                        href={`/meni?miza=${t.number}`}
+                        target="_blank"
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-2 flex items-center justify-center gap-1 rounded-md border border-sky-200 bg-sky-50 px-2 py-1 text-[10px] font-medium text-sky-700 transition-colors hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-400 dark:hover:bg-sky-900/30"
+                        title="Javni meni za to mizo (QR)"
+                      >
+                        <QrCode className="h-3 w-3" />
+                        Meni za gosta
+                      </a>
                     </Card>
                   );
                 })}
@@ -314,7 +325,14 @@ export function TablesView() {
       )}
 
       <p className="pt-2 text-center text-xs text-muted-foreground">
-        Kliknite mizo za odprtje naročila
+        Kliknite mizo za odprtje naročilo ·{" "}
+        <a
+          href="/meni"
+          target="_blank"
+          className="text-amber-600 underline hover:text-amber-700 dark:text-amber-400"
+        >
+          Javni meni za goste
+        </a>
       </p>
     </div>
   );

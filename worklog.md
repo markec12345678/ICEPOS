@@ -685,3 +685,40 @@ Stage Summary:
 - Void-item (hrabtenje postavke) zdaj popolnoma integriran (backend + frontend)
 - Blagajnik lahko hrabti posamezno postavko iz odprtega naročila (pogosta operacija ko stranka premisli)
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 19
+Agent: Z.ai Code (main)
+Task: Javna spletna stran z menijem za goste (/meni) + QR koda na mizah.
+
+Work Log:
+- Javna stran /meni (server-rendered, brez PIN-a):
+  * Prikaz: dnevna ponudba, priljubljene, vse kategorije s cenami
+  * Header: ime gostilne, naslov, odpiralni časi, telefon
+  * Badge mize: ?miza=5 prikazuje "Miza 5" (gost skenira QR na mizi)
+  * Današnje rezervacije prikazane
+  * Mobile-responsive (amber/orange tema)
+  * Footer: davčna št., "vse cene vključujejo DDV", kontakt za rezervacije
+- QR koda integracija:
+  * "Meni za gosta" gumb na vsaki mizi kartici (sky blue, QrCode ikona)
+  * Odpre /meni?miza=N v novem zavihku
+  * Footer link "Javni meni za goste"
+  * Restavracija natisne QR kode za mize → gostje skenirajo → vidijo meni
+- Lint: 0 errorjev
+- Agent Browser verification:
+  * /meni HTTP 200, vsebuje vse kategorije (Dnevna, Priljubljene, Glavne jedi, Sladice, Alkoholne)
+  * ?miza=5 prikazuje "Miza 5" badge
+  * Cene v EUR, rezervacije prikazane
+  * Mobile-responsive
+- Push na GitHub: commit ab86a84
+
+Stage Summary:
+- Javna meni stran za goste implementirana (/meni)
+- QR koda na mizah → gost skenira in vidi meni s cenami
+- Aplikacija zdaj pokriva CEL EKOSISTEM restavracije:
+  * Gost: vidi meni preko QR kode na mizi
+  * Blagajnik: POS, naročanje, plačilo, računi, smene
+  * Kuhinja: real-time naročila, recall
+  * Lastnik: dashboard, mesečno/tedensko poročilo, Z-report
+  * Admin: operaterji, mize, meni admin
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
