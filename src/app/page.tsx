@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { io, Socket } from "socket.io-client";
 import { usePosStore } from "@/stores/pos-store";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { PosHeader } from "@/components/pos/pos-header";
@@ -20,9 +21,9 @@ import { OperatorsAdminView } from "@/components/pos/operators-admin-view";
 import { TablesAdminView } from "@/components/pos/tables-admin-view";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { PinLoginDialog, getStoredOperator, type Operator } from "@/components/pos/pin-login";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Lock, UserCircle } from "lucide-react";
+import { Lock, UserCircle, Bell } from "lucide-react";
 
 export default function Home() {
   const activeView = usePosStore((s) => s.activeView);
@@ -54,6 +55,52 @@ export default function Home() {
     }
     window.addEventListener("operator-changed", handler);
     return () => window.removeEventListener("operator-changed", handler);
+  }, []);
+
+  // Globalni WebSocket listener za kuhinjske recall-e (deluje na vseh pogledih)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isDev = window.location.port === "3000";
+    const socketUrl = isDev
+      ? `${window.location.protocol}//${window.location.hostname}:81`
+      : "";
+
+    const s = io(`${socketUrl}/?XTransformPort=3003`, {
+      transports: ["websocket"],
+      forceNew: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      timeout: 10000,
+    });
+
+    s.on("order:recall", (data: { tableName: string; item?: string }) => {
+      // Glasni toast z zvokom (če je dovoljen)
+      toast.success(`🔔 Klic iz kuhinje: ${data.tableName}`, {
+        description: data.item || "Jedi so pripravljene za prevzem",
+        duration: 8000,
+      });
+
+      // Poskusi predvajati zvok (če browser dovoli)
+      try {
+        const audioCtx = new (window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        oscillator.connect(gain);
+        gain.connect(audioCtx.destination);
+        oscillator.frequency.value = 880;
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.5);
+      } catch {
+        // zvok ni kritičen
+      }
+    });
+
+    return () => {
+      s.disconnect();
+    };
   }, []);
 
   return (

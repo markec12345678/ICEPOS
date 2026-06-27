@@ -120,8 +120,20 @@ export function KitchenDisplayView() {
   const updateStatus = useCallback(
     (orderId: string, status: KitchenOrder["status"]) => {
       socketRef.current?.emit("order:status", { orderId, status });
+
+      // Ko je "served" (kuhinja pozove mizo), pošlji recall obvestilo vsem
+      if (status === "served") {
+        const order = orders.find((o) => o.id === orderId);
+        if (order) {
+          socketRef.current?.emit("order:recall", {
+            orderId,
+            tableName: order.tableName,
+            item: `Miza ${order.tableName} — jedi pripravljene za prevzem`,
+          });
+        }
+      }
     },
-    []
+    [orders]
   );
 
   // Samodejno odstrani "served" po 5 sekundah

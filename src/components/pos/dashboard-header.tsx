@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useFetch } from "@/hooks/use-fetch";
 import { usePosStore } from "@/stores/pos-store";
-import { formatDateTime } from "@/lib/types";
+import { formatDateTime, formatEUR } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,8 +16,25 @@ import {
   Receipt,
   ChefHat,
   ArrowRight,
+  TrendingUp,
+  Banknote,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+interface LiveShiftStats {
+  shift: {
+    id: string;
+    operator: string;
+    startTime: string;
+    startCash: number;
+  } | null;
+  revenue: number;
+  ordersCount: number;
+  cashRevenue: number;
+  cardRevenue: number;
+  expectedCash: number;
+}
 
 interface Shift {
   id: string;
@@ -41,6 +59,28 @@ export function DashboardHeader() {
   );
   const setActiveView = usePosStore((s) => s.setActiveView);
 
+  // Live polling za prihodek aktivne smene (vsakih 30s)
+  const [liveStats, setLiveStats] = useState<LiveShiftStats | null>(null);
+  useEffect(() => {
+    let active = true;
+    async function fetchStats() {
+      try {
+        const r = await fetch("/api/shifts/live-stats");
+        if (!r.ok) return;
+        const json = (await r.json()) as LiveShiftStats;
+        if (active) setLiveStats(json);
+      } catch {
+        // ignore
+      }
+    }
+    fetchStats();
+    const interval = setInterval(fetchStats, 30000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
+
   const now = new Date();
   const nowStr = `${String(now.getHours()).padStart(2, "0")}:${String(
     now.getMinutes()
@@ -52,7 +92,7 @@ export function DashboardHeader() {
 
   return (
     <div className="grid gap-3 lg:grid-cols-3">
-      {/* Aktivna smena */}
+      {/* Aktivna smena z live prihodkom */}
       <Card className={cn("p-4", shift ? "border-emerald-200 bg-emerald-50/30 dark:border-emerald-900 dark:bg-emerald-950/10" : "border-amber-200 bg-amber-50/30 dark:border-amber-900 dark:bg-amber-950/10")}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -86,9 +126,46 @@ export function DashboardHeader() {
           )}
         </div>
         {shift && (
-          <p className="mt-2 text-xs text-muted-foreground">
-            Od {formatDateTime(shift.startTime)}
-          </p>
+          <>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Od {formatDateTime(shift.startTime)}
+            </p>
+            {liveStats && liveStats.shift && (
+              <div className="mt-2 grid grid-cols-2 gap-2 border-t border-border pt-2">
+                <div>
+                  <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <TrendingUp className="h-3 w-3" />
+                    Prihodek
+                  </p>
+                  <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                    {formatEUR(liveStats.revenue)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground">Računov</p>
+                  <p className="text-sm font-bold">{liveStats.ordersCount}</p>
+                </div>
+                <div>
+                  <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <Banknote className="h-3 w-3" />
+                    Gotovina
+                  </p>
+                  <p className="text-xs font-medium">
+                    {formatEUR(liveStats.cashRevenue)}
+                  </p>
+                </div>
+                <div>
+                  <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <CreditCard className="h-3 w-3" />
+                    Kartica
+                  </p>
+                  <p className="text-xs font-medium">
+                    {formatEUR(liveStats.cardRevenue)}
+                  </p>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </Card>
 

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Store, Clock, ShieldCheck, Wifi, UserCircle, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LangToggle } from "@/components/lang-toggle";
 import {
   getStoredOperator,
   clearStoredOperator,
@@ -110,6 +111,7 @@ export function PosHeader() {
               <LogOut className="h-3 w-3 opacity-60" />
             </Button>
           )}
+          <LangToggle />
           <ThemeToggle />
         </div>
 
@@ -129,6 +131,7 @@ export function PosHeader() {
               {operator.name}
             </Button>
           )}
+          <LangToggle />
           <ThemeToggle />
         </div>
       </div>

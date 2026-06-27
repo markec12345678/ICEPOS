@@ -505,3 +505,37 @@ Stage Summary:
 - Aplikacija zdaj omogoča polno upravljanje: operaterje (FURS), mize, meni, rezervacije, smene
 - 13 view-ov total
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 13
+Agent: Z.ai Code (main)
+Task: Kuhinja recall (WS + zvok), live prihodek smene na dashboardu, i18n (SI/EN).
+
+Work Log:
+- Kuhinja → Blagajna recall (real-time):
+  * KitchenDisplayView: ko je "served" (Pozovi mizo), emit-a order:recall prek WS
+  * Globalni WS listener v page.tsx (deluje na vseh pogledih, ne samo kuhinji)
+  * Toast z 8s trajanjem + audio beep (880Hz oscillator prek Web Audio API)
+  * Deluje tudi ko je blagajnik na drugem pogledu (mize, naročilo, računi...)
+- Live prihodek aktivne smene (dashboard):
+  * Nov API: /api/shifts/live-stats (revenue, orders, cash/card split, expectedCash)
+  * DashboardHeader polling vsakih 30s
+  * Prikaz: prihodek, št. računov, gotovina, kartica (v smena kartici)
+- i18n (slovenščina / English):
+  * lang-store.ts: Zustand store z SI/EN slovarjem (60+ prevodov)
+  * LangToggle komponenta v headerju (SI/EN switch)
+  * Persistenca v localStorage
+  * Za turistične restavracije (pogosta zahteva na slovenski obali)
+- Lint: 0 errorjev
+- Agent Browser verification:
+  * Kuhinja recall: Pozovi mizo → toast "Klic iz kuhinje: Miza 1" prikazan + zvok
+  * Live stats: /api/shifts/live-stats → revenue, orders, cash/card
+  * Lang toggle: klik → localStorage "icepos-si-lang" = "en"
+- Push na GitHub: commit ecae476
+
+Stage Summary:
+- 3 nove funkcionalnosti: kuhinja recall, live smena stats, i18n
+- Kuhinjska komunikacija zdaj dvosmerna (blagajna → kuhinja order, kuhinja → blagajna recall)
+- Dashboard prikazuje live prihodek aktivne smene (polling 30s)
+- Aplikacija podpira slovenščino in angleščino (za turistične restavracije)
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
