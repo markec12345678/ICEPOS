@@ -15,6 +15,7 @@ import { ReservationsView } from "@/components/pos/reservations-view";
 import { ShiftView } from "@/components/pos/shift-view";
 import { DashboardView } from "@/components/pos/dashboard-view";
 import { MonthlyReportView } from "@/components/pos/monthly-report-view";
+import { WeeklyStatsView } from "@/components/pos/weekly-stats-view";
 import { ZReportView } from "@/components/pos/z-report-view";
 import { SettingsView } from "@/components/pos/settings-view";
 import { OperatorsAdminView } from "@/components/pos/operators-admin-view";
@@ -141,6 +142,7 @@ export default function Home() {
             {activeView === "shift" && <ShiftView />}
             {activeView === "dashboard" && <DashboardView />}
             {activeView === "monthly" && <MonthlyReportView />}
+            {activeView === "weekly" && <WeeklyStatsView />}
             {activeView === "zreport" && <ZReportView />}
             {activeView === "settings" && <SettingsView />}
             {activeView === "operators" && <OperatorsAdminView />}

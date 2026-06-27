@@ -27,6 +27,7 @@ import {
   Printer,
   RotateCcw,
   FileText,
+  FileDown,
   CheckCircle2,
   XCircle,
   AlertCircle,
@@ -274,6 +275,15 @@ export function ReceiptsView() {
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
+                      <a
+                        href={`/print/receipt/${r.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        title="Natisni / Shrani PDF"
+                      >
+                        <FileDown className="h-4 w-4" />
+                      </a>
                       <Button
                         variant="ghost"
                         size="icon"

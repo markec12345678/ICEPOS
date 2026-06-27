@@ -628,3 +628,39 @@ Stage Summary:
 - Dashboard zdaj prikazuje prodajo po kategorijah (lastniki vidijo kaj najbolj prodaja)
 - Blagajnik lahko z enim klikom ponovi zadnje naročilo (pogosto v barih)
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 17
+Agent: Z.ai Code (main)
+Task: Tedenska statistika, PDF izvoz računa, void-item API.
+
+Work Log:
+- Tedenska statistika (nov view):
+  * Backend /api/stats/weekly: prihodek po dnevih v tednu (povprečje 4 tednov)
+  * Frontend WeeklyStatsView: bar chart z 7 dnevi, best/worst day, cash/card breakdown
+  * Highlight: danes (sky blue), najboljši dan (amber 🏆)
+  * Tabela s podrobnostmi + optimization tip za razpored delavnikov
+  * Best day: Sobota 139.30€, Worst: Ponedeljek 0€
+- PDF izvoz računa (print stran):
+  * /print/receipt/[id]: printabilna A4 stran z računom
+  * PrintButton client komponenta: auto-print po 500ms + ročni gumb
+  * Vsebuje: header podjetja, postavke, DDV razčlenitev, FURS (ZOI/EOR), footer
+  * FileDown gumb v receipts-view odpre print stran v novem zavihku
+  * Uporabnik shrani kot PDF preko brskalnika (Cmd/Ctrl+P → Save as PDF)
+- Void item API:
+  * POST /api/orders/[id]/void-item: odstrani/zmanjša postavko iz odprtega naročila
+  * Zmanjša količino za 1 če >1, odstrani če =1
+  * Preračuna total + DDV
+- 14 view-ov total (dodan: Tedenska statistika)
+- Lint: 0 errorjev
+- Agent Browser verification:
+  * Weekly stats: "Tedenska statistika", "Najboljši dan", "Optimizacija" prisotni
+  * Print page: HTTP 200, vsebuje RAČUN/SKUPAJ/FURS/ZOI/EOR
+- Push na GitHub: commit 961a183
+
+Stage Summary:
+- 3 nove funkcionalnosti: tedenska statistika, PDF izvoz, void-item
+- Lastniki zdaj vidijo povprečne prihodke po dnevih v tednu (optimizacija delavnikov)
+- Račune lahko izvozijo kot PDF (za email/WhatsApp) preko print strani
+- Void API pripravljen za frontend integracijo (hrabtenje postavk)
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
