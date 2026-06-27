@@ -762,3 +762,35 @@ Stage Summary:
   * LASTNIK: dashboard, tedensko/mesečno poročilo, Z-report, CSV izvoz
   * ADMIN: operaterji (PIN), mize, meni admin
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 21
+Agent: Z.ai Code (main)
+Task: Sledenje statusa naročila za gosta (/sledi/[id]).
+
+Work Log:
+- Backend GET /api/orders/guest/[id]/status:
+  * Vrne status naročila za gosta: received → preparing → ready → paid
+  * Vključuje: postavke, total, miza, elapsed time, isGuestOrder
+  * Samodejno določi "preparing" po 30s od ustvarjanja
+- Frontend /sledi/[id] — real-time sledenje (poll vsakih 5s):
+  * Progress steps z animiranimi ikonami (📝 → 👨‍🍳 → ✅ → 💳)
+  * Aktivni korak pulzira, opravljeni zeleni ✓
+  * Elapsed timer (mm:ss)
+  * Kartica s podrobnostmi naročila (postavke + total)
+  * Hint o samodejnem osveževanju
+  * Mobile-responsive
+- MenuClient success screen posodobljen:
+  * "📍 Sledi naročilu" gumb (sky blue) → odpre /sledi/[id]
+  * Gost lahko spremlja status svojega naročila v realnem času
+- Lint: 0 errorjev
+- Agent Browser verification:
+  * /api/orders/guest/[id]/status: vrača "preparing", total 8.90€, 1 postavka
+  * /sledi/[id]: HTTP 200, "Sledenje naročila", progress steps, auto-refresh
+- Push na GitHub: commit 7554b40
+
+Stage Summary:
+- Sledenje naročila za gosta implementirano
+- Gost flow popoln: QR → meni → naročilo → success → "Sledi naročilu" → live tracking
+- Gost vidi v realnem času: prejeto → v pripravi → pripravljeno → zaključeno
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS

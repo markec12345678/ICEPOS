@@ -107,25 +107,43 @@ export function MenuClient({ items, tableNumber, reservations, issuer }: MenuCli
         <p style={{ fontSize: 14, marginTop: 8, color: "#999" }}>
           Št. naročila: {orderId?.slice(-8).toUpperCase()}
         </p>
-        <button
-          onClick={() => {
-            setSuccess(false);
-            setOrderId(null);
-          }}
-          style={{
-            marginTop: 24,
-            background: "#f59e0b",
-            color: "white",
-            border: "none",
-            padding: "12px 32px",
-            borderRadius: 12,
-            fontSize: 16,
-            fontWeight: 700,
-            cursor: "pointer",
-          }}
-        >
-          ← Nazaj na meni
-        </button>
+        <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+          <a
+            href={`/sledi/${orderId}`}
+            style={{
+              background: "#0ea5e9",
+              color: "white",
+              border: "none",
+              padding: "12px 32px",
+              borderRadius: 12,
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: "pointer",
+              textDecoration: "none",
+              display: "inline-block",
+            }}
+          >
+            📍 Sledi naročilu
+          </a>
+          <button
+            onClick={() => {
+              setSuccess(false);
+              setOrderId(null);
+            }}
+            style={{
+              background: "#f59e0b",
+              color: "white",
+              border: "none",
+              padding: "12px 32px",
+              borderRadius: 12,
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            ← Nazaj na meni
+          </button>
+        </div>
       </div>
     );
   }
