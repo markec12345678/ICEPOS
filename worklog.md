@@ -664,3 +664,24 @@ Stage Summary:
 - Račune lahko izvozijo kot PDF (za email/WhatsApp) preko print strani
 - Void API pripravljen za frontend integracijo (hrabtenje postavk)
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 18
+Agent: Z.ai Code (main)
+Task: Void-item frontend integracija v OrderView.
+
+Work Log:
+- OrderView: dodan "Void" gumb v voziček za vsako postavko (samo ko je odprto naročilo shranjeno)
+  * Rose barva z Ban ikono
+  * Fetch-a order iz baze, najde OrderItem ID, kliče /api/orders/[id]/void-item
+  * Zmanjša količino če >1, odstrani če =1
+  * Posodobi voziček + refetch tables
+  * Toast obvestilo o rezultatu
+- Lint: 0 errorjev
+- Agent Browser verification: 3 void gumbov prikazanih za 3 postavke v Mizi 2 naročilu
+- Push na GitHub: commit 88df1f4
+
+Stage Summary:
+- Void-item (hrabtenje postavke) zdaj popolnoma integriran (backend + frontend)
+- Blagajnik lahko hrabti posamezno postavko iz odprtega naročila (pogosta operacija ko stranka premisli)
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS

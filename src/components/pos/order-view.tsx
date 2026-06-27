@@ -36,6 +36,7 @@ import {
   ArrowRightLeft,
   Star,
   RotateCcw,
+  Ban,
 } from "lucide-react";
 import {
   Dialog,
@@ -581,6 +582,58 @@ export function OrderView() {
                         >
                           <Plus className="h-3.5 w-3.5" />
                         </button>
+                        {/* Void (hrabti) — samo ko je odprto naročilo shranjeno */}
+                        {openOrder && (
+                          <button
+                            onClick={async () => {
+                              if (!openOrder) return;
+                              // Najdi OrderItem ID v bazi za to postavko
+                              const orderId = openOrder.id;
+                              const res = await fetch(`/api/orders/${orderId}`);
+                              if (!res.ok) return;
+                              const fullOrder = await res.json();
+                              const dbItem = fullOrder.items.find(
+                                (it: { menuItemId: string; quantity: number; note?: string | null }) =>
+                                  it.menuItemId === c.menuItem.id &&
+                                  it.quantity >= c.quantity
+                              );
+                              if (!dbItem) {
+                                toast.error("Postavka ni najdena v naročilu");
+                                return;
+                              }
+                              const voidRes = await fetch(
+                                `/api/orders/${orderId}/void-item`,
+                                {
+                                  method: "POST",
+                                  headers: authHeaders(),
+                                  body: JSON.stringify({ itemId: dbItem.id }),
+                                }
+                              );
+                              const voidData = await voidRes.json();
+                              if (!voidRes.ok) {
+                                toast.error(voidData.error || "Napaka");
+                                return;
+                              }
+                              // Posodobi voziček
+                              if (voidData.action === "removed") {
+                                removeLine(c.lineId);
+                              } else {
+                                updateLineQty(c.lineId, -1);
+                              }
+                              toast.success(
+                                voidData.action === "removed"
+                                  ? "Postavka hrabtena (odstranjena)"
+                                  : `Količina zmanjšana na ${voidData.newQuantity}`
+                              );
+                              refetchTables();
+                            }}
+                            className="ml-1 flex h-7 items-center justify-center gap-1 rounded-md border border-rose-200 px-2 text-[10px] font-medium text-rose-600 transition-colors hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-950/30"
+                            title="Hrabti (void) — odstrani iz naročila"
+                          >
+                            <Ban className="h-3 w-3" />
+                            Void
+                          </button>
+                        )}
                       </div>
                       <span className="text-sm font-bold">
                         {formatEUR(unitPrice * c.quantity)}
