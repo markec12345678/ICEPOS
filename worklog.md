@@ -568,3 +568,31 @@ Stage Summary:
 - Hitri filter za najpogosteje naročene jedi (pogosta zahteva v barih/ Hitrih lokaliH)
 - Dnevna ponudba (menu dneva) — slovenska tradicija
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 15
+Agent: Z.ai Code (main)
+Task: Vizualni tloris miz po sekcijah + iskalnik.
+
+Work Log:
+- TablesView preoblikovan z vizualnim tlorisom:
+  * Mize razporejene po sekcijah (Dvorana, Terasa, Zasebna) z naslovi
+  * Vsaka sekcija ima ikono (🏛️ Dvorana, 🌿 Terasa, 🔒 Zasebna, 🍸 Bar)
+  * Naslov sekcije prikazuje število miz (badge)
+  * Jasna vizualna ločitev med sekcijami
+  * Ko je izbran "Vse", vse sekcije prikazane z naslovi
+  * Ko je izbrana določena sekcija, samo ta sekcija prikazana
+- Iskalnik po številki/ime mize:
+  * Input z search ikono
+  * Filter po imenu ali številki mize
+  * Empty state ločen za "ni miz v sekciji" vs "ni rezultatov iskanja"
+- Kartice miz izboljšane: številka mize (#1) prikazana nad imenom
+- Lint: 0 errorjev
+- VLM verification: "mize razporejene v sekcijah z naslovi: DVORANA (8 miz), TERASA (4 miz) in ZASEBNA (2 mizi)"
+- Push na GitHub: commit a647090
+
+Stage Summary:
+- Vizualni tloris miz implementiran — sekcije z naslovi in ikonami
+- Iskalnik za hitro iskanje mize po imenu/številki
+- Screenshot 01-tables.png posodobljen
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
