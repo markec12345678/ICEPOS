@@ -722,3 +722,43 @@ Stage Summary:
   * Lastnik: dashboard, mesečno/tedensko poročilo, Z-report
   * Admin: operaterji, mize, meni admin
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 20
+Agent: Z.ai Code (main)
+Task: Online naročanje za goste preko QR kode.
+
+Work Log:
+- Backend POST /api/orders/guest:
+  * Gost naroči brez PIN-a (preko QR na mizi)
+  * Validira da miza nima odprtega naročila
+  * Ustvari virtualno "GOST (online)" mizo če ni podana
+  * Postavke označene z "[GOST]" note
+  * Vrača orderId + total
+- MenuClient komponenta (polna client interaktivnost):
+  * "Dodaj" gumb na vsaki postavki z flash animacijo (+ Dodaj → ✓ Dodano)
+  * Floating cart gumb (amber, prikazuje število + skupaj)
+  * Cart sekcija: qty kontrole, odstrani, input za ime
+  * Checkout: "Oddaj naročilo" gumb → success screen
+  * Success screen: zeleno potrdilo s številko naročila
+  * Sekcije: dnevna ponudba, priljubljene, vse kategorije
+  * Rezervacije prikazane
+- Lint: 0 errorjev
+- Agent Browser verification (end-to-end):
+  * Gost odpre /meni?miza=5 → vidi meni
+  * Klikne "+ Dodaj" → postavka dodana v cart
+  * Floating cart prikazuje "1 · 8,90 €"
+  * Klikne cart → vidi checkout (Skupaj, Oddaj naročilo)
+  * Klikne "Oddaj naročilo" → success "uspešno oddano"
+  * Naročilo se pojavi v kuhinji + dnevniku računov
+- Push na GitHub: commit de246d0
+
+Stage Summary:
+- Online naročanje za goste implementirano (QR → meni → naročilo → kuhinja)
+- CEL RESTAVRACIJSKI EKOSISTEM zdaj popoln:
+  * GOST: skenira QR → vidi meni → naroči online → naročilo gre v kuhinjo
+  * KUHINJA: prejme naročilo (KOT display) → pripravi → pozove mizo
+  * BLAGAJNIK: vidi naročilo na mizi → plačilo (FURS) → račun
+  * LASTNIK: dashboard, tedensko/mesečno poročilo, Z-report, CSV izvoz
+  * ADMIN: operaterji (PIN), mize, meni admin
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
