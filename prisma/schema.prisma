@@ -13,14 +13,18 @@ datasource db {
 model MenuItem {
   id              String   @id @default(cuid())
   name            String
-  nameEn          String? // angleški prevod imena (za turiste)
+  nameEn          String?
   category        String
   price           Float
   vatRate         Float
   available       Boolean  @default(true)
   desc            String?
-  descEn          String? // angleški prevod opisa
-  allergens       String? // JSON array alergenov: ["gluten","milk","eggs","nuts","soy","fish","shellfish","sesame","sulfites","celery","mustard","lupin","molluscs"]
+  descEn          String?
+  allergens       String?
+  calories        Int? // kcal na porcijo
+  protein         Float? // grami
+  carbs           Float? // grami
+  fat             Float? // grami
   isFavorite      Boolean  @default(false)
   isDailySpecial  Boolean  @default(false)
   createdAt       DateTime @default(now())

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useFetch } from "@/hooks/use-fetch";
 import { usePosStore } from "@/stores/pos-store";
 import { formatEUR, formatTime, type Table, type Order } from "@/lib/types";
@@ -31,6 +31,29 @@ export function TablesView() {
   const selectTable = usePosStore((s) => s.selectTable);
   const [section, setSection] = useState<string>("Vse");
   const [search, setSearch] = useState("");
+  const [prevOpenCount, setPrevOpenCount] = useState<number>(0);
+
+  // Auto-refresh vsakih 10s — zazna nova online naročila gostov
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [refetch]);
+
+  // Obvesti ko se pojavi novo naročilo (count open orders increased)
+  useEffect(() => {
+    if (!data) return;
+    const openCount = data.filter((t) =>
+      t.orders.some((o) => o.status === "open")
+    ).length;
+    if (prevOpenCount > 0 && openCount > prevOpenCount) {
+      toast.info("🔔 Novo naročilo!", {
+        description: "Gost je oddal novo naročilo preko QR kode",
+      });
+    }
+    setPrevOpenCount(openCount);
+  }, [data, prevOpenCount]);
 
   async function handleSeatReservation(reservationId: string, tableName: string) {
     try {

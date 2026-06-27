@@ -822,3 +822,38 @@ Stage Summary:
   1. Alergeni (EU 1169/2011 skladnost — obvezno za javne menije)
   2. Angleški prevod (turistične restavracije — Bled, Ljubljana, obala)
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 23
+Agent: Z.ai Code (main)
+Task: Hranilna vrednost, takeaway opcija, auto-refresh miz.
+
+Work Log:
+- Hranilna vrednost (kalorije, makrohranila):
+  * Prisma: dodana polja calories, protein, carbs, fat na MenuItem
+  * Seed: vseh 34 postavk opremljenih z vrednostmi (kcal + beljakovine/ogljikovi/mascobe)
+  * Javni meni /meni: prikaz "🔥 650 kcal P: 28g O: 55g M: 32g" pod vsako postavko
+  * Bilingual (P/O/M oznake delujejo v SI/EN)
+- Takeaway opcija na javnem meniju:
+  * "Dine-in" (🍽️ amber) vs "Takeaway" (🥡 sky blue) stikalo v cart-u
+  * Takeaway: brez mize, gost povzame na pultu
+  * Dine-in: povezano z mizo iz QR kode
+  * Bilingual (Tukaj/Za povzet, Dine in/Takeaway)
+- Auto-refresh miz (10s polling):
+  * TablesView avtomatsko osveži /api/tables vsakih 10s
+  * Zazna nova online naročila gostov brez ročnega osveževanja
+  * Toast obvestilo ko se pojavi novo naročilo: "🔔 Novo naročilo!"
+  * Kritično za blagajnika da vidi gostova naročila v realnem času
+- Lint: 0 errorjev
+- Agent Browser verification:
+  * 🔥 650 kcal P: 28g O: 55g M: 32g viden na Žlikrofih
+  * Dine-in/Takeaway stikalo prisotno v cart-u
+  * Auto-refresh aktiven (10s interval)
+- Push na GitHub: commit 3f1ddaf
+
+Stage Summary:
+- 3 nove funkcionalnosti: hranilna vrednost, takeaway, auto-refresh
+- Gost vidi kalorije in makrohranila za vsako jed (EU trend, health-conscious gostje)
+- Gost lahko izbere dine-in ali takeaway (pogosto v bistrojih/fast food)
+- Blagajnik vidi nova naročila gostov v realnem času (10s polling + toast)
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS

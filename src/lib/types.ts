@@ -18,6 +18,10 @@ export interface MenuItem {
   desc?: string | null;
   descEn?: string | null;
   allergens?: string | null;
+  calories?: number | null;
+  protein?: number | null;
+  carbs?: number | null;
+  fat?: number | null;
   isFavorite?: boolean;
   isDailySpecial?: boolean;
   createdAt: string;

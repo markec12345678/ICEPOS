@@ -42,6 +42,7 @@ export function MenuClient({ items, tableNumber, reservations, issuer }: MenuCli
   const [orderId, setOrderId] = useState<string | null>(null);
   const [addedFlash, setAddedFlash] = useState<Set<string>>(new Set());
   const [lang, setLang] = useState<"sl" | "en">("sl");
+  const [orderType, setOrderType] = useState<"dinein" | "takeaway">("dinein");
 
   // Helper za prevod
   function t(item: MenuItem) {
@@ -109,8 +110,9 @@ export function MenuClient({ items, tableNumber, reservations, issuer }: MenuCli
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tableNumber,
+          tableNumber: orderType === "takeaway" ? undefined : tableNumber,
           customerName: customerName.trim() || undefined,
+          orderType,
           items: cart.map((c) => ({
             menuItemId: c.menuItem.id,
             quantity: c.quantity,
@@ -419,6 +421,42 @@ export function MenuClient({ items, tableNumber, reservations, issuer }: MenuCli
             </div>
           ))}
 
+          {/* Tip naročila: Tukaj / Za povzet */}
+          <div style={{ marginTop: 16, display: "flex", gap: 8 }}>
+            <button
+              onClick={() => setOrderType("dinein")}
+              style={{
+                flex: 1,
+                padding: "10px",
+                borderRadius: 8,
+                border: orderType === "dinein" ? "2px solid #f59e0b" : "2px solid #e5e7eb",
+                background: orderType === "dinein" ? "#fffbeb" : "white",
+                cursor: "pointer",
+                fontSize: 13,
+                fontWeight: orderType === "dinein" ? 700 : 400,
+                color: orderType === "dinein" ? "#92400e" : "#6b7280",
+              }}
+            >
+              🍽️ {lang === "sl" ? "Tukaj (dine-in)" : "Dine in"}
+            </button>
+            <button
+              onClick={() => setOrderType("takeaway")}
+              style={{
+                flex: 1,
+                padding: "10px",
+                borderRadius: 8,
+                border: orderType === "takeaway" ? "2px solid #0ea5e9" : "2px solid #e5e7eb",
+                background: orderType === "takeaway" ? "#f0f9ff" : "white",
+                cursor: "pointer",
+                fontSize: 13,
+                fontWeight: orderType === "takeaway" ? 700 : 400,
+                color: orderType === "takeaway" ? "#075985" : "#6b7280",
+              }}
+            >
+              🥡 {lang === "sl" ? "Za povzet (takeaway)" : "Takeaway"}
+            </button>
+          </div>
+
           {/* Ime */}
           <div style={{ marginTop: 16 }}>
             <input
@@ -487,7 +525,12 @@ export function MenuClient({ items, tableNumber, reservations, issuer }: MenuCli
                 textAlign: "center",
               }}
             >
-              Naročilo bo povezano z mizo {tableNumber}
+              {orderType === "dinein" && tableNumber
+                ? lang === "sl" ? `Naročilo bo povezano z mizo ${tableNumber}` : `Order will be linked to table ${tableNumber}`
+                : orderType === "takeaway"
+                ? lang === "sl" ? "🥡 Naročilo za povzet — obvestili vas bomo ko bo pripravljeno" : "🥡 Takeaway order — we'll notify you when ready"
+                : ""
+              }
             </p>
           )}
         </div>
@@ -623,6 +666,25 @@ function ItemCard({
                 </span>
               );
             })}
+          </div>
+        )}
+        {/* Hranilna vrednost */}
+        {item.calories != null && item.calories > 0 && (
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              marginTop: 6,
+              fontSize: 11,
+              color: "#6b7280",
+            }}
+          >
+            <span style={{ fontWeight: 600 }}>
+              🔥 {item.calories} kcal
+            </span>
+            {item.protein != null && <span>P: {item.protein}g</span>}
+            {item.carbs != null && <span>O: {item.carbs}g</span>}
+            {item.fat != null && <span>M: {item.fat}g</span>}
           </div>
         )}
         <div
