@@ -20,6 +20,7 @@ import {
   CalendarClock,
   Package,
   Gift,
+  CalendarCheck,
 } from "lucide-react";
 import {
   Sheet,
@@ -51,13 +52,14 @@ export function PosFooter() {
     { id: "gift-cards" as const, label: "Darilne kartice", desc: "Gift cards", icon: Gift },
     { id: "tables-admin" as const, label: "Mize admin", desc: "Urejanje miz", icon: LayoutGrid },
     { id: "operators" as const, label: "Operaterji", desc: "Blagajniki (FURS)", icon: Users },
+    { id: "scheduling" as const, label: "Razpored", desc: "Scheduling + Labor cost", icon: CalendarCheck },
     { id: "weekly" as const, label: "Tedenska statistika", desc: "Po dnevih v tednu", icon: CalendarClock },
     { id: "monthly" as const, label: "Mesečno poročilo", desc: "Statistika meseca", icon: CalendarRange },
     { id: "zreport" as const, label: "Z-report", desc: "Dnevni zaključek", icon: FileBarChart },
     { id: "settings" as const, label: "Nastavitve", desc: "Podjetje in FURS", icon: Settings },
   ];
 
-  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards"].includes(activeView);
+  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards", "scheduling"].includes(activeView);
 
   return (
     <footer className="sticky bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:hidden print:hidden">
@@ -245,6 +247,12 @@ export function PosSidebar() {
       label: "Mize admin",
       desc: "Urejanje miz",
       icon: LayoutGrid,
+    },
+    {
+      id: "scheduling" as const,
+      label: "Razpored",
+      desc: "Scheduling + Labor cost",
+      icon: CalendarCheck,
     },
   ];
 

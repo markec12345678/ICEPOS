@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { buildOrderConfirmation, sendNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -125,6 +126,21 @@ export async function POST(req: NextRequest) {
     await db.orderItem.createMany({
       data: orderItemsData.map((it) => ({ ...it, orderId: order.id })),
     });
+
+    // Pošlji potrditev naročila (če je podano ime gosta)
+    if (customerName) {
+      const payload = buildOrderConfirmation(
+        customerName,
+        order.id,
+        total,
+        orderItemsData.map((it) => {
+          const m = menuMap.get(it.menuItemId)!;
+          return { name: m.name, quantity: it.quantity, price: it.unitPrice };
+        }),
+        !tableNumber // takeaway = brez mize
+      );
+      await sendNotification(payload, "email");
+    }
 
     return NextResponse.json(
       {

@@ -126,8 +126,11 @@ model Operator {
   pin        String   @unique // 4-mesten PIN
   taxNumber  String   @default("SI12345678")
   role       String   @default("cashier") // "cashier" | "admin"
+  hourlyRate Float    @default(12) // urna postavka (EUR) za labor cost
   active     Boolean  @default(true)
   createdAt  DateTime @default(now())
+  schedules  Schedule[]
+  timesheets Timesheet[]
 }
 
 // === INVENTORY MANAGEMENT ===
@@ -186,4 +189,36 @@ model GiftCard {
   expiresAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// === EMPLOYEE SCHEDULING ===
+
+// Razpored delavnikov (planirane ure za operaterja na določen dan)
+model Schedule {
+  id           String   @id @default(cuid())
+  operatorId   String
+  operator     Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  date         String   // YYYY-MM-DD
+  startTime    String   // HH:mm (npr. "08:00")
+  endTime      String   // HH:mm (npr. "16:00")
+  role         String   @default("waiter") // "waiter" | "cashier" | "cook" | "manager" | "host"
+  note         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([operatorId, date])
+}
+
+// Časovnica dejanskega dela (clock in/out)
+model Timesheet {
+  id           String    @id @default(cuid())
+  operatorId   String
+  operator     Operator  @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  date         String    // YYYY-MM-DD (delovni dan)
+  clockIn      DateTime  // čas prihoda
+  clockOut     DateTime? // čas odhoda (null = še dela)
+  breakMinutes Int       @default(0) // odmor v minutah
+  note         String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }

@@ -23,6 +23,7 @@ import { TablesAdminView } from "@/components/pos/tables-admin-view";
 import { InventoryView } from "@/components/pos/inventory-view";
 import { CustomerView } from "@/components/pos/customer-view";
 import { GiftCardsView } from "@/components/pos/gift-cards-view";
+import { SchedulingView } from "@/components/pos/scheduling-view";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { PinLoginDialog, getStoredOperator, type Operator } from "@/components/pos/pin-login";
 import { Toaster, toast } from "sonner";
@@ -153,6 +154,7 @@ export default function Home() {
             {activeView === "inventory" && <InventoryView />}
             {activeView === "customers" && <CustomerView />}
             {activeView === "gift-cards" && <GiftCardsView />}
+            {activeView === "scheduling" && <SchedulingView />}
           </div>
         </main>
       </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { buildReservationConfirmation, sendNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -78,6 +79,22 @@ export async function POST(req: NextRequest) {
       },
       include: { table: true },
     });
+
+    // Pošlji potrditveni SMS/email (če je podan telefon)
+    if (customerPhone) {
+      const payload = buildReservationConfirmation(
+        customerName,
+        date,
+        time,
+        parseInt(partySize, 10),
+        reservation.table.name
+      );
+      payload.to = customerPhone;
+      // SMS če je telefon, sicer email
+      const isPhone = /^[\+]?[0-9\s\-]{8,15}$/.test(customerPhone);
+      await sendNotification(payload, isPhone ? "sms" : "email");
+    }
+
     return NextResponse.json(reservation, { status: 201 });
   } catch (e) {
     console.error("POST /api/reservations error:", e);
