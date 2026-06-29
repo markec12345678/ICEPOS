@@ -1,0 +1,71 @@
+# ============================================================
+# Gostilna POS — .dockerignore
+# ============================================================
+# Datoteke ki naj se NE kopirajo v Docker image.
+# =====================================================================
+
+# Odvisnosti (lokalne nameščene — bodo instalirane v build stage)
+node_modules
+**/node_modules
+
+# Build artefakti
+.next
+out
+dist
+build
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Baza (volume mount v produkciji)
+db/*.db
+db/*.db-journal
+*.sqlite
+*.sqlite3
+
+# Logi
+*.log
+dev.log
+server.log
+kitchen-service.log
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dokumentacija (lahko izpustimo iz slike)
+docs/
+*.md
+!README.md
+
+# Testi
+test
+tests
+coverage
+.tool-results
+
+# Slike / asseti ki niso potrebni v runtime
+docs/screenshots/
+
+# CI / CD
+.github
+.gitlab-ci.yml
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore

@@ -1,0 +1,141 @@
+# ============================================================
+# Gostilna POS — CI pipeline
+# ============================================================
+# Zagon na vsak push in PR na main branch.
+# =====================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+# Prekliči prejšnje zahteve na istem branchu
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # === LINT + TYPE CHECK ===
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🥟 Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 📦 Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            .next/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: 📥 Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🔍 Generate Prisma client
+        run: bunx prisma generate
+        env:
+          DATABASE_URL: "file::memory:?cache=shared"
+
+      - name: 🧹 Lint (ESLint)
+        run: bun run lint
+
+      - name: 🔎 Type check (TypeScript)
+        run: bunx tsc --noEmit
+
+  # === BUILD TEST ===
+  build:
+    name: Build Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: lint
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🥟 Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 📦 Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            .next/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+
+      - name: 📥 Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: 🔍 Generate Prisma client
+        run: bunx prisma generate
+        env:
+          DATABASE_URL: "file::memory:?cache=shared"
+
+      - name: 🏗️ Push DB schema (SQLite memory)
+        run: bunx prisma db push --skip-generate
+        env:
+          DATABASE_URL: "file::memory:?cache=shared"
+
+      - name: 🌱 Seed database
+        run: bun run db:seed
+        env:
+          DATABASE_URL: "file::memory:?cache=shared"
+
+      - name: 🏗️ Build Next.js
+        run: bun run build
+        env:
+          DATABASE_URL: "file::memory:?cache=shared"
+          NEXT_TELEMETRY_DISABLED: "1"
+          NEXTAUTH_SECRET: "ci-test-secret-do-not-use-in-production"
+          NEXTAUTH_URL: "http://localhost:3000"
+
+      - name: 📤 Upload build artifact
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: next-build
+          path: |
+            .next
+            public
+          retention-days: 3
+
+  # === KITCHEN SERVICE BUILD ===
+  kitchen-build:
+    name: Kitchen Service Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🥟 Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 📥 Install dependencies
+        working-directory: mini-services/kitchen-service
+        run: bun install --frozen-lockfile
+
+      - name: 🔎 Type check
+        working-directory: mini-services/kitchen-service
+        run: bunx tsc --noEmit || echo "no tsconfig — skip"

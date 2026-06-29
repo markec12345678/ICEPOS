@@ -1,0 +1,17 @@
+# ============================================================
+# GitHub Issue Tracker config
+# ============================================================
+# Konfiguracija za issue template chooser.
+# =====================================================================
+
+blank_issues_enabled: true
+contact_links:
+  - name: 💬 Diskusija / vprašanje
+    url: https://github.com/markec12345678/ICEPOS/discussions
+    about: Za splošna vprašanja, ideje in diskusijo uporabi Discussions (ne issues).
+  - name: 📧 Direktni kontakt (avtor)
+    url: mailto:markec@example.com
+    about: Za zasebne poslovne povpraševanja (prodaja, implementacija).
+  - name: 📖 Dokumentacija
+    url: https://github.com/markec12345678/ICEPOS#readme
+    about: Preberi README preden odpreš issue.

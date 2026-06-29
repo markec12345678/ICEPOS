@@ -1,0 +1,59 @@
+# ============================================================
+# Gostilna POS — docker-compose.yml
+# ============================================================
+# Zagon:  docker compose up -d
+# Build:  docker compose up -d --build
+# =====================================================================
+
+services:
+  # --- Glavni Next.js POS ---
+  pos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gostilna-pos
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:/app/db/custom.db
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-change-me-in-production}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - FURS_TAX_NUMBER=${FURS_TAX_NUMBER:-12345678}
+      - FURS_BUSINESS_UNIT=${FURS_BUSINESS_UNIT:-PREVOZ11}
+      - FURS_CASH_REGISTER=${FURS_CASH_REGISTER:-BLAG01}
+      - FURS_ENV=${FURS_ENV:-test}
+      - KITCHEN_SERVICE_PORT=3003
+    volumes:
+      - pos-db:/app/db
+      - pos-logs:/app/logs
+    networks:
+      - pos-network
+    depends_on:
+      - kitchen
+
+  # --- Kitchen WebSocket Service ---
+  kitchen:
+    build:
+      context: ./mini-services/kitchen-service
+      dockerfile: Dockerfile
+    container_name: gostilna-kitchen
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - POS_API_URL=http://pos:3000
+    networks:
+      - pos-network
+
+volumes:
+  pos-db:
+    driver: local
+  pos-logs:
+    driver: local
+
+networks:
+  pos-network:
+    driver: bridge
