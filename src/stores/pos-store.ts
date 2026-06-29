@@ -36,7 +36,8 @@ interface PosState {
     | "inventory"
     | "customers"
     | "gift-cards"
-    | "scheduling";
+    | "scheduling"
+    | "menu-engineering";
   setActiveView: (
     v:
       | "tables"
@@ -57,6 +58,7 @@ interface PosState {
       | "customers"
       | "gift-cards"
       | "scheduling"
+      | "menu-engineering"
   ) => void;
 
   // Selected table
