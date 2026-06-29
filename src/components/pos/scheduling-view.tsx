@@ -31,6 +31,7 @@ import {
   TrendingUp,
   DollarSign,
   Timer,
+  Coins,
 } from "lucide-react";
 import { formatEUR } from "@/lib/types";
 
@@ -102,7 +103,7 @@ const ROLES = [
 // ============================================================
 
 export function SchedulingView() {
-  const [tab, setTab] = useState<"week" | "clock" | "labor">("week");
+  const [tab, setTab] = useState<"week" | "clock" | "labor" | "tips">("week");
   const [weekStart, setWeekStart] = useState(getWeekStart(new Date()));
 
   return (
@@ -110,7 +111,7 @@ export function SchedulingView() {
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Razpored delavnikov</h2>
         <p className="text-sm text-muted-foreground">
-          Planiranje shifts, clock in/out, labor cost analiza
+          Planiranje shifts, clock in/out, labor cost analiza, distribucija napitnin
         </p>
       </div>
 
@@ -128,6 +129,10 @@ export function SchedulingView() {
           <TrendingUp className="mr-1.5 h-4 w-4" />
           Labor Cost
         </TabButton>
+        <TabButton active={tab === "tips"} onClick={() => setTab("tips")}>
+          <Coins className="mr-1.5 h-4 w-4" />
+          Tip Pool
+        </TabButton>
       </div>
 
       {tab === "week" && (
@@ -135,6 +140,7 @@ export function SchedulingView() {
       )}
       {tab === "clock" && <ClockView />}
       {tab === "labor" && <LaborCostView />}
+      {tab === "tips" && <TipPoolView />}
     </div>
   );
 }
@@ -880,4 +886,236 @@ function getWeekStart(date: Date): string {
   d.setDate(d.getDate() + diff);
   d.setHours(0, 0, 0, 0);
   return d.toISOString().slice(0, 10);
+}
+
+// ============================================================
+// Tip Pool View — distribucija napitnin
+// ============================================================
+
+interface TipDistribution {
+  operatorId: string;
+  operatorName: string;
+  role: string;
+  hourlyRate: number;
+  minutes: number;
+  hours: number;
+  weight: number;
+  weightedMinutes: number;
+  share: number;
+  amount: number;
+  clockIn: string;
+  clockOut: string | null;
+}
+
+interface TipPoolData {
+  date: string;
+  method: "hours" | "role" | "hybrid";
+  totalTips: number;
+  totalRevenue: number;
+  orderCount: number;
+  totalHours: number;
+  activeEmployees: number;
+  totalEmployees: number;
+  distributions: TipDistribution[];
+  roundingDiff: number;
+  roleWeights: Record<string, number>;
+  message?: string;
+}
+
+const ROLE_LABELS: Record<string, string> = {
+  waiter: "Natakar",
+  cashier: "Blagajnik",
+  cook: "Kuhar",
+  host: "Hostess",
+  manager: "Manager",
+};
+
+function TipPoolView() {
+  const [data, setData] = useState<TipPoolData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [method, setMethod] = useState<"hours" | "role" | "hybrid">("hybrid");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/tip-pool?date=${date}&method=${method}`);
+      if (!res.ok) throw new Error("Napaka");
+      setData(await res.json());
+    } catch {
+      toast.error("Napaka pri nalaganju tip pool");
+    } finally {
+      setLoading(false);
+    }
+  }, [date, method]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (loading || !data) {
+    return <div className="py-8 text-center text-muted-foreground">Nalagam...</div>;
+  }
+
+  const tipPercent = data.totalRevenue > 0
+    ? Math.round((data.totalTips / data.totalRevenue) * 1000) / 10
+    : 0;
+
+  return (
+    <div className="space-y-4">
+      {/* Controls */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div>
+          <label className="mb-1 block text-xs text-muted-foreground">Datum</label>
+          <Input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="w-44"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-muted-foreground">Metoda</label>
+          <Select value={method} onValueChange={(v) => setMethod(v as typeof method)}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="hybrid">Hibrid (ure × vloga)</SelectItem>
+              <SelectItem value="hours">Po urah (enako)</SelectItem>
+              <SelectItem value="role">Po vlogi (fiksno)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* KPI cards */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground">Skupaj napitnine</p>
+              <p className="text-2xl font-bold text-amber-600">{formatEUR(data.totalTips)}</p>
+            </div>
+            <Coins className="h-5 w-5 text-amber-500" />
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground">Promet</p>
+              <p className="text-2xl font-bold">{formatEUR(data.totalRevenue)}</p>
+            </div>
+            <TrendingUp className="h-5 w-5 text-muted-foreground" />
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground">% napitnine</p>
+              <p className="text-2xl font-bold">{tipPercent}%</p>
+              <p className="text-xs text-muted-foreground">{data.orderCount} računov</p>
+            </div>
+            <Timer className="h-5 w-5 text-muted-foreground" />
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground">Skupaj ur</p>
+              <p className="text-2xl font-bold">{data.totalHours}h</p>
+              <p className="text-xs text-muted-foreground">
+                {data.activeEmployees} aktivnih / {data.totalEmployees}
+              </p>
+            </div>
+            <Users className="h-5 w-5 text-muted-foreground" />
+          </div>
+        </Card>
+      </div>
+
+      {data.message ? (
+        <Card className="p-6 text-center text-muted-foreground">
+          {data.message}
+        </Card>
+      ) : (
+        <>
+          {/* Distributions table */}
+          <Card className="overflow-hidden">
+            <div className="border-b bg-muted/50 p-3">
+              <h3 className="text-sm font-semibold">
+                Distribucija napitnin — {data.distributions.length} zaposlenih
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Metoda: {data.method === "hours" ? "po urah" : data.method === "role" ? "po vlogi" : "hibrid (ure × vloga)"}
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30">
+                  <tr>
+                    <th className="p-3 text-left font-medium">Zaposleni</th>
+                    <th className="p-3 text-left font-medium">Vloga</th>
+                    <th className="p-3 text-right font-medium">Ure</th>
+                    <th className="p-3 text-right font-medium">Weight</th>
+                    <th className="p-3 text-right font-medium">Delež</th>
+                    <th className="p-3 text-right font-medium">Znesek</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.distributions.map((d) => (
+                    <tr key={d.operatorId} className="border-b last:border-0 hover:bg-muted/30">
+                      <td className="p-3">
+                        <div className="font-medium">{d.operatorName}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {d.clockIn && new Date(d.clockIn).toLocaleTimeString("sl-SI", { hour: "2-digit", minute: "2-digit" })}
+                          {" – "}
+                          {d.clockOut ? new Date(d.clockOut).toLocaleTimeString("sl-SI", { hour: "2-digit", minute: "2-digit" }) : "aktivna"}
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <Badge variant="outline">
+                          {ROLE_LABELS[d.role] || d.role}
+                        </Badge>
+                      </td>
+                      <td className="p-3 text-right font-mono">{d.hours}h</td>
+                      <td className="p-3 text-right font-mono text-xs text-muted-foreground">
+                        {d.weight}×
+                      </td>
+                      <td className="p-3 text-right font-mono">{d.share}%</td>
+                      <td className="p-3 text-right font-bold text-amber-600">
+                        {formatEUR(d.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="border-t-2 bg-muted/50">
+                  <tr>
+                    <td colSpan={5} className="p-3 text-right font-semibold">Skupaj:</td>
+                    <td className="p-3 text-right font-bold text-amber-600">
+                      {formatEUR(data.totalTips)}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            {Math.abs(data.roundingDiff) >= 0.01 && (
+              <div className="border-t bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-950/30 dark:text-amber-400">
+                ⚠️ Razlika zaradi zaokroževanja: {formatEUR(data.roundingDiff)} (ročno poračunaj)
+              </div>
+            )}
+          </Card>
+
+          {/* Info card */}
+          <Card className="p-4 bg-muted/30">
+            <h3 className="mb-2 text-sm font-semibold">💡 Kako deluje distribucija?</h3>
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <p><strong>Hibrid (priporočeno):</strong> ure × weight per vloga. Natakar (1.0×), blagajnik (0.8×), kuhar (0.6×), host (0.5×), manager (0.3×).</p>
+              <p><strong>Po urah:</strong> vsak dobi proporcionalno delu — ne glede na vlogo.</p>
+              <p><strong>Po vlogi:</strong> fiksni deleži ne glede na ure (primer: kuharji ki delajo manj).</p>
+            </div>
+          </Card>
+        </>
+      )}
+    </div>
+  );
 }
