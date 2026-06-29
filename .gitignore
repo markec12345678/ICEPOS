@@ -65,6 +65,9 @@ kitchen-service.log
 # Tool / agent artifacts
 /tool-results/
 /agent-ctx/
+/.zscripts/
+/worklog.md
+/download/
 
 # IDE
 .idea/
