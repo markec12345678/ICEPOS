@@ -161,6 +161,7 @@ export default function Home() {
             {activeView === "gift-cards" && <GiftCardsView />}
             {activeView === "scheduling" && <SchedulingView />}
             {activeView === "menu-engineering" && <MenuEngineeringView />}
+            {activeView === "benchmark" && <BenchmarkView />}
           </div>
         </main>
       </div>
