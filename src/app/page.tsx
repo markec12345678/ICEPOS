@@ -26,6 +26,7 @@ import { CustomerView } from "@/components/pos/customer-view";
 import { GiftCardsView } from "@/components/pos/gift-cards-view";
 import { SchedulingView } from "@/components/pos/scheduling-view";
 import { MenuEngineeringView } from "@/components/pos/menu-engineering-view";
+import { BenchmarkView } from "@/components/pos/benchmark-view";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { PinLoginDialog, getStoredOperator, type Operator } from "@/components/pos/pin-login";
 import { Toaster, toast } from "sonner";
