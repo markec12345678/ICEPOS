@@ -9,6 +9,31 @@ in projekt uporablja [Semantic Versioning](https://semver.org/lang/sl/).
 
 ## [Nepublikovano]
 
+### Dodano — Izpopolnitev (Toast POS konkurenca)
+- **Tableside Ordering** (`/natakar`) — mobilna aplikacija za natakarje
+  - PIN login z localStorage persistenco
+  - Bottom navigation: Mize | Meni | Naročila
+  - Mize z avto-osvežitvami (10s polling), prikaz postavk/zneska za zasedene
+  - Meni z iskanjem, kategorijami, item modal (količina, opomba)
+  - Cart drawer + "Pošlji v kuhinjo" (POST /api/orders + send-to-kitchen)
+  - Moja naročila z avto-osvežitvami (5s)
+- **Email/SMS notifikacije** (`lib/notifications.ts`)
+  - Predloge: rezervacije, online naročila, "naročilo pripravljeno"
+  - Integrirano v `/api/reservations` (SMS ob potrditvi)
+  - Integrirano v `/api/orders/guest` (email ob online naročilu)
+  - Pripravljeno za SMTP/Twilio v produkciji
+- **Employee Scheduling + Labor Cost**
+  - Prisma: `Schedule` (unique [operatorId, date]) + `Timesheet` modela
+  - Operator: `hourlyRate Float @default(12)` za labor cost izračun
+  - API: `/api/schedules` (CRUD z week filter), `/api/timesheets` (CRUD + clock)
+  - API: `/api/timesheets/clock` (hitri in/out), `/api/labor-cost` (analiza)
+  - Komponenta `scheduling-view.tsx` z 3 zavihki:
+    - **Tedenski razpored** — grid operaterji × 7 dni, modal za dodajanje shifts
+    - **Clock In/Out** — hitri gumbi per operater, dnevnik ur
+    - **Labor Cost** — KPI (strošek dela, promet, labor %, ure), per-operator breakdown
+  - Idealni labor cost %: 25–30% (v restavracijah)
+  - Nov "Razpored" gumb v sidebar (desktop) in "Več" menu (mobile)
+
 ### Dodano
 - **Napitnine (Tips)** — UI v plačilnem dialogu (%, fiksni EUR, hitri gumbi 5/10/15 %, 1/2/5 €)
 - Prikaz napitnin v dashboardu (dnevne napitnine)
