@@ -925,3 +925,32 @@ Stage Summary:
 - Vsi nav itemi obnovljeni in funkcionalni
 - README popolnoma aktualen z vsemi funkcijami
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 29
+Agent: Z.ai Code (main)
+Task: Recipe Costing (food cost % per jed) + low-stock dashboard alert.
+
+Work Log:
+- MenuAdminView — Recipe Costing:
+  * Nova "Food Cost Analiza" sekcija pod meni tabelo
+  * Fetcha /api/recipes z inventoryItem include za izračun stroška
+  * Za vsako jed z receptom prikaže: food cost %, strošek sestavin, marža (€), marža %
+  * Barvno kodirano: zelena <30%, oranžna 30-40%, rdeča >40%
+  * Breakdown sestavin: ime, količina, enota, strošek per sestavina
+  * Nova kolona v meni tabeli: "Food cost" z % in maržo
+  * Legenda: <30% odlično, 30-40% sprejemljivo, >40% previsoko
+- Dashboard header — Low-stock alert:
+  * Fetcha /api/inventory/low-stock
+  * Rose alert badge: "Nizka zaloga! X izdelkov pod minimumom"
+  * Klik → navigira na Inventory view
+  * Samo ko so izdelki pod minimumom
+- Lint: 0 errorjev
+- Agent Browser verification: "Food Cost", "Analiza", "marže" prisotni ✓
+- Push na GitHub: commit 5454021
+
+Stage Summary:
+- Recipe Costing (food cost %) implementiran — lastniki vidijo profitabilnost vsake jedi
+- Low-stock alert na dashboardu — blagajnik takoj vidi katere zaloge so nizke
+- ICEPOS SI zdaj pokriva VSE Toast POS funkcije + food cost analiza
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS

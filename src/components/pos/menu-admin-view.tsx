@@ -39,16 +39,40 @@ import {
   Search,
   AlertCircle,
   BookOpen,
+  Calculator,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function MenuAdminView() {
   const { data, loading, error, refetch } = useFetch<MenuItem[]>("/api/menu");
+  const { data: recipes } = useFetch<{
+    id: string;
+    menuItemId: string;
+    inventoryItemId: string;
+    quantity: number;
+    inventoryItem: { name: string; costPerUnit: number; unit: string };
+  }[]>("/api/recipes");
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState<string>("vse");
   const [editing, setEditing] = useState<MenuItem | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<MenuItem | null>(null);
+
+  // Izračunaj food cost per menu item
+  const recipeMap = new Map<string, { foodCost: number; ingredients: { name: string; qty: number; cost: number; unit: string }[] }>();
+  for (const r of recipes || []) {
+    const existing = recipeMap.get(r.menuItemId);
+    const lineCost = r.quantity * r.inventoryItem.costPerUnit;
+    if (existing) {
+      existing.foodCost += lineCost;
+      existing.ingredients.push({ name: r.inventoryItem.name, qty: r.quantity, cost: lineCost, unit: r.inventoryItem.unit });
+    } else {
+      recipeMap.set(r.menuItemId, {
+        foodCost: lineCost,
+        ingredients: [{ name: r.inventoryItem.name, qty: r.quantity, cost: lineCost, unit: r.inventoryItem.unit }],
+      });
+    }
+  }
 
   const items = data || [];
   const filtered = items.filter((m) => {
@@ -189,10 +213,11 @@ export function MenuAdminView() {
         <Card className="overflow-hidden p-0">
           <div className="divide-y divide-border">
             <div className="hidden grid-cols-12 gap-2 bg-muted/50 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
-              <div className="col-span-5">Naziv</div>
+              <div className="col-span-4">Naziv</div>
               <div className="col-span-2">Kategorija</div>
               <div className="col-span-2 text-right">Cena</div>
-              <div className="col-span-2 text-center">DDV</div>
+              <div className="col-span-1 text-center">DDV</div>
+              <div className="col-span-2 text-center">Food cost</div>
               <div className="col-span-1 text-center">Aktivna</div>
             </div>
             {filtered.map((m) => {
@@ -202,7 +227,7 @@ export function MenuAdminView() {
                   key={m.id}
                   className="grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm transition-colors hover:bg-muted/40"
                 >
-                  <div className="col-span-12 sm:col-span-5">
+                  <div className="col-span-12 sm:col-span-4">
                     <div className="flex items-center gap-2">
                       <span className="text-base">{cat?.icon || "🍽️"}</span>
                       <div className="min-w-0">
@@ -223,8 +248,30 @@ export function MenuAdminView() {
                   <div className="col-span-3 text-right font-semibold sm:col-span-2">
                     {formatEUR(m.price)}
                   </div>
-                  <div className="col-span-2 text-center text-xs text-muted-foreground sm:col-span-2">
+                  <div className="col-span-2 text-center text-xs text-muted-foreground sm:col-span-1">
                     {(m.vatRate * 100).toFixed(1)}%
+                  </div>
+                  {/* Food cost % */}
+                  <div className="col-span-2 text-center sm:col-span-2">
+                    {(() => {
+                      const recipe = recipeMap.get(m.id);
+                      if (!recipe || m.price === 0) {
+                        return <span className="text-xs text-muted-foreground">—</span>;
+                      }
+                      const foodCostPct = (recipe.foodCost / m.price) * 100;
+                      const margin = ((m.price - recipe.foodCost) / m.price) * 100;
+                      const color = foodCostPct > 40 ? "text-rose-600 dark:text-rose-400" : foodCostPct > 30 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400";
+                      return (
+                        <div>
+                          <p className={cn("text-xs font-bold", color)}>
+                            {foodCostPct.toFixed(0)}%
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {formatEUR(recipe.foodCost)} → {margin.toFixed(0)}% marže
+                          </p>
+                        </div>
+                      );
+                    })()}
                   </div>
                   <div className="col-span-3 flex items-center justify-end gap-1 sm:col-span-1">
                     <Button
@@ -250,6 +297,92 @@ export function MenuAdminView() {
           </div>
         </Card>
       )}
+
+      {/* Recipe Costing — food cost analiza */}
+      <Card className="p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <Calculator className="h-5 w-5 text-amber-600" />
+          <div>
+            <h3 className="font-bold">Food Cost Analiza</h3>
+            <p className="text-xs text-muted-foreground">
+              Strošek sestavin per jed · marža · food cost %
+            </p>
+          </div>
+        </div>
+
+        {/* Legenda */}
+        <div className="mb-3 flex flex-wrap gap-3 text-xs">
+          <span className="flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+            &lt; 30% (odlično)
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+            30-40% (sprejemljivo)
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
+            &gt; 40% (previsoko)
+          </span>
+        </div>
+
+        {items.filter((m) => recipeMap.has(m.id)).length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            Ni receptov. Dodaj recepte v Inventory → Recipe sekcija za izračun food cost-a.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {items
+              .filter((m) => recipeMap.has(m.id))
+              .map((m) => {
+                const recipe = recipeMap.get(m.id)!;
+                const foodCostPct = m.price > 0 ? (recipe.foodCost / m.price) * 100 : 0;
+                const margin = m.price - recipe.foodCost;
+                const marginPct = m.price > 0 ? (margin / m.price) * 100 : 0;
+                const color = foodCostPct > 40 ? "rose" : foodCostPct > 30 ? "amber" : "emerald";
+                return (
+                  <div
+                    key={m.id}
+                    className="rounded-lg border border-border p-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{m.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Cena: {formatEUR(m.price)} · Strošek: {formatEUR(recipe.foodCost)} · Marža: {formatEUR(margin)} ({marginPct.toFixed(0)}%)
+                        </p>
+                      </div>
+                      <div className="ml-3 text-right">
+                        <p
+                          className={cn(
+                            "text-lg font-bold",
+                            color === "rose" && "text-rose-600 dark:text-rose-400",
+                            color === "amber" && "text-amber-600 dark:text-amber-400",
+                            color === "emerald" && "text-emerald-600 dark:text-emerald-400"
+                          )}
+                        >
+                          {foodCostPct.toFixed(0)}%
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">food cost</p>
+                      </div>
+                    </div>
+                    {/* Sestavine */}
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {recipe.ingredients.map((ing, i) => (
+                        <span
+                          key={i}
+                          className="rounded-md bg-muted px-2 py-0.5 text-[10px] text-muted-foreground"
+                        >
+                          {ing.name}: {ing.qty}{ing.unit} ({formatEUR(ing.cost)})
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+        )}
+      </Card>
 
       {/* Dialog: urejanje/ustvarjanje */}
       {(editing || creating) && (

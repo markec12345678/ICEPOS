@@ -19,6 +19,8 @@ import {
   TrendingUp,
   Banknote,
   CreditCard,
+  Package,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -57,7 +59,9 @@ export function DashboardHeader() {
   const { data: reservations } = useFetch<Reservation[]>(
     `/api/reservations?date=${new Date().toISOString().slice(0, 10)}&status=confirmed`
   );
+  const { data: lowStock } = useFetch<{ id: string; name: string; quantity: number; minQuantity: number; unit: string }[]>("/api/inventory/low-stock");
   const setActiveView = usePosStore((s) => s.setActiveView);
+  const lowStockCount = (lowStock || []).length;
 
   // Live polling za prihodek aktivne smene (vsakih 30s)
   const [liveStats, setLiveStats] = useState<LiveShiftStats | null>(null);
@@ -231,6 +235,29 @@ export function DashboardHeader() {
             <span className="text-[10px]">Z-report</span>
           </Button>
         </div>
+
+        {/* Low-stock alert */}
+        {lowStockCount > 0 && (
+          <button
+            onClick={() => setActiveView("inventory")}
+            className={cn(
+              "mt-3 flex w-full items-center justify-between rounded-lg border-2 border-rose-300 bg-rose-50 p-2.5 text-left transition-colors hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/30 dark:hover:bg-rose-900/30"
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+              <div>
+                <p className="text-xs font-bold text-rose-700 dark:text-rose-400">
+                  Nizka zaloga!
+                </p>
+                <p className="text-[10px] text-rose-600 dark:text-rose-500">
+                  {lowStockCount} {lowStockCount === 1 ? "izdelek" : "izdelkov"} pod minimumom
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="h-3 w-3 text-rose-600 dark:text-rose-400" />
+          </button>
+        )}
       </Card>
     </div>
   );
