@@ -24,6 +24,7 @@ import {
   X,
   ShieldCheck,
   Users,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FursQrCode } from "@/components/pos/furs-qr-code";
@@ -63,11 +64,17 @@ export function PaymentDialog() {
   } = usePosStore();
 
   const { data: tables, refetch } = useFetch<TableWithOrders[]>("/api/tables");
-  const [method, setMethod] = useState<"cash" | "card">("cash");
+  const [method, setMethod] = useState<"cash" | "card" | "giftcard">("cash");
   const [tendered, setTendered] = useState<string>("");
   const [processing, setProcessing] = useState(false);
   const [paid, setPaid] = useState<PaidResult | null>(null);
   const [splitOpen, setSplitOpen] = useState(false);
+  const [giftCardCode, setGiftCardCode] = useState("");
+  const [gcBalance, setGcBalance] = useState<number | null>(null);
+  const [gcError, setGcError] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [selectedCustomerName, setSelectedCustomerName] = useState<string | null>(null);
 
   const selectedTable = tables?.find((t) => t.id === selectedTableId);
   const openOrder = selectedTable?.orders.find((o) => o.status === "open");
@@ -101,6 +108,12 @@ export function PaymentDialog() {
       selectTable(null);
       setTendered("");
       setDiscountPercent(0);
+      setGiftCardCode("");
+      setGcBalance(null);
+      setGcError("");
+      setSelectedCustomerId(null);
+      setSelectedCustomerName(null);
+      setCustomerSearch("");
       refetch();
     }
   }
@@ -114,12 +127,20 @@ export function PaymentDialog() {
       toast.error("Prejeto je manj kot znaša račun");
       return;
     }
+    if (method === "giftcard" && !giftCardCode.trim()) {
+      toast.error("Vnesite kodo darilne kartice");
+      return;
+    }
     setProcessing(true);
     try {
+      const payload: Record<string, unknown> = { paymentMethod: method };
+      if (method === "giftcard") payload.giftCardCode = giftCardCode.trim().toUpperCase();
+      if (selectedCustomerId) payload.customerId = selectedCustomerId;
+
       const res = await fetch(`/api/orders/${openOrder.id}/pay`, {
         method: "POST",
         headers: authHeaders(),
-        body: JSON.stringify({ paymentMethod: method }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -193,7 +214,7 @@ export function PaymentDialog() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setMethod("cash")}
                   className={cn(
@@ -217,6 +238,18 @@ export function PaymentDialog() {
                 >
                   <CreditCard className="h-6 w-6" />
                   <span className="text-sm font-medium">Kartica</span>
+                </button>
+                <button
+                  onClick={() => setMethod("giftcard")}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 transition-all hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                    method === "giftcard"
+                      ? "border-purple-500 bg-purple-50 dark:bg-purple-950/30"
+                      : "border-border hover:bg-muted hover:border-purple-200"
+                  )}
+                >
+                  <Gift className="h-6 w-6" />
+                  <span className="text-sm font-medium">Kartica darilo</span>
                 </button>
               </div>
 
@@ -261,6 +294,143 @@ export function PaymentDialog() {
                 </div>
               )}
 
+              {method === "giftcard" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Koda darilne kartice</label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="GC-XXXXXXXX"
+                      value={giftCardCode}
+                      onChange={(e) => {
+                        setGiftCardCode(e.target.value.toUpperCase());
+                        setGcBalance(null);
+                        setGcError("");
+                      }}
+                      className="font-mono"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        if (!giftCardCode.trim()) return;
+                        try {
+                          const res = await fetch(`/api/gift-cards/${giftCardCode.trim().toUpperCase()}`);
+                          const data = await res.json();
+                          if (!res.ok) {
+                            setGcError(data.error || "Ni najden");
+                            setGcBalance(null);
+                            return;
+                          }
+                          setGcBalance(data.balance);
+                          setGcError("");
+                        } catch {
+                          setGcError("Napaka pri iskanju");
+                        }
+                      }}
+                    >
+                      Preveri
+                    </Button>
+                  </div>
+                  {gcError && (
+                    <p className="text-sm text-rose-600">{gcError}</p>
+                  )}
+                  {gcBalance !== null && (
+                    <div className={cn(
+                      "rounded-lg p-3 text-sm",
+                      gcBalance >= total
+                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                        : "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400"
+                    )}>
+                      <div className="flex justify-between">
+                        <span>Stanje na kartici:</span>
+                        <span className="font-bold">{formatEUR(gcBalance)}</span>
+                      </div>
+                      {gcBalance >= total ? (
+                        <div className="mt-1 flex justify-between">
+                          <span>Po plačilu:</span>
+                          <span className="font-bold">{formatEUR(gcBalance - total)}</span>
+                        </div>
+                      ) : (
+                        <p className="mt-1 font-medium">Premajhno stanje!</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Stranka (loyalty) — vedno prikazano */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">
+                  Stranka (loyalty — opcijsko)
+                </label>
+                {selectedCustomerId ? (
+                  <div className="flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50/50 p-2 dark:border-emerald-900 dark:bg-emerald-950/20">
+                    <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                      👤 {selectedCustomerName}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setSelectedCustomerId(null);
+                        setSelectedCustomerName(null);
+                        setCustomerSearch("");
+                      }}
+                      className="text-xs text-muted-foreground hover:text-rose-600"
+                    >
+                      ✕ Odstrani
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Input
+                      placeholder="Išči po imenu ali telefonu..."
+                      value={customerSearch}
+                      onChange={async (e) => {
+                        setCustomerSearch(e.target.value);
+                        if (e.target.value.trim().length < 2) return;
+                        // Live search customers
+                        try {
+                          const res = await fetch("/api/customers");
+                          const data = await res.json();
+                          const found = data.filter(
+                            (c: { name: string; phone?: string | null; id: string }) =>
+                              c.name.toLowerCase().includes(e.target.value.toLowerCase()) ||
+                              (c.phone || "").includes(e.target.value)
+                          );
+                          // Store in a data attribute for display
+                          const el = document.getElementById("customer-results");
+                          if (el) {
+                            el.innerHTML = found
+                              .slice(0, 5)
+                              .map(
+                                (c: { id: string; name: string; phone?: string | null; points: number }) =>
+                                  `<div data-id="${c.id}" data-name="${c.name}" class="cust-result px-3 py-2 hover:bg-muted cursor-pointer text-sm border-b border-border/50 last:border-0">${c.name} ${c.phone ? "· " + c.phone : ""} · ${c.points} točk</div>`
+                              )
+                              .join("");
+                          }
+                        } catch {
+                          // ignore
+                        }
+                      }}
+                      className="text-sm"
+                    />
+                    {customerSearch.trim().length >= 2 && (
+                      <div
+                        id="customer-results"
+                        className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-border bg-popover shadow-lg"
+                        onClick={(e) => {
+                          const target = e.target as HTMLElement;
+                          const item = target.closest(".cust-result") as HTMLElement | null;
+                          if (item) {
+                            setSelectedCustomerId(item.dataset.id || null);
+                            setSelectedCustomerName(item.dataset.name || null);
+                            setCustomerSearch("");
+                          }
+                        }}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-3 gap-2">
                 <Button
                   variant="outline"
@@ -278,6 +448,7 @@ export function PaymentDialog() {
                   disabled={
                     processing ||
                     (method === "cash" && tenderedNum < total) ||
+                    (method === "giftcard" && (gcBalance === null || gcBalance < total)) ||
                     cart.length === 0
                   }
                   className="col-span-2 bg-amber-600 py-3 text-sm font-semibold text-white hover:bg-amber-700"

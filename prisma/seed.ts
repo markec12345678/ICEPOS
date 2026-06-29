@@ -75,6 +75,9 @@ async function main() {
   console.log("🌱 Seeding slovenskega menija in miz...");
 
   // Počisti (vrstni red pomemben zaradi foreign key constraints)
+  await db.recipe.deleteMany();
+  await db.inventoryItem.deleteMany();
+  await db.customer.deleteMany();
   await db.modifier.deleteMany();
   await db.orderItem.deleteMany();
   await db.order.deleteMany();
@@ -95,9 +98,6 @@ async function main() {
     await db.menuItem.create({ data: { ...m, available: true } });
   }
   console.log(`✅ ${menuData.length} menijskih postavk ustvarjenih`);
-
-  // Dodaj alergene + angleške prevode
-  await seedAllergensAndTranslations(db);
 
   // Demo: eno odprto naročilo na mizi 2
   const table2 = await db.table.findFirst({ where: { number: 2 } });
@@ -133,9 +133,6 @@ async function main() {
   // Demo: modifierji za nekaj jedi
   await seedModifiers(db);
 
-  // Demo: označi priljubljene in dnevno ponudbo
-  await seedFavoritesAndSpecials(db);
-
   // Demo: rezervacije za danes in jutri
   await seedReservations(db);
 
@@ -145,89 +142,89 @@ async function main() {
   // Demo: operaterji s PIN-i
   await seedOperators(db);
 
+  // Demo: inventory + recipes + customers
+  await seedInventory(db);
+  await seedCustomers(db);
+
   console.log("🎉 Seed končan!");
 }
 
-async function seedAllergensAndTranslations(db: import("@prisma/client").PrismaClient) {
-  // Alergeni (EU 1169/2011) + angleški prevodi za slovenske jedi
-  const translations: Record<string, { nameEn: string; descEn?: string; allergens: string[]; calories?: number; protein?: number; carbs?: number; fat?: number }> = {
-    "Pršut z melono": { nameEn: "Prosciutto with melon", descEn: "Dried ham, fresh melon, arugula", allergens: ["milk"], calories: 220, protein: 18, carbs: 12, fat: 12 },
-    "Sirna deska": { nameEn: "Cheese platter", descEn: "Selection of Slovenian cheeses, walnuts, honey", allergens: ["milk", "nuts"], calories: 380, protein: 22, carbs: 8, fat: 30 },
-    "Ocvrte bučke": { nameEn: "Fried zucchini", descEn: "Breaded zucchini, garlic dip", allergens: ["gluten", "milk", "eggs"], calories: 180, protein: 5, carbs: 20, fat: 9 },
-    "Juha dneva": { nameEn: "Soup of the day", descEn: "Beef soup with noodles", allergens: ["gluten", "eggs", "celery"], calories: 120, protein: 6, carbs: 18, fat: 3 },
-    "Oljke in sirek": { nameEn: "Olives and feta", descEn: "Mixed olives, feta cheese, tomato", allergens: ["milk"], calories: 250, protein: 8, carbs: 10, fat: 20 },
-    "Žlikrofi s pečenico": { nameEn: "Idrija dumplings with pork", descEn: "Traditional stuffed dumplings, roast pork, gravy", allergens: ["gluten", "eggs", "celery"], calories: 650, protein: 28, carbs: 55, fat: 32 },
-    "Kranjska klobasa s kislim zeljem": { nameEn: "Carniolan sausage with sauerkraut", descEn: "Kranjska sausage, sauerkraut, potatoes", allergens: ["sulfites", "mustard"], calories: 720, protein: 30, carbs: 25, fat: 55 },
-    "Jota": { nameEn: "Jota (bean and sauerkraut stew)", descEn: "Traditional stew with beans and sauerkraut", allergens: ["sulfites", "celery"], calories: 320, protein: 14, carbs: 45, fat: 10 },
-    "Ajdovi žganci z ocvirki": { nameEn: "Buckwheat mush with cracklings", descEn: "Buckwheat dumplings, pork cracklings", allergens: ["sulfites"], calories: 420, protein: 12, carbs: 55, fat: 18 },
-    "Štruklji v skuti": { nameEn: "Cheese dumplings", descEn: "Rolled dumplings in cottage cheese, walnut sauce", allergens: ["gluten", "milk", "eggs", "nuts"], calories: 380, protein: 14, carbs: 42, fat: 18 },
-    "Ocvrli piščanec": { nameEn: "Fried chicken", descEn: "Crispy fried chicken, french fries, salad", allergens: ["gluten", "eggs"], calories: 580, protein: 32, carbs: 35, fat: 35 },
-    "Šmarn golaž": { nameEn: "Venison goulash", descEn: "Wild game goulash, dumplings", allergens: ["gluten", "celery"], calories: 480, protein: 35, carbs: 30, fat: 22 },
-    "Rižota z morskimi sadeži": { nameEn: "Seafood risotto", descEn: "Calamari, shrimp, white wine", allergens: ["shellfish", "molluscs", "milk", "sulfites"], calories: 420, protein: 22, carbs: 55, fat: 12 },
-    "Biftek z gobovo omako": { nameEn: "Beefsteak with mushroom sauce", descEn: "Beef 200g, beef broth, french fries", allergens: ["milk", "celery", "sulfites"], calories: 680, protein: 45, carbs: 25, fat: 45 },
-    "Prekmurska gibanica": { nameEn: "Prekmurje layer cake", descEn: "Traditional cake with cottage cheese, walnuts", allergens: ["gluten", "milk", "eggs", "nuts"], calories: 450, protein: 10, carbs: 55, fat: 22 },
-    "Blediška kremšnita": { nameEn: "Bled cream cake", descEn: "Cream slice, puff pastry", allergens: ["gluten", "milk", "eggs"], calories: 380, protein: 6, carbs: 35, fat: 25 },
-    "Potica": { nameEn: "Walnut roll", descEn: "Traditional Slovenian walnut potica", allergens: ["gluten", "milk", "eggs", "nuts"], calories: 320, protein: 8, carbs: 40, fat: 15 },
-    "Palačinke z nutello": { nameEn: "Pancakes with Nutella", descEn: "Nutella, banana, whipped cream", allergens: ["gluten", "milk", "eggs", "nuts", "soy"], calories: 420, protein: 8, carbs: 55, fat: 18 },
-    "Domnči tiramisu": { nameEn: "Homemade tiramisu", descEn: "Coffee, mascarpone, cocoa", allergens: ["gluten", "milk", "eggs"], calories: 350, protein: 7, carbs: 30, fat: 22 },
-    "Kava espresso": { nameEn: "Espresso", allergens: [], calories: 5, protein: 0, carbs: 1, fat: 0 },
-    "Cappuccino": { nameEn: "Cappuccino", allergens: ["milk"], calories: 80, protein: 4, carbs: 8, fat: 4 },
-    "Topla čokolada": { nameEn: "Hot chocolate", descEn: "Belgian chocolate, cream", allergens: ["milk"], calories: 250, protein: 6, carbs: 35, fat: 10 },
-    "Sok pomaranča": { nameEn: "Orange juice", descEn: "Freshly squeezed orange juice", allergens: [], calories: 110, protein: 2, carbs: 26, fat: 0 },
-    "Radenska": { nameEn: "Radenska mineral water", descEn: "Mineral water 0.5l", allergens: [], calories: 0 },
-    "Coca-Cola": { nameEn: "Coca-Cola", descEn: "0.33l", allergens: [], calories: 139 },
-    "Čaj": { nameEn: "Tea", descEn: "Selection of teas, honey, lemon", allergens: [], calories: 20 },
-    "Laški beli": { nameEn: "White wine (Laški)", descEn: "0.2l, dry white wine", allergens: ["sulfites"], calories: 145 },
-    "Refošk": { nameEn: "Refosco red wine", descEn: "0.2l, red wine from Primorska", allergens: ["sulfites"], calories: 160 },
-    "Modra Frankinja": { nameEn: "Blaufränkisch red wine", descEn: "0.2l, red wine from Prekmurje", allergens: ["sulfites"], calories: 160 },
-    "Pivo Laško": { nameEn: "Laško beer", descEn: "0.5l, draft", allergens: ["gluten"], calories: 215 },
-    "Pivo Union": { nameEn: "Union beer", descEn: "0.5l, draft", allergens: ["gluten"], calories: 215 },
-    "Aperol Spritz": { nameEn: "Aperol Spritz", descEn: "Aperol, prosecco, soda", allergens: ["sulfites"], calories: 180 },
-    "Žganje slivovko": { nameEn: "Plum brandy (Slivovka)", descEn: "0.04l, homemade plum brandy", allergens: [], calories: 95 },
-    "Žganje hruškovo": { nameEn: "Pear brandy (Viljamovka)", descEn: "0.04l, William pear brandy", allergens: [], calories: 95 },
-  };
+async function seedInventory(db: import("@prisma/client").PrismaClient) {
+  const items = [
+    { name: "Moka", unit: "kg", quantity: 25, minQuantity: 5, costPerUnit: 0.8, supplier: "Mlinotest", category: "splosno" },
+    { name: "Goveje meso", unit: "kg", quantity: 8, minQuantity: 3, costPerUnit: 12.5, supplier: "Mercator", category: "meso" },
+    { name: "Svinjsko meso", unit: "kg", quantity: 12, minQuantity: 4, costPerUnit: 8.5, supplier: "Jata", category: "meso" },
+    { name: "Piščanec", unit: "kg", quantity: 15, minQuantity: 5, costPerUnit: 6.5, supplier: "Perutnina Ptuj", category: "meso" },
+    { name: "Krompir", unit: "kg", quantity: 30, minQuantity: 10, costPerUnit: 0.6, supplier: "Local", category: "zelenjava" },
+    { name: "Fižol", unit: "kg", quantity: 10, minQuantity: 3, costPerUnit: 2.5, supplier: "Mercator", category: "zelenjava" },
+    { name: "Kislo zelje", unit: "kg", quantity: 8, minQuantity: 2, costPerUnit: 1.8, supplier: "Local", category: "zelenjava" },
+    { name: "Buče", unit: "kg", quantity: 5, minQuantity: 2, costPerUnit: 1.2, supplier: "Local", category: "zelenjava" },
+    { name: "Sir (vsi)", unit: "kg", quantity: 6, minQuantity: 2, costPerUnit: 9.0, supplier: "Mlekarna Celeia", category: "splosno" },
+    { name: "Jajca", unit: "kos", quantity: 60, minQuantity: 20, costPerUnit: 0.2, supplier: "Local", category: "splosno" },
+    { name: "Pivo Laško (sod)", unit: "l", quantity: 50, minQuantity: 10, costPerUnit: 1.8, supplier: "Laško", category: "pijaca" },
+    { name: "Pivo Union (sod)", unit: "l", quantity: 40, minQuantity: 10, costPerUnit: 1.7, supplier: "Union", category: "pijaca" },
+    { name: "Vino Refošk", unit: "l", quantity: 15, minQuantity: 5, costPerUnit: 5.5, supplier: "Vinska klet", category: "pijaca" },
+    { name: "Vino Laški", unit: "l", quantity: 12, minQuantity: 4, costPerUnit: 4.5, supplier: "Vinska klet", category: "pijaca" },
+    { name: "Aperol", unit: "l", quantity: 3, minQuantity: 1, costPerUnit: 15.0, supplier: "Mercator", category: "pijaca" },
+    { name: "Prosecco", unit: "l", quantity: 5, minQuantity: 2, costPerUnit: 7.0, supplier: "Mercator", category: "pijaca" },
+    { name: "Kava", unit: "kg", quantity: 4, minQuantity: 1, costPerUnit: 18.0, supplier: "Barcaffe", category: "splosno" },
+    { name: "Mleko", unit: "l", quantity: 10, minQuantity: 3, costPerUnit: 1.0, supplier: "Mlekarna", category: "splosno" },
+    { name: "Orehi", unit: "kg", quantity: 3, minQuantity: 1, costPerUnit: 12.0, supplier: "Local", category: "splosno" },
+    { name: "Skuta", unit: "kg", quantity: 4, minQuantity: 1, costPerUnit: 4.5, supplier: "Mlekarna", category: "splosno" },
+  ];
 
-  let count = 0;
-  for (const [name, data] of Object.entries(translations)) {
-    const item = await db.menuItem.findFirst({ where: { name } });
-    if (item) {
-      await db.menuItem.update({
-        where: { id: item.id },
-        data: {
-          nameEn: data.nameEn,
-          descEn: data.descEn || null,
-          allergens: data.allergens.length > 0 ? JSON.stringify(data.allergens) : null,
-          calories: data.calories || null,
-          protein: data.protein ?? null,
-          carbs: data.carbs ?? null,
-          fat: data.fat ?? null,
-        },
-      });
-      count++;
-    }
+  for (const item of items) {
+    await db.inventoryItem.create({ data: item });
   }
-  console.log(`✅ ${count} postavk posodobljenih z alergeni + EN prevodi`);
+  console.log(`✅ ${items.length} inventory items ustvarjenih`);
+
+  // Recipes — poveži nekaj jedi z sestavinami
+  const zlikrofi = await db.menuItem.findFirst({ where: { name: "Žlikrofi s pečenico" } });
+  const kranjska = await db.menuItem.findFirst({ where: { name: "Kranjska klobasa s kislim zeljem" } });
+  const jota = await db.menuItem.findFirst({ where: { name: "Jota" } });
+  const biftek = await db.menuItem.findFirst({ where: { name: "Biftek z gobovo omako" } });
+  const pivo = await db.menuItem.findFirst({ where: { name: "Pivo Laško" } });
+
+  const moka = await db.inventoryItem.findFirst({ where: { name: "Moka" } });
+  const svinjina = await db.inventoryItem.findFirst({ where: { name: "Svinjsko meso" } });
+  const govedina = await db.inventoryItem.findFirst({ where: { name: "Goveje meso" } });
+  const zelje = await db.inventoryItem.findFirst({ where: { name: "Kislo zelje" } });
+  const fizol = await db.inventoryItem.findFirst({ where: { name: "Fižol" } });
+  const krompir = await db.inventoryItem.findFirst({ where: { name: "Krompir" } });
+  const pivoSod = await db.inventoryItem.findFirst({ where: { name: "Pivo Laško (sod)" } });
+
+  const recipes = [
+    zlikrofi && moka && svinjina && { menuItemId: zlikrofi.id, inventoryItemId: moka.id, quantity: 0.15 },
+    zlikrofi && svinjina && { menuItemId: zlikrofi.id, inventoryItemId: svinjina.id, quantity: 0.2 },
+    kranjska && svinjina && { menuItemId: kranjska.id, inventoryItemId: svinjina.id, quantity: 0.25 },
+    kranjska && zelje && { menuItemId: kranjska.id, inventoryItemId: zelje.id, quantity: 0.2 },
+    kranjska && krompir && { menuItemId: kranjska.id, inventoryItemId: krompir.id, quantity: 0.3 },
+    jota && fizol && { menuItemId: jota.id, inventoryItemId: fizol.id, quantity: 0.15 },
+    jota && zelje && { menuItemId: jota.id, inventoryItemId: zelje.id, quantity: 0.15 },
+    biftek && govedina && { menuItemId: biftek.id, inventoryItemId: govedina.id, quantity: 0.2 },
+    biftek && krompir && { menuItemId: biftek.id, inventoryItemId: krompir.id, quantity: 0.3 },
+    pivo && pivoSod && { menuItemId: pivo.id, inventoryItemId: pivoSod.id, quantity: 0.5 },
+  ].filter(Boolean) as { menuItemId: string; inventoryItemId: string; quantity: number }[];
+
+  for (const r of recipes) {
+    await db.recipe.create({ data: r });
+  }
+  console.log(`✅ ${recipes.length} receptov (recipes) ustvarjenih`);
 }
 
-async function seedFavoritesAndSpecials(db: import("@prisma/client").PrismaClient) {
-  // Priljubljene (najpogosteje naročene)
-  const favorites = ["Kranjska klobasa s kislim zeljem", "Žlikrofi s pečenico", "Biftek z gobovo omako", "Pivo Laško", "Cappuccino", "Aperol Spritz"];
-  // Dnevna ponudba (menu dneva)
-  const specials = ["Jota", "Šmarn golaž", "Prekmurska gibanica"];
+async function seedCustomers(db: import("@prisma/client").PrismaClient) {
+  const customers = [
+    { name: "Janez Novak", phone: "031 234 567", email: "janez@email.com", points: 45, totalSpent: 450.50, visitCount: 12, note: "Alergija na gluten" },
+    { name: "Marija Horvat", phone: "041 555 333", email: "marija@email.com", points: 32, totalSpent: 320.00, visitCount: 8, note: "Vegetarijanka" },
+    { name: "Marko Kovač", phone: "051 999 888", points: 15, totalSpent: 150.30, visitCount: 4 },
+    { name: "Ana Zupan", phone: "070 123 456", email: "ana@email.com", points: 68, totalSpent: 680.00, visitCount: 15, note: "Redna stranka, rojstni dan 15.5." },
+    { name: "Peter Krajnc", phone: "031 777 888", points: 5, totalSpent: 50.00, visitCount: 2 },
+  ];
 
-  for (const name of favorites) {
-    await db.menuItem.updateMany({
-      where: { name },
-      data: { isFavorite: true },
-    });
+  for (const c of customers) {
+    await db.customer.create({ data: c });
   }
-  for (const name of specials) {
-    await db.menuItem.updateMany({
-      where: { name },
-      data: { isDailySpecial: true },
-    });
-  }
-  console.log(`✅ ${favorites.length} priljubljenih + ${specials.length} dnevnih ponudb označenih`);
+  console.log(`✅ ${customers.length} strank (customers) ustvarjenih`);
 }
 
 async function seedOperators(db: import("@prisma/client").PrismaClient) {

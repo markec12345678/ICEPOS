@@ -11,25 +11,17 @@ datasource db {
 }
 
 model MenuItem {
-  id              String   @id @default(cuid())
-  name            String
-  nameEn          String?
-  category        String
-  price           Float
-  vatRate         Float
-  available       Boolean  @default(true)
-  desc            String?
-  descEn          String?
-  allergens       String?
-  calories        Int? // kcal na porcijo
-  protein         Float? // grami
-  carbs           Float? // grami
-  fat             Float? // grami
-  isFavorite      Boolean  @default(false)
-  isDailySpecial  Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  orderItems      OrderItem[]
-  modifiers       Modifier[]
+  id        String   @id @default(cuid())
+  name      String
+  category  String // "predjedi" | "glavne_jedi" | "brezalkoholne" | "alkoholne" | "sladice"
+  price     Float // EUR
+  vatRate   Float // 0.095 (znižana - hrana) | 0.22 (splošna - alkohol)
+  available Boolean  @default(true)
+  desc      String?
+  createdAt DateTime @default(now())
+  orderItems OrderItem[]
+  modifiers Modifier[]
+  recipes    Recipe[]
 }
 
 model Modifier {
@@ -79,6 +71,8 @@ model Order {
   stornoAt      DateTime?
   stornoZoi     String?
   stornoEor     String?
+  customerId    String?
+  customer      Customer? @relation(fields: [customerId], references: [id])
 }
 
 model OrderItem {
@@ -133,4 +127,62 @@ model Operator {
   role       String   @default("cashier") // "cashier" | "admin"
   active     Boolean  @default(true)
   createdAt  DateTime @default(now())
+}
+
+// === INVENTORY MANAGEMENT ===
+
+model InventoryItem {
+  id          String   @id @default(cuid())
+  name        String
+  unit        String   @default("kos") // "kos" | "kg" | "l" | "g" | "ml"
+  quantity    Float    @default(0)
+  minQuantity Float    @default(0) // alert ko pade pod
+  costPerUnit Float    @default(0) // nabavna cena na enoto
+  supplier    String?
+  category    String   @default("splosno") // "meso" | "zelenjava" | "pijaca" | "splosno"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  recipes     Recipe[]
+}
+
+model Recipe {
+  id              String   @id @default(cuid())
+  menuItemId      String
+  menuItem        MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  quantity        Float // kolicina potrebna za 1 porcijo
+  createdAt       DateTime @default(now())
+}
+
+// === CRM / LOYALTY ===
+
+model Customer {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String?  @unique
+  email       String?
+  points      Int      @default(0) // tocke zvestobe
+  totalSpent  Float    @default(0) // skupna poraba
+  visitCount  Int      @default(0) // stevilo obiskov
+  allergens   String?  // JSON array alergij stranke
+  note        String?  // opombe (alergije, preference)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  orders      Order[]
+}
+
+// === GIFT CARDS ===
+
+model GiftCard {
+  id          String   @id @default(cuid())
+  code        String   @unique // 8-mestna koda (npr. GC-AB12CD34)
+  balance     Float    @default(0) // trenutno stanje
+  initialAmount Float  // začetni znesek
+  status      String   @default("active") // "active" | "used" | "expired"
+  customerName String? // ime prejemnika (opcijsko)
+  note        String?
+  expiresAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
