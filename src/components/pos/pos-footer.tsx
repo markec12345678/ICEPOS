@@ -18,6 +18,8 @@ import {
   CalendarRange,
   Users,
   CalendarClock,
+  Package,
+  Gift,
 } from "lucide-react";
 import {
   Sheet,
@@ -44,6 +46,9 @@ export function PosFooter() {
     { id: "reservations" as const, label: "Rezervacije", desc: "Koledar miz", icon: CalendarDays },
     { id: "shift" as const, label: "Smena", desc: "Blagajnikova smena", icon: UserCircle },
     { id: "menu" as const, label: "Meni", desc: "Urejanje postavk", icon: BookOpen },
+    { id: "inventory" as const, label: "Zaloga", desc: "Inventory management", icon: Package },
+    { id: "customers" as const, label: "Stranke", desc: "CRM in zvestoba", icon: Users },
+    { id: "gift-cards" as const, label: "Darilne kartice", desc: "Gift cards", icon: Gift },
     { id: "tables-admin" as const, label: "Mize admin", desc: "Urejanje miz", icon: LayoutGrid },
     { id: "operators" as const, label: "Operaterji", desc: "Blagajniki (FURS)", icon: Users },
     { id: "weekly" as const, label: "Tedenska statistika", desc: "Po dnevih v tednu", icon: CalendarClock },
@@ -52,7 +57,7 @@ export function PosFooter() {
     { id: "settings" as const, label: "Nastavitve", desc: "Podjetje in FURS", icon: Settings },
   ];
 
-  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin"].includes(activeView);
+  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards"].includes(activeView);
 
   return (
     <footer className="sticky bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:hidden print:hidden">
@@ -169,6 +174,24 @@ export function PosSidebar() {
       icon: ChefHat,
     },
     { id: "menu" as const, label: "Meni", desc: "Urejanje postavk", icon: BookOpen },
+    {
+      id: "inventory" as const,
+      label: "Zaloga",
+      desc: "Inventory management",
+      icon: Package,
+    },
+    {
+      id: "customers" as const,
+      label: "Stranke",
+      desc: "CRM in zvestoba",
+      icon: Users,
+    },
+    {
+      id: "gift-cards" as const,
+      label: "Darilne kartice",
+      desc: "Gift cards",
+      icon: Gift,
+    },
     {
       id: "reservations" as const,
       label: "Rezervacije",

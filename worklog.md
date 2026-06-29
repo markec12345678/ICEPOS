@@ -897,3 +897,31 @@ Stage Summary:
   5. ✅ Customer selection v PaymentDialog (loyalty integracija)
 - ICEPOS SI zdaj pokriva VSE ključne Toast POS funkcije + FURS + alergeni + hranilna vrednost + dvojezičnost
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 28
+Agent: Z.ai Code (main)
+Task: README posodobitev + obnova navigacije + screenshots.
+
+Work Log:
+- Odkril da so inventory/customers/gift-cards nav itemi manjkali v pos-footer.tsx
+  (izgubljeni med rsync operacijami)
+- Ročno dodal Package + Gift icon import v pos-footer.tsx
+- Dodal inventory/customers/gift-cards v moreNav (mobile) in navItems (desktop sidebar)
+- Posodobil isMoreActive array z novimi view-i
+- Posodobil pos-store.ts z 3 novimi view tipi
+- Posodobil page.tsx z importi + render za InventoryView, CustomerView, GiftCardsView
+- Lint: 0 errorjev
+- Nove screenshots: inventory (30), customers (31), gift cards (32), dashboard (09), mize (01), meni (23)
+- README popolnoma posodobljen:
+  * 16 POS pogledov + 2 javni strani
+  * Inventory, CRM/Loyalty, Gift Cards, Recipe Costing sekcije
+  * Alergeni (EU 1169), hranilna vrednost, dvojezičnost
+  * Online naročanje, sledenje, takeaway
+  * 11 Prisma modelov, 30+ API route-ov, 20 komponent, 32 screenshotov
+- Push na GitHub: commit e26d20d
+
+Stage Summary:
+- Vsi nav itemi obnovljeni in funkcionalni
+- README popolnoma aktualen z vsemi funkcijami
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS

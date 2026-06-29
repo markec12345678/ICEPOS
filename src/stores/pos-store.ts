@@ -32,7 +32,10 @@ interface PosState {
     | "zreport"
     | "settings"
     | "operators"
-    | "tables-admin";
+    | "tables-admin"
+    | "inventory"
+    | "customers"
+    | "gift-cards";
   setActiveView: (
     v:
       | "tables"
@@ -49,6 +52,9 @@ interface PosState {
       | "settings"
       | "operators"
       | "tables-admin"
+      | "inventory"
+      | "customers"
+      | "gift-cards"
   ) => void;
 
   // Selected table
