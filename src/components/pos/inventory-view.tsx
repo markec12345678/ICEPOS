@@ -44,6 +44,10 @@ import {
   AlertTriangle,
   Euro,
   Boxes,
+  PackagePlus,
+  ChefHat,
+  Link2,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { authHeaders } from "@/components/pos/pin-login";
@@ -95,6 +99,20 @@ export function InventoryView() {
   const [editing, setEditing] = useState<InventoryItem | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<InventoryItem | null>(null);
+  const [restocking, setRestocking] = useState<InventoryItem | null>(null);
+  const [restockQty, setRestockQty] = useState("");
+  const [showRecipes, setShowRecipes] = useState(false);
+
+  // Recipes
+  const { data: recipes, refetch: refetchRecipes } = useFetch<{
+    id: string;
+    menuItemId: string;
+    inventoryItemId: string;
+    quantity: number;
+    menuItem: { name: string };
+    inventoryItem: { name: string; unit: string };
+  }[]>("/api/recipes");
+  const { data: menuItems } = useFetch<{ id: string; name: string }[]>("/api/menu");
 
   const items = data || [];
   const filtered = items.filter((m) => {
@@ -139,6 +157,31 @@ export function InventoryView() {
       refetch();
     } catch (e) {
       toast.error((e as Error).message || "Napaka pri shranjevanju");
+    }
+  }
+
+  async function restockItem() {
+    if (!restocking || !restockQty) return;
+    const qty = parseFloat(restockQty);
+    if (!qty || qty <= 0) {
+      toast.error("Vnesi veljavno količino");
+      return;
+    }
+    try {
+      const res = await fetch(`/api/inventory/${restocking.id}`, {
+        method: "PATCH",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          quantity: restocking.quantity + qty,
+        }),
+      });
+      if (!res.ok) throw new Error("Napaka");
+      toast.success(`Dopolnjeno: +${qty}${restocking.unit} ${restocking.name}`);
+      setRestocking(null);
+      setRestockQty("");
+      refetch();
+    } catch {
+      toast.error("Napaka pri dopolnjevanju");
     }
   }
 
@@ -329,6 +372,18 @@ export function InventoryView() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-7 w-7 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                          onClick={() => {
+                            setRestocking(m);
+                            setRestockQty("");
+                          }}
+                          title="Dopolni zalogo"
+                        >
+                          <PackagePlus className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-7 w-7"
                           onClick={() => setEditing(m)}
                         >
@@ -391,6 +446,101 @@ export function InventoryView() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Restock dialog */}
+      {restocking && (
+        <Dialog open onOpenChange={(o) => !o && setRestocking(null)}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-emerald-600">
+                <PackagePlus className="h-5 w-5" />
+                Dopolni zalogo
+              </DialogTitle>
+              <DialogDescription>
+                {restocking.name} — trenutno: {restocking.quantity}{restocking.unit}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 py-2">
+              <div>
+                <Label htmlFor="restock-qty">Količina za dodatek</Label>
+                <Input
+                  id="restock-qty"
+                  type="number"
+                  step="0.5"
+                  value={restockQty}
+                  onChange={(e) => setRestockQty(e.target.value)}
+                  placeholder="npr. 10"
+                  autoFocus
+                />
+                {restockQty && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Nova zaloga: <span className="font-bold text-emerald-600">
+                      {(restocking.quantity + parseFloat(restockQty)).toFixed(1)}{restocking.unit}
+                    </span>
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-1.5">
+                {[5, 10, 20, 50].map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => setRestockQty(String(q))}
+                    className="rounded-md border border-border px-2.5 py-1 text-xs font-medium hover:bg-muted"
+                  >
+                    +{q}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRestocking(null)}>
+                Prekliči
+              </Button>
+              <Button
+                className="bg-emerald-600 hover:bg-emerald-700"
+                onClick={restockItem}
+              >
+                <PackagePlus className="mr-1.5 h-4 w-4" />
+                Dopolni
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Recipe Management sekcija */}
+      <Card className="p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ChefHat className="h-5 w-5 text-amber-600" />
+            <div>
+              <h3 className="font-bold">Recepti (jed → sestavine)</h3>
+              <p className="text-xs text-muted-foreground">
+                Poveži jedi z sestavinami za food cost in auto-odštevanje zaloge
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setShowRecipes(!showRecipes)}
+          >
+            {showRecipes ? "Skrij" : "Prikaži"}
+          </Button>
+        </div>
+
+        {showRecipes && (
+          <RecipeManager
+            recipes={recipes || []}
+            menuItems={menuItems || []}
+            inventoryItems={items}
+            onSaved={() => {
+              refetchRecipes();
+              refetch();
+            }}
+          />
+        )}
+      </Card>
     </div>
   );
 }
@@ -582,5 +732,166 @@ function ItemDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+interface RecipeData {
+  id: string;
+  menuItemId: string;
+  inventoryItemId: string;
+  quantity: number;
+  menuItem: { name: string };
+  inventoryItem: { name: string; unit: string };
+}
+
+function RecipeManager({
+  recipes,
+  menuItems,
+  inventoryItems,
+  onSaved,
+}: {
+  recipes: RecipeData[];
+  menuItems: { id: string; name: string }[];
+  inventoryItems: InventoryItem[];
+  onSaved: () => void;
+}) {
+  const [selMenu, setSelMenu] = useState("");
+  const [selInv, setSelInv] = useState("");
+  const [qty, setQty] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function addRecipe() {
+    if (!selMenu || !selInv || !qty) {
+      toast.error("Izberi jed, sestavino in količino");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/recipes", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          menuItemId: selMenu,
+          inventoryItemId: selInv,
+          quantity: parseFloat(qty),
+        }),
+      });
+      if (!res.ok) throw new Error("Napaka");
+      toast.success("Recept dodan");
+      setSelMenu("");
+      setSelInv("");
+      setQty("");
+      onSaved();
+    } catch {
+      toast.error("Napaka pri dodajanju recepta");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteRecipe(id: string) {
+    try {
+      await fetch(`/api/recipes/${id}`, { method: "DELETE", headers: authHeaders() });
+      toast.success("Recept izbrisan");
+      onSaved();
+    } catch {
+      toast.error("Napaka pri brisanju");
+    }
+  }
+
+  // Group recipes by menu item
+  const byMenu = new Map<string, RecipeData[]>();
+  for (const r of recipes) {
+    const existing = byMenu.get(r.menuItemId);
+    if (existing) {
+      existing.push(r);
+    } else {
+      byMenu.set(r.menuItemId, [r]);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Add new recipe */}
+      <div className="rounded-lg border border-border bg-muted/30 p-3">
+        <p className="mb-2 text-xs font-medium text-muted-foreground">Nov recept:</p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
+          <Select value={selMenu} onValueChange={setSelMenu}>
+            <SelectTrigger className="text-xs">
+              <SelectValue placeholder="Jed..." />
+            </SelectTrigger>
+            <SelectContent>
+              {menuItems.map((m) => (
+                <SelectItem key={m.id} value={m.id}>
+                  {m.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={selInv} onValueChange={setSelInv}>
+            <SelectTrigger className="text-xs">
+              <SelectValue placeholder="Sestavina..." />
+            </SelectTrigger>
+            <SelectContent>
+              {inventoryItems.map((i) => (
+                <SelectItem key={i.id} value={i.id}>
+                  {i.name} ({i.unit})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Input
+            type="number"
+            step="0.05"
+            value={qty}
+            onChange={(e) => setQty(e.target.value)}
+            placeholder="Količina"
+            className="text-xs"
+          />
+          <Button
+            size="sm"
+            onClick={addRecipe}
+            disabled={saving || !selMenu || !selInv || !qty}
+            className="bg-amber-600 hover:bg-amber-700"
+          >
+            <Link2 className="mr-1 h-3 w-3" />
+            Poveži
+          </Button>
+        </div>
+      </div>
+
+      {/* Existing recipes grouped by menu item */}
+      {byMenu.size === 0 ? (
+        <p className="py-4 text-center text-sm text-muted-foreground">
+          Ni receptov. Dodaj prvi recept zgoraj.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {Array.from(byMenu.entries()).map(([menuId, recs]) => (
+            <div key={menuId} className="rounded-lg border border-border p-3">
+              <p className="mb-2 text-sm font-semibold">
+                {recs[0].menuItem.name}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {recs.map((r) => (
+                  <span
+                    key={r.id}
+                    className="flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs"
+                  >
+                    {r.inventoryItem.name}: {r.quantity}{r.inventoryItem.unit}
+                    <button
+                      onClick={() => deleteRecipe(r.id)}
+                      className="rounded p-0.5 text-muted-foreground hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-950/40"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

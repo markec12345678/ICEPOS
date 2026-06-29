@@ -954,3 +954,35 @@ Stage Summary:
 - Low-stock alert na dashboardu — blagajnik takoj vidi katere zaloge so nizke
 - ICEPOS SI zdaj pokriva VSE Toast POS funkcije + food cost analiza
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 30
+Agent: Z.ai Code (main)
+Task: Recipe Manager UI + Restock button v InventoryView.
+
+Work Log:
+- InventoryView — Restock (Dopolni zalogo):
+  * PackagePlus ikona (emerald) na vsakem inventory item-u
+  * Dialog: input količine + hitri gumbi (+5, +10, +20, +50)
+  * Prikaz trenutne + nove zaloge
+  * PATCH /api/inventory/[id] z quantity += restockQty
+- InventoryView — Recipe Manager (Poveži jedi ↔ sestavine):
+  * Collapsible sekcija z "Prikaži/Skrij" gumbom
+  * Nov recept: Select jed + Select sestavina + Input količina → "Poveži"
+  * POST /api/recipes integracija
+  * Obstoječi recepti prikazani grupirano po jedi (badges z sestavino + količino + delete)
+  * DELETE /api/recipes/[id] integracija
+  * 10 demo receptov prikazanih (Žlikrofi→moka+svinjina, Biftek→govedina+krompir, itd.)
+- Lint: 0 errorjev
+- Agent Browser verification:
+  * 20 restock gumbov (en per inventory item) ✓
+  * "Recepti" sekcija z "Prikaži" toggle ✓
+  * "Nov recept", "Poveži", obstoječi recepti (Žlikrofi, Biftek) ✓
+- Push na GitHub: commit 77e6d09
+
+Stage Summary:
+- Recipe Manager UI implementiran — blagajnik lahko poveže jedi z sestavinami
+- Restock button — hitro dopolnjevanje zaloge z en klikom
+- Food Cost Analiza v MenuAdmin zdaj polno funkcionalna (recepti se upravljajo tukaj)
+- 35 screenshotov total
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
