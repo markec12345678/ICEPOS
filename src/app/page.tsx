@@ -27,6 +27,7 @@ import { GiftCardsView } from "@/components/pos/gift-cards-view";
 import { SchedulingView } from "@/components/pos/scheduling-view";
 import { MenuEngineeringView } from "@/components/pos/menu-engineering-view";
 import { BenchmarkView } from "@/components/pos/benchmark-view";
+import { WasteView } from "@/components/pos/waste-view";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { PinLoginDialog, getStoredOperator, type Operator } from "@/components/pos/pin-login";
 import { Toaster, toast } from "sonner";
@@ -162,6 +163,7 @@ export default function Home() {
             {activeView === "scheduling" && <SchedulingView />}
             {activeView === "menu-engineering" && <MenuEngineeringView />}
             {activeView === "benchmark" && <BenchmarkView />}
+            {activeView === "waste" && <WasteView />}
           </div>
         </main>
       </div>
