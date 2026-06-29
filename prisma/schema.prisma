@@ -54,6 +54,7 @@ model Restaurant {
   customers       Customer[]
   giftCards       GiftCard[]
   wasteLogs       WasteLog[]
+  happyHours      HappyHour[]
 }
 
 // ============================================================
@@ -342,4 +343,27 @@ model WasteLog {
   note            String?
   operator        String?  // ime operaterja
   createdAt       DateTime @default(now())
+}
+
+// ============================================================
+// HAPPY HOUR — časovno odvisne cene
+// ============================================================
+
+model HappyHour {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name          String   // "Happy Hour", "Popoldanski popust", itd.
+  daysOfWeek    String   // JSON array: [1,2,3,4,5] = pon-pet
+  startTime     String   // "16:00"
+  endTime       String   // "18:00"
+  discountType  String   // "percent" | "fixed"
+  discountValue Float    // 30 = 30% off, ali 2 = 2€ off
+  // Filter na kategorije (JSON array ali "all")
+  categories    String   @default("all") // "all" ali JSON ["alkoholne","brezalkoholne"]
+  // Ali velja samo za določene item-e (JSON array itemId-jev ali "all")
+  menuItemIds   String   @default("all")
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

@@ -23,6 +23,7 @@ import {
   CalendarCheck,
   Building2,
   Trash2,
+  Clock3,
 } from "lucide-react";
 import {
   Sheet,
@@ -58,13 +59,14 @@ export function PosFooter() {
     { id: "menu-engineering" as const, label: "Menu Engineering", desc: "Profitabilnost menija", icon: BarChart3 },
     { id: "benchmark" as const, label: "Benchmark lokacij", desc: "Primerjava restavracij", icon: Building2 },
     { id: "waste" as const, label: "Odpadki", desc: "Food waste tracking", icon: Trash2 },
+    { id: "happy-hour" as const, label: "Happy Hour", desc: "Časovno odvisne cene", icon: Clock3 },
     { id: "weekly" as const, label: "Tedenska statistika", desc: "Po dnevih v tednu", icon: CalendarClock },
     { id: "monthly" as const, label: "Mesečno poročilo", desc: "Statistika meseca", icon: CalendarRange },
     { id: "zreport" as const, label: "Z-report", desc: "Dnevni zaključek", icon: FileBarChart },
     { id: "settings" as const, label: "Nastavitve", desc: "Podjetje in FURS", icon: Settings },
   ];
 
-  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards", "scheduling", "menu-engineering", "benchmark", "waste"].includes(activeView);
+  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards", "scheduling", "menu-engineering", "benchmark", "waste", "happy-hour"].includes(activeView);
 
   return (
     <footer className="sticky bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:hidden print:hidden">
@@ -276,6 +278,12 @@ export function PosSidebar() {
       label: "Odpadki",
       desc: "Food waste tracking",
       icon: Trash2,
+    },
+    {
+      id: "happy-hour" as const,
+      label: "Happy Hour",
+      desc: "Časovno odvisne cene",
+      icon: Clock3,
     },
   ];
 

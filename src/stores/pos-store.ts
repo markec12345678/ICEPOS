@@ -39,7 +39,8 @@ interface PosState {
     | "scheduling"
     | "menu-engineering"
     | "benchmark"
-    | "waste";
+    | "waste"
+    | "happy-hour";
   setActiveView: (
     v:
       | "tables"
@@ -63,6 +64,7 @@ interface PosState {
       | "menu-engineering"
       | "benchmark"
       | "waste"
+      | "happy-hour"
   ) => void;
 
   // Selected table
