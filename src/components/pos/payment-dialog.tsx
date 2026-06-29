@@ -25,6 +25,10 @@ import {
   ShieldCheck,
   Users,
   Gift,
+  Smartphone,
+  Loader2,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FursQrCode } from "@/components/pos/furs-qr-code";
@@ -64,7 +68,7 @@ export function PaymentDialog() {
   } = usePosStore();
 
   const { data: tables, refetch } = useFetch<TableWithOrders[]>("/api/tables");
-  const [method, setMethod] = useState<"cash" | "card" | "giftcard">("cash");
+  const [method, setMethod] = useState<"cash" | "card" | "giftcard" | "sumup">("cash");
   const [tendered, setTendered] = useState<string>("");
   const [processing, setProcessing] = useState(false);
   const [paid, setPaid] = useState<PaidResult | null>(null);
@@ -314,7 +318,7 @@ export function PaymentDialog() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <button
                   onClick={() => setMethod("cash")}
                   className={cn(
@@ -350,6 +354,18 @@ export function PaymentDialog() {
                 >
                   <Gift className="h-6 w-6" />
                   <span className="text-sm font-medium">Kartica darilo</span>
+                </button>
+                <button
+                  onClick={() => setMethod("sumup")}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 transition-all hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                    method === "sumup"
+                      ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30"
+                      : "border-border hover:bg-muted hover:border-emerald-200"
+                  )}
+                >
+                  <Smartphone className="h-6 w-6" />
+                  <span className="text-sm font-medium">Sumup terminal</span>
                 </button>
               </div>
 
@@ -455,6 +471,10 @@ export function PaymentDialog() {
                     </div>
                   )}
                 </div>
+              )}
+
+              {method === "sumup" && (
+                <SumupPaymentBlock amount={grandTotal} orderId={openOrder?.id} />
               )}
 
               {/* Stranka (loyalty) — vedno prikazano */}
@@ -765,6 +785,222 @@ function ReceiptView({
           Zaključi
         </Button>
       </div>
+    </div>
+  );
+}
+
+
+// ============================================================
+// Sumup Terminal Payment Block
+// ============================================================
+
+interface SumupState {
+  status: "idle" | "creating" | "pending" | "success" | "failed" | "cancelled";
+  paymentId?: string;
+  errorMessage?: string;
+  cardInfo?: { last4?: string; type?: string };
+}
+
+function SumupPaymentBlock({
+  amount,
+  orderId,
+}: {
+  amount: number;
+  orderId?: string;
+}) {
+  const [state, setState] = useState<SumupState>({ status: "idle" });
+  const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null);
+
+  const startPayment = async () => {
+    setState({ status: "creating" });
+    try {
+      const res = await fetch("/api/sumup/create", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          amount,
+          orderId,
+          description: `POS plačilo${orderId ? ` #${orderId.slice(-6)}` : ""}`,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setState({
+          status: "failed",
+          errorMessage: data.error || "Napaka pri ustvarjanju plačila",
+        });
+        toast.error(data.error || "Sumup napaka");
+        return;
+      }
+      setState({
+        status: data.status === "SUCCESSFUL" ? "success" : "pending",
+        paymentId: data.id,
+        cardInfo: data.cardLast4Digits
+          ? { last4: data.cardLast4Digits, type: data.cardType }
+          : undefined,
+      });
+      // Začni polling (vsako 2s)
+      if (data.status !== "SUCCESSFUL" && data.id) {
+        const interval = setInterval(async () => {
+          try {
+            const statusRes = await fetch(`/api/sumup/status/${data.id}`, {
+              headers: authHeaders(),
+            });
+            const statusData = await statusRes.json();
+            if (statusData.status === "SUCCESSFUL") {
+              setState({
+                status: "success",
+                paymentId: data.id,
+                cardInfo: statusData.cardLast4Digits
+                  ? { last4: statusData.cardLast4Digits, type: statusData.cardType }
+                  : undefined,
+              });
+              clearInterval(interval);
+              toast.success("Plačilo prejeto na terminalu!");
+            } else if (statusData.status === "FAILED" || statusData.status === "CANCELLED") {
+              setState({
+                status: statusData.status === "CANCELLED" ? "cancelled" : "failed",
+                paymentId: data.id,
+                errorMessage: statusData.errorMessage,
+              });
+              clearInterval(interval);
+              toast.error(statusData.status === "CANCELLED" ? "Plačilo preklicano" : "Plačilo neuspešno");
+            }
+          } catch {
+            // ignore poll errors
+          }
+        }, 2000);
+        setPollInterval(interval);
+      }
+    } catch (e) {
+      setState({
+        status: "failed",
+        errorMessage: (e as Error).message,
+      });
+      toast.error("Napaka pri Sumup klicu");
+    }
+  };
+
+  const cancelPayment = async () => {
+    if (!state.paymentId) return;
+    try {
+      await fetch(`/api/sumup/cancel/${state.paymentId}`, {
+        method: "POST",
+        headers: authHeaders(),
+      });
+      if (pollInterval) clearInterval(pollInterval);
+      setState({ status: "cancelled", paymentId: state.paymentId });
+      toast.info("Plačilo preklicano");
+    } catch {
+      toast.error("Napaka pri preklicu");
+    }
+  };
+
+  const reset = () => {
+    if (pollInterval) clearInterval(pollInterval);
+    setState({ status: "idle" });
+  };
+
+  // Cleanup ob unmount
+  useEffect(() => {
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [pollInterval]);
+
+  return (
+    <div className="space-y-3 rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-900 dark:bg-emerald-950/20">
+      <div className="flex items-center gap-2">
+        <Smartphone className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+        <span className="font-medium text-emerald-800 dark:text-emerald-300">
+          Sumup terminal
+        </span>
+        <Badge variant="outline" className="ml-auto border-emerald-300 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400">
+          {formatEUR(amount)}
+        </Badge>
+      </div>
+
+      {state.status === "idle" && (
+        <>
+          <p className="text-sm text-muted-foreground">
+            Pošlji znesek na Sumup terminal. Gost bo lahko plačal s kartico ali telefonom.
+          </p>
+          <Button
+            onClick={startPayment}
+            className="w-full bg-emerald-600 hover:bg-emerald-700"
+          >
+            <Smartphone className="mr-2 h-4 w-4" />
+            Pošlji na terminal
+          </Button>
+        </>
+      )}
+
+      {state.status === "creating" && (
+        <div className="flex items-center justify-center gap-2 py-4 text-emerald-700 dark:text-emerald-400">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="text-sm">Pošiljam na terminal...</span>
+        </div>
+      )}
+
+      {state.status === "pending" && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm font-medium">Čakam na terminal...</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Gost naj pritisne/spravi kartico na terminal. Status se osvežuje samodejno.
+          </p>
+          <Button variant="outline" onClick={cancelPayment} className="w-full">
+            <XCircle className="mr-2 h-4 w-4" />
+            Prekliči plačilo
+          </Button>
+        </div>
+      )}
+
+      {state.status === "success" && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+            <CheckCircle className="h-5 w-5" />
+            <span className="font-medium">Plačilo uspešno!</span>
+          </div>
+          {state.cardInfo?.last4 && (
+            <p className="text-xs text-muted-foreground">
+              Kartica: •••• {state.cardInfo.last4} ({state.cardInfo.type})
+            </p>
+          )}
+          <Button variant="outline" size="sm" onClick={reset}>
+            Novo plačilo
+          </Button>
+        </div>
+      )}
+
+      {state.status === "failed" && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+            <XCircle className="h-5 w-5" />
+            <span className="font-medium">Plačilo neuspešno</span>
+          </div>
+          {state.errorMessage && (
+            <p className="text-xs text-muted-foreground">{state.errorMessage}</p>
+          )}
+          <Button variant="outline" size="sm" onClick={reset}>
+            Poskusi znova
+          </Button>
+        </div>
+      )}
+
+      {state.status === "cancelled" && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <XCircle className="h-5 w-5" />
+            <span className="font-medium">Plačilo preklicano</span>
+          </div>
+          <Button variant="outline" size="sm" onClick={reset}>
+            Poskusi znova
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getTenantFromRequest } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
-// Vse stranke, sortirane po totalSpent desc, z zadnjimi 10 naročili
-export async function GET() {
+// Vse stranke za trenutno restavracijo, sortirane po totalSpent desc
+export async function GET(req: NextRequest) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
+    }
+
     const customers = await db.customer.findMany({
+      where: { restaurantId: tenant.id },
       orderBy: { totalSpent: "desc" },
       include: {
         orders: {
@@ -34,6 +41,11 @@ export async function GET() {
 // Nova stranka
 export async function POST(req: NextRequest) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
+    }
+
     const body = await req.json();
     const { name, phone, email, note } = body as {
       name: string;
@@ -49,14 +61,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Preveri unikatnost telefona, če je podan
+    // Preveri unikatnost telefona znotraj te restavracije
     if (phone && phone.trim()) {
-      const existing = await db.customer.findUnique({
-        where: { phone: phone.trim() },
+      const existing = await db.customer.findFirst({
+        where: { phone: phone.trim(), restaurantId: tenant.id },
       });
       if (existing) {
         return NextResponse.json(
-          { error: "Stranka s to telefonsko številko že obstaja" },
+          { error: "Stranka s to telefonsko številko že obstaja v tej restavraciji" },
           { status: 409 }
         );
       }
@@ -68,6 +80,7 @@ export async function POST(req: NextRequest) {
         phone: phone?.trim() || null,
         email: email?.trim() || null,
         note: note?.trim() || null,
+        restaurantId: tenant.id,
       },
     });
     return NextResponse.json(customer, { status: 201 });

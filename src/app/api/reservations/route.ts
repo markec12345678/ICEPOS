@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getTenantFromRequest } from "@/lib/tenant";
 import { buildReservationConfirmation, sendNotification } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
-// Vrne rezervacije (z opcijskim filtrom na datum)
+// Vrne rezervacije za trenutno restavracijo (z opcijskim filtrom na datum)
 export async function GET(req: NextRequest) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
+    }
+
     const date = req.nextUrl.searchParams.get("date");
     const status = req.nextUrl.searchParams.get("status");
 
-    const where: { date?: string; status?: string } = {};
+    const where: { restaurantId: string; date?: string; status?: string } = { restaurantId: tenant.id };
     if (date) where.date = date;
     if (status) where.status = status;
 
@@ -29,6 +35,11 @@ export async function GET(req: NextRequest) {
 // Ustvari novo rezervacijo
 export async function POST(req: NextRequest) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
+    }
+
     const body = await req.json();
     const { tableId, customerName, customerPhone, partySize, date, time, duration, note } = body as {
       tableId: string;
@@ -46,6 +57,14 @@ export async function POST(req: NextRequest) {
         { error: "Manjkajoči podatki (tableId, customerName, partySize, date, time)" },
         { status: 400 }
       );
+    }
+
+    // Preveri da miza pripada tej restavraciji
+    const table = await db.table.findFirst({
+      where: { id: tableId, restaurantId: tenant.id },
+    });
+    if (!table) {
+      return NextResponse.json({ error: "Miza ni najdena v tej restavraciji" }, { status: 404 });
     }
 
     // Preveri konflikte (ista miza, isti dan, prekrivajoč čas)
@@ -76,6 +95,7 @@ export async function POST(req: NextRequest) {
         duration: duration || 120,
         note: note?.trim() || null,
         status: "confirmed",
+        restaurantId: tenant.id,
       },
       include: { table: true },
     });

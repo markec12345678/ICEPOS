@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getTenantFromRequest } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,11 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
+    }
+
     const { id } = await params;
     const body = await req.json().catch(() => ({}));
     const endCash: number | undefined =
@@ -16,7 +22,9 @@ export async function POST(
     const note: string | undefined =
       typeof body.note === "string" ? body.note.slice(0, 500) : undefined;
 
-    const shift = await db.shift.findUnique({ where: { id } });
+    const shift = await db.shift.findFirst({
+      where: { id, restaurantId: tenant.id },
+    });
     if (!shift) {
       return NextResponse.json({ error: "Smena ni najdena" }, { status: 404 });
     }
@@ -24,10 +32,11 @@ export async function POST(
       return NextResponse.json({ error: "Smena je že zaključena" }, { status: 400 });
     }
 
-    // Izračunaj prihodek in število računov za to smeno
+    // Izračunaj prihodek in število računov za to smeno (samo za to restavracijo)
     const paidOrders = await db.order.findMany({
       where: {
         status: "paid",
+        restaurantId: tenant.id,
         paidAt: { gte: shift.startTime, lte: new Date() },
       },
       select: { total: true, paymentMethod: true, tip: true },

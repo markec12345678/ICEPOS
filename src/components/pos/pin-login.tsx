@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Lock } from "lucide-react";
+import { useTenantStore } from "@/stores/tenant-store";
 
 const STORAGE_KEY = "icepos-si-operator";
 const PIN_KEY = "icepos-si-pin";
@@ -45,7 +46,7 @@ export function clearStoredOperator() {
   localStorage.removeItem(PIN_KEY);
 }
 
-// Helper: pošlji PIN v header za avtorizirane API klice
+// Helper: pošlji PIN + tenant v header za avtorizirane API klice
 export function authHeaders(extra?: Record<string, string>): Record<string, string> {
   const pin = getStoredPin();
   const headers: Record<string, string> = {
@@ -54,6 +55,20 @@ export function authHeaders(extra?: Record<string, string>): Record<string, stri
   };
   if (pin) {
     headers["x-operator-pin"] = pin;
+  }
+  // Dodaj tenant header če je na voljo
+  if (typeof window !== "undefined") {
+    try {
+      const tenantRaw = localStorage.getItem("tenant-storage");
+      if (tenantRaw) {
+        const tenant = JSON.parse(tenantRaw);
+        const t = tenant?.state?.current;
+        if (t?.id) headers["x-restaurant-id"] = t.id;
+        if (t?.slug) headers["x-restaurant-slug"] = t.slug;
+      }
+    } catch {
+      // ignore
+    }
   }
   return headers;
 }
@@ -70,6 +85,7 @@ export function PinLoginDialog({
   const [pin, setPin] = useState("");
   const [error, setError] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const tenantSlug = useTenantStore((s) => s.current?.slug);
 
   useEffect(() => {
     if (open) {
@@ -97,7 +113,7 @@ export function PinLoginDialog({
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pin: p }),
+        body: JSON.stringify({ pin: p, restaurantSlug: tenantSlug }),
       });
       const data = await res.json();
       if (!res.ok) {

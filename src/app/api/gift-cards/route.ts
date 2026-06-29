@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getOperatorFromRequest } from "@/lib/auth";
+import { getTenantFromRequest } from "@/lib/tenant";
 import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
@@ -9,10 +10,15 @@ function genCode(): string {
   return "GC-" + crypto.randomBytes(4).toString("hex").toUpperCase();
 }
 
-// Vse gift cards
-export async function GET() {
+// Vse gift cards za trenutno restavracijo
+export async function GET(req: NextRequest) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
+    }
     const cards = await db.giftCard.findMany({
+      where: { restaurantId: tenant.id },
       orderBy: { createdAt: "desc" },
       take: 100,
     });
@@ -26,6 +32,10 @@ export async function GET() {
 // Ustvari novo gift card
 export async function POST(req: NextRequest) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
+    }
     const authOp = await getOperatorFromRequest(req);
     if (!authOp) {
       return NextResponse.json({ error: "Potrebna je prijava" }, { status: 401 });
@@ -39,12 +49,12 @@ export async function POST(req: NextRequest) {
     if (!amount || amount <= 0) {
       return NextResponse.json({ error: "Znesek mora biti pozitiven" }, { status: 400 });
     }
-    // Generiraj unikatno kodo
+    // Generiraj unikatno kodo znotraj te restavracije
     let code = genCode();
-    let existing = await db.giftCard.findFirst({ where: { code } });
+    let existing = await db.giftCard.findFirst({ where: { code, restaurantId: tenant.id } });
     while (existing) {
       code = genCode();
-      existing = await db.giftCard.findFirst({ where: { code } });
+      existing = await db.giftCard.findFirst({ where: { code, restaurantId: tenant.id } });
     }
     const card = await db.giftCard.create({
       data: {
@@ -54,6 +64,7 @@ export async function POST(req: NextRequest) {
         customerName: customerName?.trim() || null,
         note: note?.trim() || null,
         status: "active",
+        restaurantId: tenant.id,
       },
     });
     return NextResponse.json(card, { status: 201 });

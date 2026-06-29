@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getTenantFromRequest } from "@/lib/tenant";
 import {
   calculateZOI,
   generateEOR,
   buildInvoiceXml,
   buildInvoiceNumber,
-  ISSUER,
 } from "@/lib/furs";
+import { sendInvoiceToFurs } from "@/lib/furs-api";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,10 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
+    }
     const body = await req.json().catch(() => ({}));
     const paymentMethod: "cash" | "card" | "giftcard" =
       body.paymentMethod === "card"
@@ -29,8 +34,8 @@ export async function POST(
     const giftCardCode: string | undefined = body.giftCardCode;
     const tip: number = typeof body.tip === "number" && body.tip > 0 ? body.tip : 0;
 
-    const order = await db.order.findUnique({
-      where: { id },
+    const order = await db.order.findFirst({
+      where: { id, restaurantId: tenant.id },
       include: { items: { include: { menuItem: true } } },
     });
 
@@ -41,14 +46,14 @@ export async function POST(
       return NextResponse.json({ error: "Naročilo je že zaključeno" }, { status: 400 });
     }
 
-    // Gift card validacija
+    // Gift card validacija (znotraj te restavracije)
     let giftCardId: string | null = null;
     if (paymentMethod === "giftcard") {
       if (!giftCardCode) {
         return NextResponse.json({ error: "Manjka koda darilne kartice" }, { status: 400 });
       }
       const gc = await db.giftCard.findFirst({
-        where: { code: giftCardCode.toUpperCase() },
+        where: { code: giftCardCode.toUpperCase(), restaurantId: tenant.id },
       });
       if (!gc) {
         return NextResponse.json({ error: "Darilna kartica ni najdena" }, { status: 404 });
@@ -65,23 +70,22 @@ export async function POST(
       giftCardId = gc.id;
     }
 
-    // Določi naslednjo zaporedno številko računa
+    // Določi naslednjo zaporedno številko računa (per restavracija)
     const paidCount = await db.order.count({
-      where: { status: { in: ["paid", "storno"] } },
+      where: { status: { in: ["paid", "storno"] }, restaurantId: tenant.id },
     });
     const invoiceSeq = paidCount + 1;
     const invoiceNumberStr = buildInvoiceNumber(invoiceSeq);
     const issueDate = new Date();
 
-    // ZOI
+    // ZOI (uporabi tenant podatke za FURS)
     const zoi = calculateZOI({
-      taxNumber: ISSUER.taxNumber,
+      taxNumber: tenant.taxNumber,
       issueDate,
       invoiceNumber: invoiceSeq,
-      businessPremiseID: ISSUER.businessPremiseID,
-      electronicDeviceID: ISSUER.electronicDeviceID,
+      businessPremiseID: tenant.businessUnit,
+      electronicDeviceID: tenant.cashRegister,
     });
-    const eor = generateEOR();
 
     // XML račun
     const fursXml = buildInvoiceXml({
@@ -97,6 +101,34 @@ export async function POST(
       paymentMethod: paymentMethod === "giftcard" ? "card" : paymentMethod,
       operator: order.operator,
     });
+
+    // Pošlji na FURS za pravi EOR (če je certifikat naložen, sicer POC)
+    const restaurant = await db.restaurant.findUnique({
+      where: { id: tenant.id },
+      select: { fursEnv: true, fursCertPath: true, fursCertPassword: true, taxNumber: true },
+    });
+
+    let eor: string;
+    let fursSuccess = true;
+    if (restaurant) {
+      const fursResult = await sendInvoiceToFurs({
+        xml: fursXml,
+        zoi,
+        config: {
+          env: restaurant.fursEnv as "test" | "prod",
+          certPath: restaurant.fursCertPath || undefined,
+          certPassword: restaurant.fursCertPassword || undefined,
+          taxNumber: restaurant.taxNumber,
+        },
+      });
+      eor = fursResult.eor;
+      fursSuccess = fursResult.success;
+      if (!fursResult.success) {
+        console.warn(`[pay] FURS POC mode: ${fursResult.error?.message}`);
+      }
+    } else {
+      eor = generateEOR();
+    }
 
     // Posodobi naročilo
     const paid = await db.order.update({

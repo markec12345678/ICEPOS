@@ -1,15 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getOperatorFromRequest } from "@/lib/auth";
+import { getTenantFromRequest } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
-// Vsa naročila (z opcijskim filtrom na status)
+// Vsa naročila (z opcijskim filtrom na status) — samo za trenutno restavracijo
 export async function GET(req: NextRequest) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json(
+        { error: "Restavracija ni najdena" },
+        { status: 400 }
+      );
+    }
+
     const status = req.nextUrl.searchParams.get("status");
     const orders = await db.order.findMany({
-      where: status ? { status } : {},
+      where: {
+        restaurantId: tenant.id,
+        ...(status ? { status } : {}),
+      },
       include: {
         table: true,
         items: { include: { menuItem: true } },
@@ -30,6 +42,14 @@ export async function GET(req: NextRequest) {
 // Ustvari ali posodobi odprto naročilo za mizo
 export async function POST(req: NextRequest) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json(
+        { error: "Restavracija ni najdena" },
+        { status: 400 }
+      );
+    }
+
     const body = await req.json();
     const { tableId, items } = body as {
       tableId: string;
@@ -49,30 +69,45 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Preveri da miza pripada tej restavraciji
+    const table = await db.table.findFirst({
+      where: { id: tableId, restaurantId: tenant.id },
+    });
+    if (!table) {
+      return NextResponse.json(
+        { error: "Miza ni najdena v tej restavraciji" },
+        { status: 404 }
+      );
+    }
+
     // Poišči obstoječe odprto naročilo za to mizo
     let order = await db.order.findFirst({
-      where: { tableId, status: "open" },
+      where: { tableId, status: "open", restaurantId: tenant.id },
     });
 
     if (!order) {
-      // Pridobi operaterja iz PIN-a (fallback na "Blagajnik")
       const operator = await getOperatorFromRequest(req);
       order = await db.order.create({
         data: {
           tableId,
           status: "open",
           operator: operator?.name || "Blagajnik",
-          operatorTaxNo: operator?.taxNumber || "SI12345678",
+          operatorTaxNo: operator?.taxNumber || tenant.taxNumber,
+          restaurantId: tenant.id,
+          businessUnit: tenant.businessUnit,
+          cashRegister: tenant.cashRegister,
         },
       });
     } else {
-      // Počisti stare postavke (nadomestimo z novim vozicom)
       await db.orderItem.deleteMany({ where: { orderId: order.id } });
     }
 
-    // Pridobi podatke o meniju za cene/DDV
+    // Pridobi podatke o meniju za cene/DDV (samo iz iste restavracije)
     const menuItems = await db.menuItem.findMany({
-      where: { id: { in: items.map((i) => i.menuItemId) } },
+      where: {
+        id: { in: items.map((i) => i.menuItemId) },
+        restaurantId: tenant.id,
+      },
     });
     const menuMap = new Map(menuItems.map((m) => [m.id, m]));
 
@@ -83,7 +118,6 @@ export async function POST(req: NextRequest) {
       .filter((i) => menuMap.has(i.menuItemId) && i.quantity > 0)
       .map((i) => {
         const m = menuMap.get(i.menuItemId)!;
-        // unitPrice iz requesta (vključuje modifierje) ali fallback na osnovno ceno
         const unitPrice =
           typeof i.unitPrice === "number" && i.unitPrice > 0
             ? i.unitPrice

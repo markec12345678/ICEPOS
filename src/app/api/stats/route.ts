@@ -1,11 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getTenantFromRequest } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
-// Statistika za nadzorno ploščo (današnji dan)
-export async function GET() {
+// Statistika za nadzorno ploščo (današnji dan) — per restavracija
+export async function GET(req: NextRequest) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json(
+        { error: "Restavracija ni najdena" },
+        { status: 400 }
+      );
+    }
+
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date();
@@ -14,6 +23,7 @@ export async function GET() {
     const paidOrders = await db.order.findMany({
       where: {
         status: "paid",
+        restaurantId: tenant.id,
         paidAt: { gte: startOfDay, lte: endOfDay },
       },
       include: { items: { include: { menuItem: true } } },
@@ -24,9 +34,9 @@ export async function GET() {
     const todayOrders = paidOrders.length;
     const avgOrderValue = todayOrders > 0 ? todayRevenue / todayOrders : 0;
 
-    const totalTables = await db.table.count();
+    const totalTables = await db.table.count({ where: { restaurantId: tenant.id } });
     const openOrders = await db.order.findMany({
-      where: { status: "open" },
+      where: { status: "open", restaurantId: tenant.id },
       select: { tableId: true },
     });
     const openTables = openOrders.length;

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { usePosStore } from "@/stores/pos-store";
+import { useTenantStore } from "@/stores/tenant-store";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { PosHeader } from "@/components/pos/pos-header";
 import { PosSidebar, PosFooter } from "@/components/pos/pos-footer";
@@ -33,21 +34,23 @@ import { Lock, UserCircle, Bell } from "lucide-react";
 export default function Home() {
   const activeView = usePosStore((s) => s.activeView);
   useKeyboardShortcuts();
+  const loadTenantList = useTenantStore((s) => s.loadList);
 
   // Operator login state
   const [operator, setOperator] = useState<Operator | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Preveri localStorage ob mount-u
+  // Naloži tenant listo ob mount-u
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
+    loadTenantList();
     const stored = getStoredOperator();
     if (stored) {
       setOperator(stored);
     }
-  }, []);
+  }, [loadTenantList]);
 
   // Poslušaj spremembe operatorja (logout iz headerja)
   useEffect(() => {

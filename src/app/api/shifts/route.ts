@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getOperatorFromRequest } from "@/lib/auth";
+import { getTenantFromRequest } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
-// Vrne smene (z opcijskim filtrom na status)
+// Vrne smene za trenutno restavracijo
 export async function GET(req: NextRequest) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
+    }
+
     const status = req.nextUrl.searchParams.get("status");
     const shifts = await db.shift.findMany({
-      where: status ? { status } : {},
+      where: {
+        restaurantId: tenant.id,
+        ...(status ? { status } : {}),
+      },
       orderBy: { startTime: "desc" },
       take: 50,
     });
@@ -23,6 +32,11 @@ export async function GET(req: NextRequest) {
 // Začne novo smeno
 export async function POST(req: NextRequest) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
+    }
+
     const body = await req.json();
     const { operator, operatorTaxNo, startCash } = body as {
       operator: string;
@@ -34,8 +48,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Manjka ime operaterja" }, { status: 400 });
     }
 
-    // Preveri da ni že odprte smene
-    const openShift = await db.shift.findFirst({ where: { status: "open" } });
+    // Preveri da ni že odprte smene v tej restavraciji
+    const openShift = await db.shift.findFirst({
+      where: { status: "open", restaurantId: tenant.id },
+    });
     if (openShift) {
       return NextResponse.json(
         { error: `Smena je že odprta (${openShift.operator}, od ${openShift.startTime})` },
@@ -43,10 +59,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Pridobi operaterja iz PIN-a (če je prijavljen, uporabi njegove podatke)
     const authOperator = await getOperatorFromRequest(req);
     const finalOperator = authOperator?.name || operator.trim();
-    const finalTaxNo = authOperator?.taxNumber || operatorTaxNo || "SI12345678";
+    const finalTaxNo = authOperator?.taxNumber || operatorTaxNo || tenant.taxNumber;
 
     const shift = await db.shift.create({
       data: {
@@ -54,6 +69,7 @@ export async function POST(req: NextRequest) {
         operatorTaxNo: finalTaxNo,
         startCash: startCash || 0,
         status: "open",
+        restaurantId: tenant.id,
       },
     });
     return NextResponse.json(shift, { status: 201 });

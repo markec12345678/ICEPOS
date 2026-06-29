@@ -1,5 +1,6 @@
 // Prisma schema za slovensko restavracijsko blagajno (POS)
-// Navdihnjeno po ICEPOS arhitekturi, prilagojeno za slovenski trg (EUR, DDV)
+// Multi-tenant SaaS — več restavracij v eni instalaciji
+// Navdihnjeno po ICEPOS arhitekturi, prilagojeno za slovenski trg (EUR, DDV, FURS)
 
 generator client {
   provider = "prisma-client-js"
@@ -10,18 +11,77 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============================================================
+// RESTAURANT (TENANT) — centralni model za multi-tenant
+// ============================================================
+
+model Restaurant {
+  id              String   @id @default(cuid())
+  name            String   // "Gostilna Pri Marku"
+  slug            String   @unique // URL slug: "gostilna-pri-marku"
+  subdomain       String?  @unique // "marko" → marko.pos.si
+  address         String?
+  city            String?
+  phone           String?
+  email           String?
+  website         String?
+
+  // FURS podatki (per restavracija)
+  taxNumber       String   @default("SI12345678") // davčna št.
+  businessUnit    String   @default("PREVOZ11") // oznaka poslovnega prostora
+  cashRegister    String   @default("BLAG01") // oznaka blagajne
+  fursEnv         String   @default("test") // "test" | "production"
+  fursCertPath    String?  // pot do eDavki certifikata
+  fursCertPassword String?
+
+  // Nastavitve
+  currency        String   @default("EUR")
+  timezone        String   @default("Europe/Ljubljana")
+  language        String   @default("sl")
+  loyaltyRate     Float    @default(0.1) // 1 točka na 10 EUR (0.1)
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relacije (vse entitete pripadajo restavraciji)
+  menuItems       MenuItem[]
+  tables          Table[]
+  orders          Order[]
+  reservations    Reservation[]
+  shifts          Shift[]
+  operators       Operator[]
+  inventoryItems  InventoryItem[]
+  customers       Customer[]
+  giftCards       GiftCard[]
+}
+
+// ============================================================
+// MENU
+// ============================================================
+
 model MenuItem {
-  id        String   @id @default(cuid())
-  name      String
-  category  String // "predjedi" | "glavne_jedi" | "brezalkoholne" | "alkoholne" | "sladice"
-  price     Float // EUR
-  vatRate   Float // 0.095 (znižana - hrana) | 0.22 (splošna - alkohol)
-  available Boolean  @default(true)
-  desc      String?
-  createdAt DateTime @default(now())
-  orderItems OrderItem[]
-  modifiers Modifier[]
-  recipes    Recipe[]
+  id            String   @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name          String
+  nameEn        String?
+  category      String // "predjedi" | "glavne_jedi" | "brezalkoholne" | "alkoholne" | "sladice"
+  price         Float // EUR
+  vatRate       Float // 0.095 (znižana - hrana) | 0.22 (splošna - alkohol)
+  available     Boolean @default(true)
+  desc          String?
+  descEn        String?
+  allergens     String? // JSON array alergenov
+  calories      Int?
+  protein       Float?
+  carbs         Float?
+  fat           Float?
+  isFavorite    Boolean @default(false)
+  isDailySpecial Boolean @default(false)
+  createdAt     DateTime @default(now())
+  orderItems    OrderItem[]
+  modifiers     Modifier[]
+  recipes       Recipe[]
 }
 
 model Modifier {
@@ -29,23 +89,33 @@ model Modifier {
   menuItemId String
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
   label      String // npr. "Brez čebule", "Dobra pečena", "Bez glutena"
-  priceDelta Float    @default(0) // sprememba cene ( Lahko negativna za popust)
+  priceDelta Float    @default(0) // sprememba cene (Lahko negativna za popust)
   createdAt  DateTime @default(now())
 }
 
+// ============================================================
+// TABLES & ORDERS
+// ============================================================
+
 model Table {
-  id        String   @id @default(cuid())
-  number    Int      @unique
-  name      String
-  seats     Int      @default(4)
-  section   String   @default("Dvorana") // "Dvorana" | "Terasa" | "Zasebna"
-  createdAt DateTime @default(now())
-  orders    Order[]
+  id           String   @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  number       Int
+  name         String
+  seats        Int      @default(4)
+  section      String   @default("Dvorana") // "Dvorana" | "Terasa" | "Zasebna"
+  createdAt    DateTime @default(now())
+  orders       Order[]
   reservations Reservation[]
+
+  @@unique([restaurantId, number])
 }
 
 model Order {
   id            String    @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   tableId       String
   table         Table     @relation(fields: [tableId], references: [id])
   status        String    @default("open") // "open" | "paid" | "cancelled" | "storno"
@@ -54,20 +124,20 @@ model Order {
   vatTotal      Float     @default(0)
   createdAt     DateTime  @default(now())
   paidAt        DateTime?
-  paymentMethod String? // "cash" | "card"
-  receiptNo     String? // SRS številka računa (npr. 1, 2, 3 ...)
-  zoi           String? // Zaščitna oznaka izdajatelja (ZOI) — 32 hex znakov
+  paymentMethod String? // "cash" | "card" | "giftcard"
+  receiptNo     String? // SRS številka računa
+  zoi           String? // Zaščitna oznaka izdajatelja (ZOI) — 32 hex
   eor           String? // Enkratna identifikacija računa (EOR) — UUID
   fursXml       String? // Podpisan XML računa za FURS (audit)
-  businessUnit  String   @default("PREVOZ11") // Oznaka poslovnega prostora
-  cashRegister  String   @default("BLAG01") // Oznaka elektronske naprave
+  businessUnit  String   @default("PREVOZ11")
+  cashRegister  String   @default("BLAG01")
   invoiceNumber String? // Celotna številka računa: PP-EN-ŠT
   operator      String   @default("Blagajnik")
-  operatorTaxNo String   @default("SI12345678") // Davčna št. blagajnika
-  shiftId       String? // povezava s Smeno (FURS zahteva sledljivost)
+  operatorTaxNo String   @default("SI12345678")
+  shiftId       String?
   tip           Float    @default(0) // napitnina (EUR)
   // Storno
-  stornoOf      String? // ID izvirnega računa, če je to storno
+  stornoOf      String?
   stornoReason  String?
   stornoAt      DateTime?
   stornoZoi     String?
@@ -85,65 +155,81 @@ model OrderItem {
   quantity   Int      @default(1)
   unitPrice  Float // snapshot cene ob naročilu (vključno z modifierji)
   vatRate    Float // snapshot DDV stopnje
-  note       String? // prosto besedilo (npr. "brez čebule")
-  modifiers  String? // JSON array izbranih modifierjev (label + priceDelta)
+  note       String?
+  modifiers  String? // JSON array izbranih modifierjev
 }
 
 model Reservation {
   id         String   @id @default(cuid())
+  restaurantId String
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   tableId    String
   table      Table    @relation(fields: [tableId], references: [id])
   customerName String
   customerPhone String?
-  partySize  Int // število oseb
+  partySize  Int
   date       String // YYYY-MM-DD
   time       String // HH:mm
-  duration   Int      @default(120) // minute
-  status     String   @default("confirmed") // "confirmed" | "seated" | "cancelled" | "no_show"
-  note       String? // alergije, priložnosti (rojstni dan), posebne zahteve
+  duration   Int      @default(120)
+  status     String   @default("confirmed")
+  note       String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
 
+// ============================================================
+// SHIFT & OPERATOR
+// ============================================================
+
 model Shift {
   id         String   @id @default(cuid())
-  operator   String // ime blagajnika
+  restaurantId String
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  operator   String
   operatorTaxNo String
   startTime  DateTime @default(now())
   endTime    DateTime?
-  startCash  Float    @default(0) // gotovina na začetku smene
-  endCash    Float? // gotovina na koncu smene
-  status     String   @default("open") // "open" | "closed"
+  startCash  Float    @default(0)
+  endCash    Float?
+  status     String   @default("open")
   ordersCount Int     @default(0)
   totalRevenue Float  @default(0)
-  note       String? // opomba ob zaključku
+  note       String?
   createdAt  DateTime @default(now())
 }
 
 model Operator {
   id         String   @id @default(cuid())
+  restaurantId String
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   name       String
-  pin        String   @unique // 4-mesten PIN
+  pin        String
   taxNumber  String   @default("SI12345678")
   role       String   @default("cashier") // "cashier" | "admin"
-  hourlyRate Float    @default(12) // urna postavka (EUR) za labor cost
+  hourlyRate Float    @default(12)
   active     Boolean  @default(true)
   createdAt  DateTime @default(now())
   schedules  Schedule[]
   timesheets Timesheet[]
+
+  @@unique([restaurantId, pin])
 }
 
-// === INVENTORY MANAGEMENT ===
+// ============================================================
+// INVENTORY
+// ============================================================
 
 model InventoryItem {
   id          String   @id @default(cuid())
+  restaurantId String
+  restaurant  Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   name        String
-  unit        String   @default("kos") // "kos" | "kg" | "l" | "g" | "ml"
+  unit        String   @default("kos")
   quantity    Float    @default(0)
-  minQuantity Float    @default(0) // alert ko pade pod
-  costPerUnit Float    @default(0) // nabavna cena na enoto
+  minQuantity Float    @default(0)
+  costPerUnit Float    @default(0)
   supplier    String?
-  category    String   @default("splosno") // "meso" | "zelenjava" | "pijaca" | "splosno"
+  category    String   @default("splosno")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   recipes     Recipe[]
@@ -155,53 +241,66 @@ model Recipe {
   menuItem        MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
   inventoryItemId String
   inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
-  quantity        Float // kolicina potrebna za 1 porcijo
+  quantity        Float
   createdAt       DateTime @default(now())
 }
 
-// === CRM / LOYALTY ===
+// ============================================================
+// CRM / LOYALTY
+// ============================================================
 
 model Customer {
   id          String   @id @default(cuid())
+  restaurantId String
+  restaurant  Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   name        String
-  phone       String?  @unique
+  phone       String?
   email       String?
-  points      Int      @default(0) // tocke zvestobe
-  totalSpent  Float    @default(0) // skupna poraba
-  visitCount  Int      @default(0) // stevilo obiskov
-  allergens   String?  // JSON array alergij stranke
-  note        String?  // opombe (alergije, preference)
+  points      Int      @default(0)
+  totalSpent  Float    @default(0)
+  visitCount  Int      @default(0)
+  allergens   String?
+  note        String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   orders      Order[]
+
+  @@unique([restaurantId, phone])
 }
 
-// === GIFT CARDS ===
+// ============================================================
+// GIFT CARDS
+// ============================================================
 
 model GiftCard {
   id          String   @id @default(cuid())
-  code        String   @unique // 8-mestna koda (npr. GC-AB12CD34)
-  balance     Float    @default(0) // trenutno stanje
-  initialAmount Float  // začetni znesek
-  status      String   @default("active") // "active" | "used" | "expired"
-  customerName String? // ime prejemnika (opcijsko)
+  restaurantId String
+  restaurant  Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  code        String
+  balance     Float    @default(0)
+  initialAmount Float
+  status      String   @default("active")
+  customerName String?
   note        String?
   expiresAt   DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@unique([restaurantId, code])
 }
 
-// === EMPLOYEE SCHEDULING ===
+// ============================================================
+// EMPLOYEE SCHEDULING
+// ============================================================
 
-// Razpored delavnikov (planirane ure za operaterja na določen dan)
 model Schedule {
   id           String   @id @default(cuid())
   operatorId   String
   operator     Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
   date         String   // YYYY-MM-DD
-  startTime    String   // HH:mm (npr. "08:00")
-  endTime      String   // HH:mm (npr. "16:00")
-  role         String   @default("waiter") // "waiter" | "cashier" | "cook" | "manager" | "host"
+  startTime    String   // HH:mm
+  endTime      String   // HH:mm
+  role         String   @default("waiter")
   note         String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -209,15 +308,14 @@ model Schedule {
   @@unique([operatorId, date])
 }
 
-// Časovnica dejanskega dela (clock in/out)
 model Timesheet {
   id           String    @id @default(cuid())
   operatorId   String
   operator     Operator  @relation(fields: [operatorId], references: [id], onDelete: Cascade)
-  date         String    // YYYY-MM-DD (delovni dan)
-  clockIn      DateTime  // čas prihoda
-  clockOut     DateTime? // čas odhoda (null = še dela)
-  breakMinutes Int       @default(0) // odmor v minutah
+  date         String    // YYYY-MM-DD
+  clockIn      DateTime
+  clockOut     DateTime?
+  breakMinutes Int       @default(0)
   note         String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt

@@ -1,13 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getTenantFromRequest } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
-// Vrne live prihodek aktivne smene (za dashboard polling)
-export async function GET() {
+// Vrne live prihodek aktivne smene (za dashboard polling) — per restavracija
+export async function GET(req: NextRequest) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
+    }
+
     const shift = await db.shift.findFirst({
-      where: { status: "open" },
+      where: { status: "open", restaurantId: tenant.id },
       orderBy: { startTime: "desc" },
     });
 
@@ -25,6 +31,7 @@ export async function GET() {
     const paidOrders = await db.order.findMany({
       where: {
         status: "paid",
+        restaurantId: tenant.id,
         paidAt: { gte: shift.startTime },
       },
       select: { total: true, paymentMethod: true, tip: true },

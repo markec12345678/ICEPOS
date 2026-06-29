@@ -12,7 +12,6 @@ const menuData = [
   { name: "Ocvrte bučke", category: "predjedi", price: 5.5, vatRate: REDUCED, desc: "Panirane bučke, česnov dip" },
   { name: "Juha dneva", category: "predjedi", price: 3.5, vatRate: REDUCED, desc: "Goveja juha z rezanci" },
   { name: "Oljke in sirek", category: "predjedi", price: 4.9, vatRate: REDUCED, desc: "Mešane oljke, sir feta, paradižnik" },
-
   // Glavne jedi
   { name: "Žlikrofi s pečenico", category: "glavne_jedi", price: 12.5, vatRate: REDUCED, desc: "Idrijski žlikrofi, pečenica, zaliv" },
   { name: "Kranjska klobasa s kislim zeljem", category: "glavne_jedi", price: 13.9, vatRate: REDUCED, desc: "Kranjska klobasa, zelje, krompir" },
@@ -23,14 +22,12 @@ const menuData = [
   { name: "Šmarn golaž", category: "glavne_jedi", price: 10.9, vatRate: REDUCED, desc: "Golaž iz divjačine, žlikrofi" },
   { name: "Rižota z morskimi sadeži", category: "glavne_jedi", price: 14.5, vatRate: REDUCED, desc: "Kalamari, kozice, belo vino" },
   { name: "Biftek z gobovo omako", category: "glavne_jedi", price: 24.9, vatRate: REDUCED, desc: "Biftek 200g, goveja juha, pomfrit" },
-
   // Sladice
   { name: "Prekmurska gibanica", category: "sladice", price: 4.5, vatRate: REDUCED, desc: "Tradicionalna gibanica s skuto, orehi" },
   { name: "Blediška kremšnita", category: "sladice", price: 4.2, vatRate: REDUCED, desc: "Kremna rezina, listnato testo" },
   { name: "Potica", category: "sladice", price: 3.9, vatRate: REDUCED, desc: "Orehova potica" },
   { name: "Palačinke z nutello", category: "sladice", price: 4.5, vatRate: REDUCED, desc: "Nutella, banana, sladka smetana" },
   { name: "Domnči tiramisu", category: "sladice", price: 5.5, vatRate: REDUCED, desc: "Kava, mascarpone, kakao" },
-
   // Brezalkoholne
   { name: "Kava espresso", category: "brezalkoholne", price: 1.5, vatRate: REDUCED, desc: "Prava italijanska kava" },
   { name: "Cappuccino", category: "brezalkoholne", price: 2.0, vatRate: REDUCED, desc: "Espresso, topleno mleko, pena" },
@@ -39,7 +36,6 @@ const menuData = [
   { name: "Radenska", category: "brezalkoholne", price: 2.3, vatRate: REDUCED, desc: "Mineralna voda 0,5l" },
   { name: "Coca-Cola", category: "brezalkoholne", price: 2.5, vatRate: REDUCED, desc: "0,33l" },
   { name: "Čaj", category: "brezalkoholne", price: 1.8, vatRate: REDUCED, desc: "Izbor čajev, med, limona" },
-
   // Alkoholne
   { name: "Laški beli", category: "alkoholne", price: 3.5, vatRate: STANDARD, desc: "0,2l, suho belo vino" },
   { name: "Refošk", category: "alkoholne", price: 3.8, vatRate: STANDARD, desc: "0,2l, rdeče vino Primorska" },
@@ -52,7 +48,6 @@ const menuData = [
 ];
 
 const tablesData = [
-  // Dvorana
   { number: 1, name: "Miza 1", seats: 2, section: "Dvorana" },
   { number: 2, name: "Miza 2", seats: 4, section: "Dvorana" },
   { number: 3, name: "Miza 3", seats: 4, section: "Dvorana" },
@@ -61,22 +56,56 @@ const tablesData = [
   { number: 6, name: "Miza 6", seats: 8, section: "Dvorana" },
   { number: 7, name: "Miza 7", seats: 2, section: "Dvorana" },
   { number: 8, name: "Miza 8", seats: 4, section: "Dvorana" },
-  // Terasa
   { number: 9, name: "Terasa 1", seats: 4, section: "Terasa" },
   { number: 10, name: "Terasa 2", seats: 4, section: "Terasa" },
   { number: 11, name: "Terasa 3", seats: 6, section: "Terasa" },
   { number: 12, name: "Terasa 4", seats: 2, section: "Terasa" },
-  // Zasebna
   { number: 13, name: "Zasebna 1", seats: 10, section: "Zasebna" },
   { number: 14, name: "Zasebna 2", seats: 12, section: "Zasebna" },
 ];
 
-async function main() {
-  console.log("🌱 Seeding slovenskega menija in miz...");
+// ============================================================
+// RESTAURANT CONFIG (2 tenant-a za demo)
+// ============================================================
 
-  // Počisti (vrstni red pomemben zaradi foreign key constraints)
+const restaurants = [
+  {
+    name: "Gostilna Pri Marku",
+    slug: "gostilna-pri-marku",
+    subdomain: "marko",
+    address: "Prevozna ulica 11, 1000 Ljubljana",
+    city: "Ljubljana",
+    phone: "01 234 56 78",
+    email: "info@gostilnaprimarku.si",
+    taxNumber: "SI12345678",
+    businessUnit: "PREVOZ11",
+    cashRegister: "BLAG01",
+    fursEnv: "test",
+  },
+  {
+    name: "Hotel Slavija",
+    slug: "hotel-slavija",
+    subdomain: "slavija",
+    address: "Slovenska cesta 34, 1000 Ljubljana",
+    city: "Ljubljana",
+    phone: "01 425 33 11",
+    email: "recepcija@hotelslavija.si",
+    taxNumber: "SI87654321",
+    businessUnit: "HOTEL34",
+    cashRegister: "RECEP01",
+    fursEnv: "test",
+  },
+];
+
+async function main() {
+  console.log("🌱 Multi-tenant seeding (2 restavraciji)...");
+
+  // Počisti vse
+  await db.timesheet.deleteMany();
+  await db.schedule.deleteMany();
   await db.recipe.deleteMany();
   await db.inventoryItem.deleteMany();
+  await db.giftCard.deleteMany();
   await db.customer.deleteMany();
   await db.modifier.deleteMany();
   await db.orderItem.deleteMany();
@@ -86,71 +115,66 @@ async function main() {
   await db.operator.deleteMany();
   await db.menuItem.deleteMany();
   await db.table.deleteMany();
+  await db.restaurant.deleteMany();
 
-  // Mize
-  for (const t of tablesData) {
-    await db.table.create({ data: t });
+  // Ustvari obe restavraciji
+  for (const r of restaurants) {
+    await db.restaurant.create({ data: r });
   }
-  console.log(`✅ ${tablesData.length} miz ustvarjenih`);
+  console.log(`✅ ${restaurants.length} restavracij ustvarjenih`);
 
-  // Meni
-  for (const m of menuData) {
-    await db.menuItem.create({ data: { ...m, available: true } });
-  }
-  console.log(`✅ ${menuData.length} menijskih postavk ustvarjenih`);
-
-  // Demo: eno odprto naročilo na mizi 2
-  const table2 = await db.table.findFirst({ where: { number: 2 } });
-  const zlikrofi = await db.menuItem.findFirst({ where: { name: "Žlikrofi s pečenico" } });
-  const refošk = await db.menuItem.findFirst({ where: { name: "Refošk" } });
-  const gibanica = await db.menuItem.findFirst({ where: { name: "Prekmurska gibanica" } });
-
-  if (table2 && zlikrofi && refošk && gibanica) {
-    const order = await db.order.create({
-      data: {
-        tableId: table2.id,
-        status: "open",
-        operator: "Ana",
-      },
-    });
-    await db.orderItem.createMany({
-      data: [
-        { orderId: order.id, menuItemId: zlikrofi.id, quantity: 2, unitPrice: zlikrofi.price, vatRate: zlikrofi.vatRate },
-        { orderId: order.id, menuItemId: refošk.id, quantity: 2, unitPrice: refošk.price, vatRate: refošk.vatRate },
-        { orderId: order.id, menuItemId: gibanica.id, quantity: 1, unitPrice: gibanica.price, vatRate: gibanica.vatRate },
-      ],
-    });
-    // Posodobi skupaj
-    const total = 2 * zlikrofi.price + 2 * refošk.price + 1 * gibanica.price;
-    const vatTotal = 2 * zlikrofi.price * zlikrofi.vatRate + 2 * refošk.price * refošk.vatRate + 1 * gibanica.price * gibanica.vatRate;
-    await db.order.update({ where: { id: order.id }, data: { total, vatTotal } });
-    console.log("✅ Demo naročilo na mizi 2 ustvarjeno");
+  // Seedaj vsako restavracijo posebej
+  for (let i = 0; i < restaurants.length; i++) {
+    const restaurant = await db.restaurant.findFirst({ where: { slug: restaurants[i].slug } });
+    if (!restaurant) continue;
+    await seedRestaurantData(db, restaurant.id, i);
   }
 
-  // Demo: nekaj plačanih računov iz današnjega dne (za dnevnik + statistiko)
-  await seedPaidReceipts(db);
-
-  // Demo: modifierji za nekaj jedi
-  await seedModifiers(db);
-
-  // Demo: rezervacije za danes in jutri
-  await seedReservations(db);
-
-  // Demo: ena zaprta smena včerajšnji dan
-  await seedShifts(db);
-
-  // Demo: operaterji s PIN-i
-  await seedOperators(db);
-
-  // Demo: inventory + recipes + customers
-  await seedInventory(db);
-  await seedCustomers(db);
-
-  console.log("🎉 Seed končan!");
+  console.log("🎉 Multi-tenant seed končan!");
 }
 
-async function seedInventory(db: import("@prisma/client").PrismaClient) {
-  const items = [
+async function seedRestaurantData(
+  db: import("@prisma/client").PrismaClient,
+  restaurantId: string,
+  index: number
+) {
+  const restaurant = await db.restaurant.findUnique({ where: { id: restaurantId } });
+  if (!restaurant) return;
+  console.log(`\n--- Seeding: ${restaurant.name} ---`);
+
+  // Mize (za drugo restavracijo s predpono H-)
+  const prefix = index === 1 ? "H-" : "";
+  for (const t of tablesData) {
+    await db.table.create({
+      data: { ...t, name: prefix + t.name, restaurantId },
+    });
+  }
+  console.log(`✅ ${tablesData.length} miz`);
+
+  // Meni (ista za obe, za demo)
+  const menuMap = new Map<string, string>();
+  for (const m of menuData) {
+    const item = await db.menuItem.create({
+      data: { ...m, available: true, restaurantId },
+    });
+    menuMap.set(m.name, item.id);
+  }
+  console.log(`✅ ${menuData.length} menijskih postavk`);
+
+  // Operaterji (različni PIN-i za drugo restavracijo)
+  const pinOffset = index * 1000;
+  const operators = [
+    { name: index === 0 ? "Ana" : "Mija", pin: String(1234 + pinOffset), taxNumber: restaurant.taxNumber, role: "cashier", hourlyRate: 12 },
+    { name: index === 0 ? "Marko" : "Tomaž", pin: String(5678 + pinOffset), taxNumber: restaurant.taxNumber, role: "cashier", hourlyRate: 13 },
+    { name: index === 0 ? "Admin" : "Direktor", pin: String(9999 + pinOffset), taxNumber: restaurant.taxNumber, role: "admin", hourlyRate: 20 },
+  ];
+  for (const op of operators) {
+    await db.operator.create({ data: { ...op, restaurantId } });
+  }
+  console.log(`✅ 3 operaterjev (PIN: ${operators.map((o) => o.pin).join(", ")})`);
+
+  // Inventory
+  const inventoryItems = [
     { name: "Moka", unit: "kg", quantity: 25, minQuantity: 5, costPerUnit: 0.8, supplier: "Mlinotest", category: "splosno" },
     { name: "Goveje meso", unit: "kg", quantity: 8, minQuantity: 3, costPerUnit: 12.5, supplier: "Mercator", category: "meso" },
     { name: "Svinjsko meso", unit: "kg", quantity: 12, minQuantity: 4, costPerUnit: 8.5, supplier: "Jata", category: "meso" },
@@ -158,147 +182,89 @@ async function seedInventory(db: import("@prisma/client").PrismaClient) {
     { name: "Krompir", unit: "kg", quantity: 30, minQuantity: 10, costPerUnit: 0.6, supplier: "Local", category: "zelenjava" },
     { name: "Fižol", unit: "kg", quantity: 10, minQuantity: 3, costPerUnit: 2.5, supplier: "Mercator", category: "zelenjava" },
     { name: "Kislo zelje", unit: "kg", quantity: 8, minQuantity: 2, costPerUnit: 1.8, supplier: "Local", category: "zelenjava" },
-    { name: "Buče", unit: "kg", quantity: 5, minQuantity: 2, costPerUnit: 1.2, supplier: "Local", category: "zelenjava" },
     { name: "Sir (vsi)", unit: "kg", quantity: 6, minQuantity: 2, costPerUnit: 9.0, supplier: "Mlekarna Celeia", category: "splosno" },
     { name: "Jajca", unit: "kos", quantity: 60, minQuantity: 20, costPerUnit: 0.2, supplier: "Local", category: "splosno" },
     { name: "Pivo Laško (sod)", unit: "l", quantity: 50, minQuantity: 10, costPerUnit: 1.8, supplier: "Laško", category: "pijaca" },
-    { name: "Pivo Union (sod)", unit: "l", quantity: 40, minQuantity: 10, costPerUnit: 1.7, supplier: "Union", category: "pijaca" },
     { name: "Vino Refošk", unit: "l", quantity: 15, minQuantity: 5, costPerUnit: 5.5, supplier: "Vinska klet", category: "pijaca" },
-    { name: "Vino Laški", unit: "l", quantity: 12, minQuantity: 4, costPerUnit: 4.5, supplier: "Vinska klet", category: "pijaca" },
-    { name: "Aperol", unit: "l", quantity: 3, minQuantity: 1, costPerUnit: 15.0, supplier: "Mercator", category: "pijaca" },
-    { name: "Prosecco", unit: "l", quantity: 5, minQuantity: 2, costPerUnit: 7.0, supplier: "Mercator", category: "pijaca" },
     { name: "Kava", unit: "kg", quantity: 4, minQuantity: 1, costPerUnit: 18.0, supplier: "Barcaffe", category: "splosno" },
-    { name: "Mleko", unit: "l", quantity: 10, minQuantity: 3, costPerUnit: 1.0, supplier: "Mlekarna", category: "splosno" },
-    { name: "Orehi", unit: "kg", quantity: 3, minQuantity: 1, costPerUnit: 12.0, supplier: "Local", category: "splosno" },
-    { name: "Skuta", unit: "kg", quantity: 4, minQuantity: 1, costPerUnit: 4.5, supplier: "Mlekarna", category: "splosno" },
   ];
-
-  for (const item of items) {
-    await db.inventoryItem.create({ data: item });
+  for (const item of inventoryItems) {
+    await db.inventoryItem.create({ data: { ...item, restaurantId } });
   }
-  console.log(`✅ ${items.length} inventory items ustvarjenih`);
+  console.log(`✅ ${inventoryItems.length} inventory items`);
 
-  // Recipes — poveži nekaj jedi z sestavinami
-  const zlikrofi = await db.menuItem.findFirst({ where: { name: "Žlikrofi s pečenico" } });
-  const kranjska = await db.menuItem.findFirst({ where: { name: "Kranjska klobasa s kislim zeljem" } });
-  const jota = await db.menuItem.findFirst({ where: { name: "Jota" } });
-  const biftek = await db.menuItem.findFirst({ where: { name: "Biftek z gobovo omako" } });
-  const pivo = await db.menuItem.findFirst({ where: { name: "Pivo Laško" } });
-
-  const moka = await db.inventoryItem.findFirst({ where: { name: "Moka" } });
-  const svinjina = await db.inventoryItem.findFirst({ where: { name: "Svinjsko meso" } });
-  const govedina = await db.inventoryItem.findFirst({ where: { name: "Goveje meso" } });
-  const zelje = await db.inventoryItem.findFirst({ where: { name: "Kislo zelje" } });
-  const fizol = await db.inventoryItem.findFirst({ where: { name: "Fižol" } });
-  const krompir = await db.inventoryItem.findFirst({ where: { name: "Krompir" } });
-  const pivoSod = await db.inventoryItem.findFirst({ where: { name: "Pivo Laško (sod)" } });
-
-  const recipes = [
-    zlikrofi && moka && svinjina && { menuItemId: zlikrofi.id, inventoryItemId: moka.id, quantity: 0.15 },
-    zlikrofi && svinjina && { menuItemId: zlikrofi.id, inventoryItemId: svinjina.id, quantity: 0.2 },
-    kranjska && svinjina && { menuItemId: kranjska.id, inventoryItemId: svinjina.id, quantity: 0.25 },
-    kranjska && zelje && { menuItemId: kranjska.id, inventoryItemId: zelje.id, quantity: 0.2 },
-    kranjska && krompir && { menuItemId: kranjska.id, inventoryItemId: krompir.id, quantity: 0.3 },
-    jota && fizol && { menuItemId: jota.id, inventoryItemId: fizol.id, quantity: 0.15 },
-    jota && zelje && { menuItemId: jota.id, inventoryItemId: zelje.id, quantity: 0.15 },
-    biftek && govedina && { menuItemId: biftek.id, inventoryItemId: govedina.id, quantity: 0.2 },
-    biftek && krompir && { menuItemId: biftek.id, inventoryItemId: krompir.id, quantity: 0.3 },
-    pivo && pivoSod && { menuItemId: pivo.id, inventoryItemId: pivoSod.id, quantity: 0.5 },
-  ].filter(Boolean) as { menuItemId: string; inventoryItemId: string; quantity: number }[];
-
-  for (const r of recipes) {
-    await db.recipe.create({ data: r });
-  }
-  console.log(`✅ ${recipes.length} receptov (recipes) ustvarjenih`);
-}
-
-async function seedCustomers(db: import("@prisma/client").PrismaClient) {
+  // Stranke
   const customers = [
-    { name: "Janez Novak", phone: "031 234 567", email: "janez@email.com", points: 45, totalSpent: 450.50, visitCount: 12, note: "Alergija na gluten" },
-    { name: "Marija Horvat", phone: "041 555 333", email: "marija@email.com", points: 32, totalSpent: 320.00, visitCount: 8, note: "Vegetarijanka" },
-    { name: "Marko Kovač", phone: "051 999 888", points: 15, totalSpent: 150.30, visitCount: 4 },
-    { name: "Ana Zupan", phone: "070 123 456", email: "ana@email.com", points: 68, totalSpent: 680.00, visitCount: 15, note: "Redna stranka, rojstni dan 15.5." },
-    { name: "Peter Krajnc", phone: "031 777 888", points: 5, totalSpent: 50.00, visitCount: 2 },
+    { name: "Janez Novak", phone: `031 234 56${index}7`, email: "janez@email.com", points: 45, totalSpent: 450.50, visitCount: 12, note: "Alergija na gluten" },
+    { name: "Marija Horvat", phone: `041 555 33${index}3`, email: "marija@email.com", points: 32, totalSpent: 320.00, visitCount: 8, note: "Vegetarijanka" },
+    { name: "Marko Kovač", phone: `051 999 88${index}8`, points: 15, totalSpent: 150.30, visitCount: 4 },
+    { name: "Ana Zupan", phone: `070 123 45${index}6`, email: "ana@email.com", points: 68, totalSpent: 680.00, visitCount: 15, note: "Redna stranka" },
   ];
-
   for (const c of customers) {
-    await db.customer.create({ data: c });
+    await db.customer.create({ data: { ...c, restaurantId } });
   }
-  console.log(`✅ ${customers.length} strank (customers) ustvarjenih`);
-}
+  console.log(`✅ ${customers.length} strank`);
 
-async function seedOperators(db: import("@prisma/client").PrismaClient) {
-  const operators = [
-    { name: "Ana", pin: "1234", taxNumber: "SI12345678", role: "cashier" },
-    { name: "Marko", pin: "5678", taxNumber: "SI87654321", role: "cashier" },
-    { name: "Admin", pin: "9999", taxNumber: "SI11111111", role: "admin" },
-  ];
-
-  for (const op of operators) {
-    await db.operator.create({ data: op });
-  }
-  console.log(`✅ ${operators.length} operaterjev ustvarjenih (PIN: 1234, 5678, 9999)`);
-}
-
-async function seedModifiers(db: import("@prisma/client").PrismaClient) {
-  const biftek = await db.menuItem.findFirst({ where: { name: "Biftek z gobovo omako" } });
-  const zlikrofi = await db.menuItem.findFirst({ where: { name: "Žlikrofi s pečenico" } });
-  const pivo = await db.menuItem.findFirst({ where: { name: "Pivo Laško" } });
-
+  // Modifiers
+  const biftekId = menuMap.get("Biftek z gobovo omako");
+  const zlikrofiId = menuMap.get("Žlikrofi s pečenico");
+  const pivoId = menuMap.get("Pivo Laško");
   const mods = [
-    biftek && { menuItemId: biftek.id, label: "Dobra pečena", priceDelta: 0 },
-    biftek && { menuItemId: biftek.id, label: "Medium", priceDelta: 0 },
-    biftek && { menuItemId: biftek.id, label: "Srednje pečena", priceDelta: 0 },
-    biftek && { menuItemId: biftek.id, label: "Gobe dodaj", priceDelta: 2.5 },
-    zlikrofi && { menuItemId: zlikrofi.id, label: "Brez zaliva", priceDelta: 0 },
-    zlikrofi && { menuItemId: zlikrofi.id, label: "Dvojna porcija", priceDelta: 6.0 },
-    zlikrofi && { menuItemId: zlikrofi.id, label: "Brez čebule", priceDelta: 0 },
-    pivo && { menuItemId: pivo.id, label: "Veliko (0,5l)", priceDelta: 0.8 },
-    pivo && { menuItemId: pivo.id, label: "Hladno", priceDelta: 0 },
+    biftekId && { menuItemId: biftekId, label: "Dobra pečena", priceDelta: 0 },
+    biftekId && { menuItemId: biftekId, label: "Medium", priceDelta: 0 },
+    biftekId && { menuItemId: biftekId, label: "Srednje pečena", priceDelta: 0 },
+    biftekId && { menuItemId: biftekId, label: "Gobe dodaj", priceDelta: 2.5 },
+    zlikrofiId && { menuItemId: zlikrofiId, label: "Brez zaliva", priceDelta: 0 },
+    zlikrofiId && { menuItemId: zlikrofiId, label: "Dvojna porcija", priceDelta: 6.0 },
+    zlikrofiId && { menuItemId: zlikrofiId, label: "Brez čebule", priceDelta: 0 },
+    pivoId && { menuItemId: pivoId, label: "Veliko (0,5l)", priceDelta: 0.8 },
   ].filter(Boolean) as { menuItemId: string; label: string; priceDelta: number }[];
-
   for (const m of mods) {
     await db.modifier.create({ data: m });
   }
-  console.log(`✅ ${mods.length} modifierjev ustvarjenih`);
-}
 
-async function seedReservations(db: import("@prisma/client").PrismaClient) {
+  // Darilne kartice
+  await db.giftCard.create({
+    data: {
+      code: `GC-${index === 0 ? "MARKO" : "SLAVI"}01`,
+      balance: 50,
+      initialAmount: 50,
+      restaurantId,
+      customerName: "Demo prejemnik",
+    },
+  });
+  console.log(`✅ 1 darilna kartica`);
+
+  // Rezervacije za danes
   const today = new Date().toISOString().slice(0, 10);
   const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-
-  const table3 = await db.table.findFirst({ where: { number: 3 } });
-  const table6 = await db.table.findFirst({ where: { number: 6 } });
-  const table9 = await db.table.findFirst({ where: { number: 9 } });
-  const table11 = await db.table.findFirst({ where: { number: 11 } });
+  const table3 = await db.table.findFirst({ where: { number: 3, restaurantId } });
+  const table6 = await db.table.findFirst({ where: { number: 6, restaurantId } });
+  const table9 = await db.table.findFirst({ where: { number: 9, restaurantId } });
+  const table11 = await db.table.findFirst({ where: { number: 11, restaurantId } });
 
   const reservations = [
     { tableId: table3?.id, customerName: "Janez Novak", customerPhone: "031 234 567", partySize: 4, date: today, time: "19:00", duration: 120, note: "Alergija na gluten" },
-    { tableId: table6?.id, customerName: "Familija Horvat", customerPhone: "041 555 333", partySize: 6, date: today, time: "20:00", duration: 150, note: "Rojstni dan — torta v hladilniku" },
+    { tableId: table6?.id, customerName: "Familija Horvat", customerPhone: "041 555 333", partySize: 6, date: today, time: "20:00", duration: 150, note: "Rojstni dan" },
     { tableId: table9?.id, customerName: "Gospod Kovač", customerPhone: null, partySize: 2, date: today, time: "12:30", duration: 90, note: null },
     { tableId: table11?.id, customerName: "Skupina 8 oseb", customerPhone: "051 999 888", partySize: 8, date: tomorrow, time: "19:30", duration: 180, note: "Poslovno srečanje" },
   ].filter((r) => r.tableId) as { tableId: string; customerName: string; customerPhone: string | null; partySize: number; date: string; time: string; duration: number; note: string | null }[];
 
   for (const r of reservations) {
-    await db.reservation.create({
-      data: { ...r, status: "confirmed" },
-    });
+    await db.reservation.create({ data: { ...r, status: "confirmed", restaurantId } });
   }
-  console.log(`✅ ${reservations.length} rezervacij ustvarjenih`);
-}
+  console.log(`✅ ${reservations.length} rezervacij`);
 
-async function seedShifts(db: import("@prisma/client").PrismaClient) {
-  // Včerajšnja zaprta smena (Ana)
+  // Včerajšnja zaprta smena
   const yesterday = new Date(Date.now() - 86400000);
   const start = new Date(yesterday);
   start.setHours(10, 0, 0, 0);
   const end = new Date(yesterday);
   end.setHours(22, 0, 0, 0);
-
   await db.shift.create({
     data: {
-      operator: "Ana",
-      operatorTaxNo: "SI12345678",
+      operator: index === 0 ? "Ana" : "Mija",
+      operatorTaxNo: restaurant.taxNumber,
       startTime: start,
       endTime: end,
       startCash: 150,
@@ -306,69 +272,98 @@ async function seedShifts(db: import("@prisma/client").PrismaClient) {
       status: "closed",
       ordersCount: 8,
       totalRevenue: 234.5,
-      note: "Mirna smena, vse OK",
+      note: "Mirna smena",
+      restaurantId,
     },
   });
 
-  // Predvčerajšnja zaprta smena (Marko)
-  const dayBefore = new Date(Date.now() - 2 * 86400000);
-  const start2 = new Date(dayBefore);
-  start2.setHours(14, 0, 0, 0);
-  const end2 = new Date(dayBefore);
-  end2.setHours(23, 0, 0, 0);
+  // Demo naročilo na mizi 2 (odprto)
+  const table2 = await db.table.findFirst({ where: { number: 2, restaurantId } });
+  const zlikrofiItem = await db.menuItem.findFirst({ where: { name: "Žlikrofi s pečenico", restaurantId } });
+  const refoškItem = await db.menuItem.findFirst({ where: { name: "Refošk", restaurantId } });
+  const gibanicaItem = await db.menuItem.findFirst({ where: { name: "Prekmurska gibanica", restaurantId } });
+  if (table2 && zlikrofiItem && refoškItem && gibanicaItem) {
+    const order = await db.order.create({
+      data: {
+        tableId: table2.id,
+        status: "open",
+        operator: index === 0 ? "Ana" : "Mija",
+        restaurantId,
+        businessUnit: restaurant.businessUnit,
+        cashRegister: restaurant.cashRegister,
+      },
+    });
+    await db.orderItem.createMany({
+      data: [
+        { orderId: order.id, menuItemId: zlikrofiItem.id, quantity: 2, unitPrice: zlikrofiItem.price, vatRate: zlikrofiItem.vatRate },
+        { orderId: order.id, menuItemId: refoškItem.id, quantity: 2, unitPrice: refoškItem.price, vatRate: refoškItem.vatRate },
+        { orderId: order.id, menuItemId: gibanicaItem.id, quantity: 1, unitPrice: gibanicaItem.price, vatRate: gibanicaItem.vatRate },
+      ],
+    });
+    const total = 2 * zlikrofiItem.price + 2 * refoškItem.price + 1 * gibanicaItem.price;
+    const vatTotal = 2 * zlikrofiItem.price * zlikrofiItem.vatRate + 2 * refoškItem.price * refoškItem.vatRate + 1 * gibanicaItem.price * gibanicaItem.vatRate;
+    await db.order.update({ where: { id: order.id }, data: { total, vatTotal } });
+  }
 
-  await db.shift.create({
-    data: {
-      operator: "Marko",
-      operatorTaxNo: "SI87654321",
-      startTime: start2,
-      endTime: end2,
-      startCash: 200,
-      endCash: 380,
-      status: "closed",
-      ordersCount: 5,
-      totalRevenue: 178.3,
-      note: null,
-    },
-  });
+  // Plačani demo računi
+  await seedPaidReceipts(db, restaurantId, index);
 
-  console.log("✅ 2 zaprti smeni ustvarjeni");
+  // Recipes
+  const mokaInv = await db.inventoryItem.findFirst({ where: { name: "Moka", restaurantId } });
+  const svinjinaInv = await db.inventoryItem.findFirst({ where: { name: "Svinjsko meso", restaurantId } });
+  const govedinaInv = await db.inventoryItem.findFirst({ where: { name: "Goveje meso", restaurantId } });
+  const zeljeInv = await db.inventoryItem.findFirst({ where: { name: "Kislo zelje", restaurantId } });
+  const fizolInv = await db.inventoryItem.findFirst({ where: { name: "Fižol", restaurantId } });
+  const krompirInv = await db.inventoryItem.findFirst({ where: { name: "Krompir", restaurantId } });
+
+  const recipeData = [
+    zlikrofiId && mokaInv && { menuItemId: zlikrofiId, inventoryItemId: mokaInv.id, quantity: 0.15 },
+    zlikrofiId && svinjinaInv && { menuItemId: zlikrofiId, inventoryItemId: svinjinaInv.id, quantity: 0.2 },
+    biftekId && govedinaInv && { menuItemId: biftekId, inventoryItemId: govedinaInv.id, quantity: 0.2 },
+    biftekId && krompirInv && { menuItemId: biftekId, inventoryItemId: krompirInv.id, quantity: 0.3 },
+  ].filter(Boolean) as { menuItemId: string; inventoryItemId: string; quantity: number }[];
+  for (const r of recipeData) {
+    await db.recipe.create({ data: r });
+  }
 }
 
-async function seedPaidReceipts(db: import("@prisma/client").PrismaClient) {
-  // Poenostavljen FURS-like podpis (demo, brez pravega RSA)
+async function seedPaidReceipts(
+  db: import("@prisma/client").PrismaClient,
+  restaurantId: string,
+  index: number
+) {
   function fakeZoi(n: number) {
-    return Array.from({ length: 32 }, (_, i) =>
-      ((n + i * 7) % 16).toString(16).toUpperCase()
-    ).join("");
+    return Array.from({ length: 32 }, (_, i) => ((n + i * 7) % 16).toString(16).toUpperCase()).join("");
   }
   function fakeEor(n: number) {
-    return Array.from({ length: 32 }, (_, i) =>
-      ((n * 3 + i * 11) % 16).toString(16).toUpperCase()
-    ).join("");
+    return Array.from({ length: 32 }, (_, i) => ((n * 3 + i * 11) % 16).toString(16).toUpperCase()).join("");
   }
 
-  const jota = await db.menuItem.findFirst({ where: { name: "Jota" } });
-  const kranjska = await db.menuItem.findFirst({ where: { name: "Kranjska klobasa s kislim zeljem" } });
-  const pivo = await db.menuItem.findFirst({ where: { name: "Pivo Laško" } });
-  const cappuccino = await db.menuItem.findFirst({ where: { name: "Cappuccino" } });
-  const potica = await db.menuItem.findFirst({ where: { name: "Potica" } });
-  const spritz = await db.menuItem.findFirst({ where: { name: "Aperol Spritz" } });
-  const biftek = await db.menuItem.findFirst({ where: { name: "Biftek z gobovo omako" } });
-  const gibanicaLocal = await db.menuItem.findFirst({ where: { name: "Prekmurska gibanica" } });
-  const refoškLocal = await db.menuItem.findFirst({ where: { name: "Refošk" } });
-  const table3 = await db.table.findFirst({ where: { number: 3 } });
-  const table5 = await db.table.findFirst({ where: { number: 5 } });
-  const table7 = await db.table.findFirst({ where: { number: 7 } });
-  const table9 = await db.table.findFirst({ where: { number: 9 } });
-  const table10 = await db.table.findFirst({ where: { number: 10 } });
+  const restaurant = await db.restaurant.findUnique({ where: { id: restaurantId } });
+  if (!restaurant) return;
 
+  const jota = await db.menuItem.findFirst({ where: { name: "Jota", restaurantId } });
+  const kranjska = await db.menuItem.findFirst({ where: { name: "Kranjska klobasa s kislim zeljem", restaurantId } });
+  const pivo = await db.menuItem.findFirst({ where: { name: "Pivo Laško", restaurantId } });
+  const cappuccino = await db.menuItem.findFirst({ where: { name: "Cappuccino", restaurantId } });
+  const potica = await db.menuItem.findFirst({ where: { name: "Potica", restaurantId } });
+  const spritz = await db.menuItem.findFirst({ where: { name: "Aperol Spritz", restaurantId } });
+  const biftek = await db.menuItem.findFirst({ where: { name: "Biftek z gobovo omako", restaurantId } });
+  const gibanica = await db.menuItem.findFirst({ where: { name: "Prekmurska gibanica", restaurantId } });
+  const refošk = await db.menuItem.findFirst({ where: { name: "Refošk", restaurantId } });
+  const table3 = await db.table.findFirst({ where: { number: 3, restaurantId } });
+  const table5 = await db.table.findFirst({ where: { number: 5, restaurantId } });
+  const table7 = await db.table.findFirst({ where: { number: 7, restaurantId } });
+  const table9 = await db.table.findFirst({ where: { number: 9, restaurantId } });
+  const table10 = await db.table.findFirst({ where: { number: 10, restaurantId } });
+
+  const operatorName = index === 0 ? "Ana" : "Mija";
   const demoReceipts = [
-    { hoursAgo: 5, table: table3, items: [{ m: jota, q: 2 }, { m: pivo, q: 2 }, { m: potica, q: 1 }], method: "cash", operator: "Ana" },
-    { hoursAgo: 4, table: table5, items: [{ m: kranjska, q: 1 }, { m: pivo, q: 1 }, { m: potica, q: 1 }], method: "card", operator: "Ana" },
-    { hoursAgo: 3, table: table7, items: [{ m: cappuccino, q: 2 }, { m: gibanicaLocal, q: 1 }], method: "cash", operator: "Marko" },
-    { hoursAgo: 2, table: table9, items: [{ m: spritz, q: 3 }], method: "card", operator: "Marko" },
-    { hoursAgo: 1, table: table10, items: [{ m: biftek, q: 2 }, { m: refoškLocal, q: 2 }, { m: gibanicaLocal, q: 2 }], method: "card", operator: "Ana" },
+    { hoursAgo: 5, table: table3, items: [{ m: jota, q: 2 }, { m: pivo, q: 2 }, { m: potica, q: 1 }], method: "cash", tip: 0 },
+    { hoursAgo: 4, table: table5, items: [{ m: kranjska, q: 1 }, { m: pivo, q: 1 }, { m: potica, q: 1 }], method: "card", tip: 1.5 },
+    { hoursAgo: 3, table: table7, items: [{ m: cappuccino, q: 2 }, { m: gibanica, q: 1 }], method: "cash", tip: 0.5 },
+    { hoursAgo: 2, table: table9, items: [{ m: spritz, q: 3 }], method: "card", tip: 1.0 },
+    { hoursAgo: 1, table: table10, items: [{ m: biftek, q: 2 }, { m: refošk, q: 2 }, { m: gibanica, q: 2 }], method: "card", tip: 5.0 },
   ];
 
   let seq = 1;
@@ -376,16 +371,11 @@ async function seedPaidReceipts(db: import("@prisma/client").PrismaClient) {
     if (!r.table) continue;
     const paidAt = new Date();
     paidAt.setHours(paidAt.getHours() - r.hoursAgo);
-
     const items = r.items.filter((i) => i.m);
     if (items.length === 0) continue;
     const total = items.reduce((s, i) => s + i.m!.price * i.q, 0);
-    const vatTotal = items.reduce(
-      (s, i) => s + i.m!.price * i.q * i.m!.vatRate,
-      0
-    );
-
-    const invNum = `PREVOZ11-BLAG01-${String(seq).padStart(10, "0")}`;
+    const vatTotal = items.reduce((s, i) => s + i.m!.price * i.q * i.m!.vatRate, 0);
+    const invNum = `${restaurant.businessUnit}-${restaurant.cashRegister}-${String(seq).padStart(10, "0")}`;
     const order = await db.order.create({
       data: {
         tableId: r.table.id,
@@ -396,12 +386,14 @@ async function seedPaidReceipts(db: import("@prisma/client").PrismaClient) {
         paymentMethod: r.method,
         receiptNo: invNum,
         invoiceNumber: invNum,
-        zoi: fakeZoi(seq),
-        eor: fakeEor(seq),
+        zoi: fakeZoi(seq + index * 100),
+        eor: fakeEor(seq + index * 100),
         fursXml: `<demo/>`,
-        operator: r.operator,
-        businessUnit: "PREVOZ11",
-        cashRegister: "BLAG01",
+        operator: operatorName,
+        businessUnit: restaurant.businessUnit,
+        cashRegister: restaurant.cashRegister,
+        tip: r.tip,
+        restaurantId,
       },
     });
     await db.orderItem.createMany({
@@ -415,7 +407,7 @@ async function seedPaidReceipts(db: import("@prisma/client").PrismaClient) {
     });
     seq++;
   }
-  console.log(`✅ ${seq - 1} plačanih demo računov ustvarjenih`);
+  console.log(`✅ ${seq - 1} plačanih demo računov (z napitninami)`);
 }
 
 main()

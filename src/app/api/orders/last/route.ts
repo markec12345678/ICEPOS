@@ -1,13 +1,19 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getTenantFromRequest } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
-// Vrne zadnje plačano naročilo (za quick reorder)
-export async function GET() {
+// Vrne zadnje plačano naročilo (za quick reorder) — per restavracija
+export async function GET(req: NextRequest) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
+    }
+
     const lastOrder = await db.order.findFirst({
-      where: { status: "paid" },
+      where: { status: "paid", restaurantId: tenant.id },
       include: {
         table: true,
         items: { include: { menuItem: true } },

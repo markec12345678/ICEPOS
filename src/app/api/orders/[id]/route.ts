@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getTenantFromRequest } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
+    }
+
     const { id } = await params;
-    const order = await db.order.findUnique({
-      where: { id },
+    const order = await db.order.findFirst({
+      where: { id, restaurantId: tenant.id },
       include: {
         table: true,
         items: { include: { menuItem: true } },
@@ -31,11 +37,22 @@ export async function GET(
 
 // Brisanje (preklic) naročila
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
+    }
+
     const { id } = await params;
+    const order = await db.order.findFirst({
+      where: { id, restaurantId: tenant.id },
+    });
+    if (!order) {
+      return NextResponse.json({ error: "Naročilo ni najdeno" }, { status: 404 });
+    }
     await db.order.update({
       where: { id },
       data: { status: "cancelled" },

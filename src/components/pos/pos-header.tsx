@@ -6,16 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Store, Clock, ShieldCheck, Wifi, UserCircle, LogOut } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LangToggle } from "@/components/lang-toggle";
+import { TenantSelector } from "@/components/pos/tenant-selector";
 import {
   getStoredOperator,
   clearStoredOperator,
   type Operator,
 } from "@/components/pos/pin-login";
+import { useTenantStore } from "@/stores/tenant-store";
 import { toast } from "sonner";
 
 export function PosHeader() {
   const [now, setNow] = useState(new Date());
   const [operator, setOperator] = useState<Operator | null>(null);
+  const currentTenant = useTenantStore((s) => s.current);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
@@ -71,12 +74,13 @@ export function PosHeader() {
           </div>
           <div>
             <h1 className="text-base font-bold leading-tight text-foreground md:text-lg">
-              Gostilna Pri Marku
+              {currentTenant?.name || "Gostilna Pri Marku"}
             </h1>
             <p className="text-xs text-muted-foreground">
               Restavracija &middot; Pivnica &middot; Sobiše
             </p>
           </div>
+          <TenantSelector />
         </div>
 
         <div className="hidden items-center gap-2 md:flex">
