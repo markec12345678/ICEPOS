@@ -53,7 +53,7 @@ export function DashboardView() {
       <DashboardHeader />
 
       {/* KPI kartice */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className={cn("grid grid-cols-2 gap-3", data.todayTips > 0 ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
         <KpiCard
           label="Prihodek danes"
           value={formatEUR(data.todayRevenue)}
@@ -78,6 +78,14 @@ export function DashboardView() {
           icon={Users}
           accent="rose"
         />
+        {data.todayTips > 0 && (
+          <KpiCard
+            label="🪙 Napitnine"
+            value={formatEUR(data.todayTips)}
+            icon={Wallet}
+            accent="emerald"
+          />
+        )}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

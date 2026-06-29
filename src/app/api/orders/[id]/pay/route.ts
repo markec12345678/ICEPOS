@@ -27,6 +27,7 @@ export async function POST(
         : "cash";
     const customerId: string | undefined = body.customerId;
     const giftCardCode: string | undefined = body.giftCardCode;
+    const tip: number = typeof body.tip === "number" && body.tip > 0 ? body.tip : 0;
 
     const order = await db.order.findUnique({
       where: { id },
@@ -110,6 +111,7 @@ export async function POST(
         eor,
         fursXml,
         customerId: customerId || null,
+        tip,
       },
       include: {
         table: true,
@@ -176,6 +178,8 @@ export async function POST(
 
     return NextResponse.json({
       ...paid,
+      tip,
+      grandTotal: paid.total + tip,
       fursXmlPreview: fursXml.slice(0, 800) + "...(skrajšano)",
     });
   } catch (e) {

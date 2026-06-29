@@ -18,6 +18,7 @@ export async function GET() {
         ordersCount: 0,
         cashRevenue: 0,
         cardRevenue: 0,
+        tips: 0,
       });
     }
 
@@ -26,10 +27,11 @@ export async function GET() {
         status: "paid",
         paidAt: { gte: shift.startTime },
       },
-      select: { total: true, paymentMethod: true },
+      select: { total: true, paymentMethod: true, tip: true },
     });
 
     const revenue = paidOrders.reduce((s, o) => s + o.total, 0);
+    const tips = paidOrders.reduce((s, o) => s + (o.tip || 0), 0);
     const cashRevenue = paidOrders
       .filter((o) => o.paymentMethod === "cash")
       .reduce((s, o) => s + o.total, 0);
@@ -45,6 +47,7 @@ export async function GET() {
         startCash: shift.startCash,
       },
       revenue,
+      tips,
       ordersCount: paidOrders.length,
       cashRevenue,
       cardRevenue,

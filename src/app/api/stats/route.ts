@@ -20,6 +20,7 @@ export async function GET() {
     });
 
     const todayRevenue = paidOrders.reduce((s, o) => s + o.total, 0);
+    const todayTips = paidOrders.reduce((s, o) => s + (o.tip || 0), 0);
     const todayOrders = paidOrders.length;
     const avgOrderValue = todayOrders > 0 ? todayRevenue / todayOrders : 0;
 
@@ -113,6 +114,7 @@ export async function GET() {
 
     return NextResponse.json({
       todayRevenue,
+      todayTips,
       todayOrders,
       avgOrderValue,
       openTables,

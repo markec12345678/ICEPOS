@@ -65,6 +65,7 @@ model Order {
   operator      String   @default("Blagajnik")
   operatorTaxNo String   @default("SI12345678") // Davčna št. blagajnika
   shiftId       String? // povezava s Smeno (FURS zahteva sledljivost)
+  tip           Float    @default(0) // napitnina (EUR)
   // Storno
   stornoOf      String? // ID izvirnega računa, če je to storno
   stornoReason  String?

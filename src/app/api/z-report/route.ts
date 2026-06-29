@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
     const stornoReceipts = paidOrders.filter((o) => o.status === "storno");
 
     const grossTotal = validReceipts.reduce((s, o) => s + o.total, 0);
+    const totalTips = validReceipts.reduce((s, o) => s + (o.tip || 0), 0);
     const stornoTotal = stornoReceipts.reduce(
       (s, o) => s + Math.abs(o.total),
       0
@@ -120,6 +121,7 @@ export async function GET(req: NextRequest) {
         grossTotal: Math.round(grossTotal * 100) / 100,
         stornoTotal: Math.round(stornoTotal * 100) / 100,
         netTotal: Math.round(netTotal * 100) / 100,
+        totalTips: Math.round(totalTips * 100) / 100,
         netVatTotal: Math.round(netVatTotal * 100) / 100,
         receiptCount: validReceipts.length,
         stornoCount: stornoReceipts.length,

@@ -194,6 +194,12 @@ export default async function PrintReceiptPage({
 
         <div className="total">SKUPAJ: {order.total.toFixed(2)} €</div>
 
+        {order.tip > 0 && (
+          <div className="total" style={{ fontSize: 14, color: "#16a34a" }}>
+            Napitnina: {order.tip.toFixed(2)} €
+          </div>
+        )}
+
         <div className="furs">
           <div className="verified">✓ FURS — SRS fiskaliziran</div>
           <p>

@@ -30,10 +30,11 @@ export async function POST(
         status: "paid",
         paidAt: { gte: shift.startTime, lte: new Date() },
       },
-      select: { total: true, paymentMethod: true },
+      select: { total: true, paymentMethod: true, tip: true },
     });
 
     const totalRevenue = paidOrders.reduce((s, o) => s + o.total, 0);
+    const totalTips = paidOrders.reduce((s, o) => s + (o.tip || 0), 0);
     const cashRevenue = paidOrders
       .filter((o) => o.paymentMethod === "cash")
       .reduce((s, o) => s + o.total, 0);
@@ -54,6 +55,7 @@ export async function POST(
       shift: closed,
       summary: {
         totalRevenue,
+        totalTips,
         ordersCount: paidOrders.length,
         cashRevenue,
         cardRevenue: totalRevenue - cashRevenue,

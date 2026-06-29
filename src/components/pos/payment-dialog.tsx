@@ -75,6 +75,9 @@ export function PaymentDialog() {
   const [customerSearch, setCustomerSearch] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedCustomerName, setSelectedCustomerName] = useState<string | null>(null);
+  const [tipMode, setTipMode] = useState<"none" | "percent" | "fixed">("none");
+  const [tipPercent, setTipPercent] = useState("10");
+  const [tipFixed, setTipFixed] = useState("");
 
   const selectedTable = tables?.find((t) => t.id === selectedTableId);
   const openOrder = selectedTable?.orders.find((o) => o.status === "open");
@@ -90,8 +93,17 @@ export function PaymentDialog() {
   const vat = grossVat * (1 - discountPercent / 100);
   const subtotal = total - vat;
 
+  // Napitnina
+  const tipAmount =
+    tipMode === "percent"
+      ? (total * (parseFloat(tipPercent) || 0)) / 100
+      : tipMode === "fixed"
+      ? parseFloat(tipFixed) || 0
+      : 0;
+  const grandTotal = total + tipAmount;
+
   const tenderedNum = parseFloat(tendered) || 0;
-  const change = tenderedNum - total;
+  const change = tenderedNum - grandTotal;
 
   // Počisti paid ob zaprtju
   useEffect(() => {
@@ -114,6 +126,9 @@ export function PaymentDialog() {
       setSelectedCustomerId(null);
       setSelectedCustomerName(null);
       setCustomerSearch("");
+      setTipMode("none");
+      setTipPercent("10");
+      setTipFixed("");
       refetch();
     }
   }
@@ -123,7 +138,7 @@ export function PaymentDialog() {
       toast.error("Ni aktivnega naročila");
       return;
     }
-    if (method === "cash" && tenderedNum < total) {
+    if (method === "cash" && tenderedNum < grandTotal) {
       toast.error("Prejeto je manj kot znaša račun");
       return;
     }
@@ -136,6 +151,7 @@ export function PaymentDialog() {
       const payload: Record<string, unknown> = { paymentMethod: method };
       if (method === "giftcard") payload.giftCardCode = giftCardCode.trim().toUpperCase();
       if (selectedCustomerId) payload.customerId = selectedCustomerId;
+      if (tipAmount > 0) payload.tip = Math.round(tipAmount * 100) / 100;
 
       const res = await fetch(`/api/orders/${openOrder.id}/pay`, {
         method: "POST",
@@ -159,10 +175,10 @@ export function PaymentDialog() {
   }
 
   const quickAmounts = [
-    total,
-    Math.ceil(total / 5) * 5,
-    Math.ceil(total / 10) * 10,
-    Math.ceil(total / 20) * 20,
+    grandTotal,
+    Math.ceil(grandTotal / 5) * 5,
+    Math.ceil(grandTotal / 10) * 10,
+    Math.ceil(grandTotal / 20) * 20,
   ].filter((v, i, a) => a.indexOf(v) === i);
 
   return (
@@ -211,6 +227,90 @@ export function PaymentDialog() {
                   <span className="text-amber-700 dark:text-amber-400">
                     {formatEUR(total)}
                   </span>
+                </div>
+                {tipAmount > 0 && (
+                  <>
+                    <div className="mt-1 flex justify-between text-emerald-600 dark:text-emerald-400">
+                      <span>Napitnina</span>
+                      <span>+{formatEUR(tipAmount)}</span>
+                    </div>
+                    <Separator className="my-1" />
+                    <div className="flex justify-between text-base font-bold">
+                      <span>Za plačilo</span>
+                      <span className="text-amber-700 dark:text-amber-400">
+                        {formatEUR(grandTotal)}
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Napitnina selector */}
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground">
+                  Napitnina (opcijsko)
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    onClick={() => setTipMode("none")}
+                    className={cn(
+                      "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
+                      tipMode === "none"
+                        ? "border-border bg-muted"
+                        : "border-border hover:bg-muted/50"
+                    )}
+                  >
+                    Brez
+                  </button>
+                  {[5, 10, 15].map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => {
+                        setTipMode("percent");
+                        setTipPercent(String(p));
+                      }}
+                      className={cn(
+                        "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
+                        tipMode === "percent" && tipPercent === String(p)
+                          ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                          : "border-border hover:bg-muted/50"
+                      )}
+                    >
+                      {p}%
+                    </button>
+                  ))}
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setTipMode("fixed")}
+                      className={cn(
+                        "rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
+                        tipMode === "fixed"
+                          ? "border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                          : "border-border hover:bg-muted/50"
+                      )}
+                    >
+                      €
+                    </button>
+                    {tipMode === "fixed" && (
+                      <Input
+                        type="number"
+                        step="0.50"
+                        value={tipFixed}
+                        onChange={(e) => setTipFixed(e.target.value)}
+                        placeholder="0.00"
+                        className="h-7 w-20 text-xs"
+                      />
+                    )}
+                    {tipMode === "percent" && (
+                      <Input
+                        type="number"
+                        step="1"
+                        value={tipPercent}
+                        onChange={(e) => setTipPercent(e.target.value)}
+                        className="h-7 w-16 text-xs"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -447,8 +547,8 @@ export function PaymentDialog() {
                   onClick={processPayment}
                   disabled={
                     processing ||
-                    (method === "cash" && tenderedNum < total) ||
-                    (method === "giftcard" && (gcBalance === null || gcBalance < total)) ||
+                    (method === "cash" && tenderedNum < grandTotal) ||
+                    (method === "giftcard" && (gcBalance === null || gcBalance < grandTotal)) ||
                     cart.length === 0
                   }
                   className="col-span-2 bg-amber-600 py-3 text-sm font-semibold text-white hover:bg-amber-700"
@@ -458,7 +558,7 @@ export function PaymentDialog() {
                   ) : (
                     <>
                       <CheckCircle2 className="mr-2 h-4 w-4" />
-                      Plačaj ({formatEUR(total)})
+                      Plačaj ({formatEUR(grandTotal)})
                     </>
                   )}
                 </Button>

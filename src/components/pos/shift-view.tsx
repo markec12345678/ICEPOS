@@ -368,6 +368,7 @@ function EndShiftDialog({
   const [saving, setSaving] = useState(false);
   const [summary, setSummary] = useState<{
     totalRevenue: number;
+    totalTips: number;
     ordersCount: number;
     cashRevenue: number;
     cardRevenue: number;
@@ -411,6 +412,12 @@ function EndShiftDialog({
               <span className="text-muted-foreground">Skupni prihodek</span>
               <span className="font-bold">{formatEUR(summary.totalRevenue)}</span>
             </div>
+            {summary.totalTips > 0 && (
+              <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                <span>🪙 Napitnine</span>
+                <span className="font-bold">{formatEUR(summary.totalTips)}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-muted-foreground">Št. računov</span>
               <span className="font-bold">{summary.ordersCount}</span>

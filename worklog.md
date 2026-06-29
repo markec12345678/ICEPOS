@@ -986,3 +986,45 @@ Stage Summary:
 - Food Cost Analiza v MenuAdmin zdaj polno funkcionalna (recepti se upravljajo tukaj)
 - 35 screenshotov total
 - GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS
+
+---
+Task ID: 31
+Agent: Z.ai Code (main)
+Task: Napitnine (Tips) — polna integracija.
+
+Work Log:
+- Prisma: dodan 'tip' Float polje na Order model
+- PaymentDialog:
+  * Tip selector z 3 načini: Brez, % (5/10/15%), Fiksni €
+  * Live izračun: tipAmount → grandTotal = total + tip
+  * Summary prikazuje: Skupaj, Napitnina (+), Za plačilo (grand total)
+  * Cash/giftcard validacija uporablja grandTotal
+  * Hitri zneski uporabljajo grandTotal
+  * Tip poslan v pay request payload
+- Pay route: sprejema 'tip' v request body, shrani na Order, vrača tip + grandTotal
+- Stats API: vrača todayTips (vsota napitnin)
+- Dashboard:
+  * KPI kartica: "🪙 Napitnine" (pogojno, samo ko tips > 0)
+  * Shift header: live tips count v shift kartici
+- Shift close: summary vključuje totalTips, prikazan v dialogu
+- Z-report: summary vključuje totalTips
+- Print receipt: prikazuje "Napitnina: X.XX €" pod SKUPAJ ko tip > 0
+- Lint: 0 errorjev
+- End-to-end verification:
+  * API: pay z tip=1.10 → total=11€, tip=1.10€, grandTotal=12.10€ ✓
+  * Stats: todayTips=1.10€ ✓
+  * Z-report: totalTips=1.10€ ✓
+  * Browser: 10% tip na 8.90€ = 0.89€, "Za plačilo" prikazuje grand total ✓
+  * "Napitnina", "Brez", "10%" vsi vidni v payment dialog ✓
+- Push na GitHub: commit 65965c9
+
+Stage Summary:
+- Napitnine (Tips) popolnoma integrirane v vse dele sistema:
+  * PaymentDialog z 3 načini (% / fiksni / brez)
+  * Pay route shrani tip
+  * Dashboard KPI + live shift stats
+  * Shift close summary
+  * Z-report
+  * Print receipt
+- ICEPOS SI zdaj pokriva VSE ključne funkcije slovenskih konkurentov (Microgramm, Hisoft, Imprion) + Toast POS
+- GitHub repo posodobljen: https://github.com/markec12345678/ICEPOS

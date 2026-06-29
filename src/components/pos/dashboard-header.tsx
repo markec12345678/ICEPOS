@@ -32,6 +32,7 @@ interface LiveShiftStats {
     startCash: number;
   } | null;
   revenue: number;
+  tips: number;
   ordersCount: number;
   cashRevenue: number;
   cardRevenue: number;
@@ -149,6 +150,14 @@ export function DashboardHeader() {
                   <p className="text-[10px] text-muted-foreground">Računov</p>
                   <p className="text-sm font-bold">{liveStats.ordersCount}</p>
                 </div>
+                {liveStats.tips > 0 && (
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">🪙 Napitnine</p>
+                    <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                      {formatEUR(liveStats.tips)}
+                    </p>
+                  </div>
+                )}
                 <div>
                   <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
                     <Banknote className="h-3 w-3" />

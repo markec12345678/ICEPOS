@@ -73,6 +73,7 @@ export interface Order {
   stornoAt: string | null;
   stornoZoi: string | null;
   stornoEor: string | null;
+  tip?: number;
 }
 
 export interface Modifier {
@@ -90,6 +91,7 @@ export interface CartItem {
 
 export interface DashboardStats {
   todayRevenue: number;
+  todayTips: number;
   todayOrders: number;
   avgOrderValue: number;
   openTables: number;
