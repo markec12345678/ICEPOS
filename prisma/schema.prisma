@@ -53,6 +53,7 @@ model Restaurant {
   inventoryItems  InventoryItem[]
   customers       Customer[]
   giftCards       GiftCard[]
+  wasteLogs       WasteLog[]
 }
 
 // ============================================================
@@ -233,6 +234,7 @@ model InventoryItem {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   recipes     Recipe[]
+  wasteLogs   WasteLog[]
 }
 
 model Recipe {
@@ -319,4 +321,25 @@ model Timesheet {
   note         String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+}
+
+// ============================================================
+// FOOD WASTE TRACKING — sledenje odpadkov
+// ============================================================
+
+model WasteLog {
+  id              String   @id @default(cuid())
+  restaurantId    String
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  inventoryItemId String?
+  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id], onDelete: SetNull)
+  menuItemId      String?  // povezava z menijem (če gre za pripravljeno jed)
+  name            String   // ime izdelka (snapshot)
+  quantity        Float    // količina odpadka
+  unit            String   // "kos" | "kg" | "l" | "g" | "ml"
+  cost            Float    // strošek odpadka (EUR)
+  reason          String   // "expired" | "burnt" | "dropped" | "returned" | "spoilage" | "other"
+  note            String?
+  operator        String?  // ime operaterja
+  createdAt       DateTime @default(now())
 }
