@@ -21,12 +21,14 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { STATIONS, categoryToStation, getStationConfig, type KitchenStation } from "@/lib/kds-routing";
 
 interface KitchenItem {
   menuItemId: string;
   name: string;
   quantity: number;
   note?: string | null;
+  category?: string;
 }
 
 interface KitchenOrder {
@@ -52,6 +54,7 @@ interface KitchenStats {
 export function KitchenDisplayView() {
   const [connected, setConnected] = useState(false);
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
+  const [activeStation, setActiveStation] = useState<KitchenStation>("all");
   const [stats, setStats] = useState<KitchenStats>({
     new: 0,
     preparing: 0,
@@ -215,6 +218,49 @@ export function KitchenDisplayView() {
         <StatCard label="Skupaj" count={stats.total} icon={Utensils} accent="neutral" />
       </div>
 
+      {/* Station filter — Multi-Step KDS Routing */}
+      <div>
+        <p className="mb-2 text-xs font-medium text-muted-foreground">Postaja (routing):</p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setActiveStation("all")}
+            className={cn(
+              "rounded-lg border-2 px-3 py-1.5 text-sm font-medium transition-all",
+              activeStation === "all"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border hover:bg-muted"
+            )}
+          >
+            🍽️ Vse postaje
+          </button>
+          {STATIONS.map((station) => {
+            // Preštej item-e za to postajo
+            const stationItemCount = orders.reduce((s, o) => {
+              return s + o.items.filter((it) => categoryToStation(it.category || "") === station.id).length;
+            }, 0);
+            return (
+              <button
+                key={station.id}
+                onClick={() => setActiveStation(station.id)}
+                className={cn(
+                  "rounded-lg border-2 px-3 py-1.5 text-sm font-medium transition-all",
+                  activeStation === station.id
+                    ? station.color
+                    : "border-border hover:bg-muted"
+                )}
+              >
+                {station.icon} {station.label}
+                {stationItemCount > 0 && (
+                  <span className="ml-1.5 rounded-full bg-black/10 px-1.5 text-xs">
+                    {stationItemCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {!connected && (
         <Card className="border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900 dark:bg-amber-950/20">
           <div className="flex items-center gap-3">
@@ -253,6 +299,7 @@ export function KitchenDisplayView() {
                       key={order.id}
                       order={order}
                       onStatusChange={updateStatus}
+                      activeStation={activeStation}
                     />
                   ))
                 )}
@@ -268,9 +315,11 @@ export function KitchenDisplayView() {
 function KitchenOrderCard({
   order,
   onStatusChange,
+  activeStation,
 }: {
   order: KitchenOrder;
   onStatusChange: (id: string, status: KitchenOrder["status"]) => void;
+  activeStation: KitchenStation;
 }) {
   const elapsed = Math.floor(
     (Date.now() - new Date(order.createdAt).getTime()) / 1000
@@ -280,6 +329,14 @@ function KitchenOrderCard({
 
   // Če je več kot 10 minut, pokaži opozorilo
   const isDelayed = elapsed > 600;
+
+  // Filtriraj item-e po aktivni postaji
+  const filteredItems = activeStation === "all"
+    ? order.items
+    : order.items.filter((it) => categoryToStation(it.category || "") === activeStation);
+
+  // Če na tej postaji ni item-ov, ne prikaži kartice
+  if (filteredItems.length === 0) return null;
 
   return (
     <Card
@@ -325,21 +382,31 @@ function KitchenOrderCard({
 
       {/* Postavke */}
       <div className="space-y-1.5">
-        {order.items.map((it, i) => (
-          <div key={i} className="flex items-start gap-2 text-sm">
-            <Badge variant="secondary" className="mt-0.5 min-w-[28px] justify-center font-mono">
-              {it.quantity}×
-            </Badge>
-            <div className="flex-1">
-              <p className="font-medium">{it.name}</p>
-              {it.note && (
-                <p className="text-xs italic text-amber-700 dark:text-amber-400">
-                  ⚠ {it.note}
-                </p>
-              )}
+        {filteredItems.map((it, i) => {
+          const station = getStationConfig(categoryToStation(it.category || ""));
+          return (
+            <div key={i} className="flex items-start gap-2 text-sm">
+              <Badge variant="secondary" className="mt-0.5 min-w-[28px] justify-center font-mono">
+                {it.quantity}×
+              </Badge>
+              <div className="flex-1">
+                <div className="flex items-center gap-1.5">
+                  <p className="font-medium">{it.name}</p>
+                  {station && activeStation === "all" && (
+                    <span className="text-xs" title={station.label}>
+                      {station.icon}
+                    </span>
+                  )}
+                </div>
+                {it.note && (
+                  <p className="text-xs italic text-amber-700 dark:text-amber-400">
+                    ⚠ {it.note}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <Separator className="my-3" />
