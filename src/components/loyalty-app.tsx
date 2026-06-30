@@ -27,8 +27,12 @@ import {
   Crown,
   Medal,
   Clock,
+  Utensils,
+  Plus,
+  Minus,
+  Search,
 } from "lucide-react";
-import { formatEUR, formatDateTime } from "@/lib/types";
+import { formatEUR, formatDateTime, CATEGORIES, type MenuItem } from "@/lib/types";
 import QRCode from "qrcode";
 
 // ============================================================
@@ -78,7 +82,7 @@ export function LoyaltyApp() {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
-  const [tab, setTab] = useState<"home" | "rewards" | "history">("home");
+  const [tab, setTab] = useState<"home" | "rewards" | "order" | "history">("home");
   const [loading, setLoading] = useState(true);
   const [qrUrl, setQrUrl] = useState<string>("");
 
@@ -191,6 +195,9 @@ export function LoyaltyApp() {
             token={token}
             onRedeemed={() => loadCustomer()}
           />
+        )}
+        {tab === "order" && (
+          <OrderAheadTab token={token} customer={customer} />
         )}
         {tab === "history" && <HistoryTab orders={orders} />}
       </main>
@@ -590,11 +597,12 @@ function BottomNav({
   active,
   onChange,
 }: {
-  active: "home" | "rewards" | "history";
-  onChange: (v: "home" | "rewards" | "history") => void;
+  active: "home" | "rewards" | "order" | "history";
+  onChange: (v: "home" | "rewards" | "order" | "history") => void;
 }) {
   const items = [
     { id: "home" as const, label: "Domov", icon: Star },
+    { id: "order" as const, label: "Naroči", icon: Utensils },
     { id: "rewards" as const, label: "Nagrade", icon: Gift },
     { id: "history" as const, label: "Zgodovina", icon: Award },
   ];
@@ -619,5 +627,305 @@ function BottomNav({
         );
       })}
     </>
+  );
+}
+
+// ============================================================
+// Order Ahead Tab — mobile naročanje pred prihodom
+// ============================================================
+
+function OrderAheadTab({
+  token,
+  customer,
+}: {
+  token: string;
+  customer: Customer;
+}) {
+  const [menu, setMenu] = useState<MenuItem[]>([]);
+  const [cart, setCart] = useState<{ menuItem: MenuItem; quantity: number }[]>([]);
+  const [pickupTime, setPickupTime] = useState("");
+  const [orderType, setOrderType] = useState<"dinein" | "takeaway">("dinein");
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("glavne_jedi");
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState<{ orderId: string; total: number; points: number; pickupTime: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/menu")
+      .then((r) => r.json())
+      .then((items: MenuItem[]) => setMenu(items.filter((i) => i.available)))
+      .catch(() => toast.error("Napaka pri nalaganju menija"));
+  }, []);
+
+  const filtered = menu.filter((m) => {
+    if (search) return m.name.toLowerCase().includes(search.toLowerCase());
+    return m.category === category;
+  });
+
+  const cartTotal = cart.reduce((s, c) => s + c.menuItem.price * c.quantity, 0);
+  const cartCount = cart.reduce((s, c) => s + c.quantity, 0);
+
+  function addToCart(item: MenuItem) {
+    setCart((prev) => {
+      const existing = prev.find((c) => c.menuItem.id === item.id);
+      if (existing) {
+        return prev.map((c) =>
+          c.menuItem.id === item.id ? { ...c, quantity: c.quantity + 1 } : c
+        );
+      }
+      return [...prev, { menuItem: item, quantity: 1 }];
+    });
+  }
+
+  function updateQty(itemId: string, delta: number) {
+    setCart((prev) =>
+      prev
+        .map((c) =>
+          c.menuItem.id === itemId ? { ...c, quantity: c.quantity + delta } : c
+        )
+        .filter((c) => c.quantity > 0)
+    );
+  }
+
+  async function submitOrder() {
+    if (cart.length === 0 || !pickupTime) {
+      toast.error("Dodaj postavke in izberi čas prevzema");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/loyalty/order-ahead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token,
+          items: cart.map((c) => ({
+            menuItemId: c.menuItem.id,
+            quantity: c.quantity,
+          })),
+          pickupTime,
+          type: orderType,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Napaka");
+        return;
+      }
+      setSuccess({
+        orderId: data.orderId,
+        total: data.total,
+        points: data.pointsEarned,
+        pickupTime,
+      });
+      setCart([]);
+      toast.success(data.message);
+    } catch {
+      toast.error("Napaka pri naročanju");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  // Success screen
+  if (success) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-6 text-center text-white shadow-lg">
+          <Check className="mx-auto mb-3 h-16 w-16" />
+          <h2 className="text-2xl font-bold">Naročilo uspešno!</h2>
+          <p className="mt-2 text-white/90">
+            Prevzem: <strong>{success.pickupTime}</strong>
+          </p>
+          <p className="mt-1 text-3xl font-bold">{formatEUR(success.total)}</p>
+          <p className="mt-2 text-sm text-white/80">
+            +{success.points} točk zvestobe
+          </p>
+        </div>
+        <div className="rounded-xl border bg-card p-4 text-center">
+          <p className="text-xs text-muted-foreground">ID naročila</p>
+          <p className="font-mono text-lg font-bold">
+            #{success.orderId.slice(-6).toUpperCase()}
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Sledite statusu na: /sledi/{success.orderId}
+          </p>
+        </div>
+        <Button className="w-full" onClick={() => setSuccess(null)}>
+          Novo naročilo
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="flex items-center gap-2 text-xl font-bold">
+          <Utensils className="h-5 w-5 text-primary" />
+          Naroči pred prihodom
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Naroči zdaj, prevzemi kasneje — brez čakanja
+        </p>
+      </div>
+
+      {/* Pickup time + type */}
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label className="mb-1 block text-xs text-muted-foreground">Čas prevzema</label>
+          <Input
+            type="time"
+            value={pickupTime}
+            onChange={(e) => setPickupTime(e.target.value)}
+            className="text-base"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-muted-foreground">Tip</label>
+          <div className="flex gap-1">
+            <button
+              onClick={() => setOrderType("dinein")}
+              className={`flex-1 rounded-lg border px-2 py-2 text-sm font-medium ${
+                orderType === "dinein"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border"
+              }`}
+            >
+              🍽️ Na mizi
+            </button>
+            <button
+              onClick={() => setOrderType("takeaway")}
+              className={`flex-1 rounded-lg border px-2 py-2 text-sm font-medium ${
+                orderType === "takeaway"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border"
+              }`}
+            >
+              🥡 Poberi
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Išči jed..."
+          className="pl-9"
+        />
+      </div>
+
+      {/* Categories */}
+      {!search && (
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
+          {CATEGORIES.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setCategory(c.id)}
+              className={`flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium ${
+                category === c.id
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {c.icon} {c.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Menu items */}
+      <div className="grid grid-cols-1 gap-2">
+        {filtered.map((item) => (
+          <div
+            key={item.id}
+            className="flex items-center gap-3 rounded-xl border bg-card p-3"
+          >
+            {item.imageUrl && (
+              <img
+                src={item.imageUrl}
+                alt={item.name}
+                className="h-14 w-14 shrink-0 rounded-lg object-cover"
+              />
+            )}
+            <div className="flex-1">
+              <p className="font-medium leading-tight">{item.name}</p>
+              <p className="text-sm text-primary">{formatEUR(item.price)}</p>
+            </div>
+            <Button
+              size="icon"
+              variant="outline"
+              className="h-9 w-9"
+              onClick={() => addToCart(item)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+
+      {/* Cart */}
+      {cart.length > 0 && (
+        <div className="rounded-xl border-2 border-primary bg-primary/5 p-3">
+          <h3 className="mb-2 font-semibold">Vaše naročilo ({cartCount})</h3>
+          <div className="space-y-1">
+            {cart.map((c) => (
+              <div key={c.menuItem.id} className="flex items-center justify-between text-sm">
+                <span>{c.menuItem.name}</span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-6 w-6"
+                    onClick={() => updateQty(c.menuItem.id, -1)}
+                  >
+                    <Minus className="h-3 w-3" />
+                  </Button>
+                  <span className="min-w-6 text-center font-bold">{c.quantity}</span>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-6 w-6"
+                    onClick={() => updateQty(c.menuItem.id, 1)}
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                  <span className="ml-2 font-medium">{formatEUR(c.menuItem.price * c.quantity)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 flex justify-between border-t pt-2 font-bold">
+            <span>Skupaj</span>
+            <span className="text-primary">{formatEUR(cartTotal)}</span>
+          </div>
+          <div className="mt-2 text-xs text-muted-foreground">
+            +{Math.floor(cartTotal / 10)} točk zvestobe
+          </div>
+          <Button
+            className="mt-3 w-full"
+            size="lg"
+            onClick={submitOrder}
+            disabled={submitting || !pickupTime}
+          >
+            {submitting ? (
+              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+            ) : (
+              <Utensils className="mr-1.5 h-4 w-4" />
+            )}
+            {submitting ? "Naročam..." : `Naroči · ${formatEUR(cartTotal)}`}
+          </Button>
+          {!pickupTime && (
+            <p className="mt-1 text-center text-xs text-amber-600">
+              Izberi čas prevzema
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
