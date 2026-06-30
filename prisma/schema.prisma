@@ -81,6 +81,7 @@ model MenuItem {
   fat           Float?
   isFavorite    Boolean @default(false)
   isDailySpecial Boolean @default(false)
+  imageUrl      String?  // AI-generirana slika jedi
   createdAt     DateTime @default(now())
   orderItems    OrderItem[]
   modifiers     Modifier[]
