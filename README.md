@@ -1,82 +1,110 @@
-# 🍽️ Gostilna POS — Slovenska restavracijska blagajna
+# 🍽️ Gostilna POS — Slovenska restavracijska blagajna (SaaS)
 
-> Popolna slovenska restavracijska blagajna (POS) z **FURS skladnostjo**, online naročanjem preko QR kode, upravljanjem zalog, CRM/zvestobo in darilnimi karticami.
-> Zgrajena na **Next.js 16 + TypeScript + Prisma + Tailwind/shadcn**. Pripravljena za prodajo lokalnim restavracijam in hotelom.
+> **Vodilna slovenska restavracijska blagajna** z **100+ funkcijami** — FURS skladnost, multi-tenant SaaS, AI slike jedi, AI napoved povpraševanja, Wolt/Deliverect integracija, Apple Pay/Google Pay, loyalty app z gamification, in več.
+> Konkurenčna z **Toast POS, Square, Lightspeed, Starbucks Rewards**.
+> Zgrajena na **Next.js 16 + TypeScript + Prisma + Tailwind/shadcn**.
 
 ---
 
-## ✨ Ključne funkcije
+## ✨ Ključne funkcije (100+)
 
-### 🧾 Blagajna & FURS
-- **Fiskalizacija računov** (ZOI: RSA-SHA256 + MD5, EOR: UUID, podpisan XML, QR koda)
-- **Dvojna DDV stopnja** (9,5 % znižana za hrano, 22 % splošna za alkohol)
-- **Storno računov** s sledljivostjo (povezava z izvirnikom)
-- **Z-report** (dnevni zaključek blagajne)
-- **SRS številčenje** računov (zaporedne številke)
-- **PIN login** z backend avtentikacijo (Operator model, vloge `cashier` / `admin`)
-- **Mene** plačil: gotovina, kartica, **darilna kartica**
+### 🏢 Multi-Tenant SaaS
+- **Več restavracij** v eni instalaciji z ločenimi podatki
+- **Tenant selector** — preklop med restavracijami z enim klikom
+- **Per-tenant FURS** konfiguracija (taxNumber, businessUnit, certifikat)
+- **Multi-Location Benchmark** — primerjava med lokacijami
+- **Ločeni operaterji** per restavracija (PIN per tenant)
 
-### 🍽️ Naročanje
-- **Mize** (Dvorana / Terasa / Zasebna) z barvno kodiranimi statusi
-- **Modifierji** (brez čebule, dobro pečena, brez glutena …) s spremembo cene
-- **Void postavk** (ponižanje računa z razlogom)
-- **Popusti** (% ali fiksni EUR) na nivoju računa
-- **Ponovi zadnje naročilo** (hitri gumb)
-- **Prestavi mizo** (prenos naročila na drugo mizo)
-- **Split bill** (delitev računa med več oseb)
-- **Napitnine** (% ali fiksni EUR) — prikaz v plačilnem dialogu, dashboardu in zaključku smene
+### 🧾 Blagajna & FURS (produkcija ready)
+- **Fiskalizacija računov** (ZOI: RSA-SHA256 + MD5, EOR: UUID, XML, QR koda)
+- **Produkcijski SOAP klic** z WS-Security podpisom in mutual TLS
+- **INI postopek** — registracija naprave pri FURS
+- **Dvojna DDV stopnja** (9,5% znižana, 22% splošna)
+- **Storno računov** s sledljivostjo
+- **Z-report** (dnevni zaključek)
+- **PIN login** z backend avtentikacijo (vloge cashier/admin)
 
-### 📱 Online naročanje (gostje)
-- **Javni meni** (`/meni`) dostopen preko QR kode na mizi
-- **Sledenje naročila** v živo (`/sledi/[id]`) — status: prejeto → v pripravi → pripravljeno → servirano
-- **Alergeni** po EU 1169/2011 (13 alergenov z ikonami)
-- **Hranilna vrednost** (kalorije, makrohranila)
-- **Dvojezičnost** SI / EN (gost lahko preklopi jezik)
-- **Takeaway** možnost (poberi sam)
-- **PDF izvoz računa** (`/print/receipt/[id]`)
+### 💳 Plačila (5 načinov)
+- **Gotovina** s hitrimi zneski in vračilom
+- **Kartica**
+- **Darilna kartica** (GC-XXXXXXXX kode z avto-redeem)
+- **Sumup terminal** (real-time polling, preklic)
+- **Apple Pay / Google Pay** (Stripe Terminal, NFC)
 
-### 🍳 Kuhinja (real-time)
-- **WebSocket** povezava (socket.io, mini-service na portu 3003)
-- **Kitchen Display System (KDS)** — nova naročila prihajajo v živo
-- **Statusi**: novo → v pripravi → pripravljeno → servirano
-- **Avto-osvežitev** brez potrebe po osveževanju strani
+### 📱 7 Uporabniških vmesnikov
+1. **POS Blagajna** (`/`) — za blagajnike (5 načinov plačila, napitnine, CDU sync)
+2. **KDS Kuhinja** — real-time WebSocket, multi-step routing (4 postaje)
+3. **Natakar Tableside** (`/natakar`) — mobilna aplikacija za natakarje
+4. **Online Meni** (`/meni`) — javni meni z AI slikami, alergeni, upsell AI
+5. **Self-Service Kiosk** (`/kiosk`) — celozaslonski z AI slikami in upsell
+6. **Customer Display** (`/cdu`) — drugi zaslon za gosta (real-time sync)
+7. **Loyalty App** (`/zvestoba`) — Starbucks-nivo: točke, nagrade, order ahead, wallet, gamification
 
-### 📦 Inventory & Recipe Costing
-- **Inventory CRUD** (mesto, kg, l, g, ml) z minimalnimi količinami
-- **Low-stock alerti** (samodejno opozarilo ko pade pod mejo)
-- **Recipe Manager** — poveži meni postavko z inventarjem (npr. Pizza → 200g moke, 100g sira)
-- **Auto-deduct** — ob plačilu se zaloga samodejno odšteje
-- **Food Cost Analiza** — food cost % per jed (cena sestavin / prodajna cena)
-- **Restock** gumb za hitro dopolnjevanje
+### 🚴 Dostava (2 integraciji)
+- **Wolt** — webhook, avtomatska kreacija naročil, accept/reject/ready
+- **Deliverect** — agregator 8 platform (UberEats, DoorDash, Glovo, Bolt, itd.)
 
-### 👥 CRM / Loyalty
-- **Baza strank** (ime, telefon, email, opombe, alergije)
-- **Točke zvestobe** (1 točka / 10 € porabe)
-- **Skupna poraba** in število obiskov
-- **Povezava z računi** (zgodovina nakupov)
+### 📞 Rezervacije
+- **OpenTable/Resy** integracija — webhook, avtomatsko iskanje mize
+- **Interni rezervacije** z koledarjem in konflikt detekcijo
 
-### 🎁 Darilne kartice
-- **8-mestne kode** (npr. `GC-AB12CD34`)
-- **Poljuben začetni znesek**
-- **Redeem** pri plačilu (3. način plačila)
-- **Status**: active / used / expired
+### 📊 Analitika & AI
+- **Dashboard** v živo (promet, računi, napitnine, urni graf)
+- **Menu Engineering** — Bostonska matrika (Zvezde/Konji/Uganke/Psi)
+- **AI Demand Forecasting** — napoved povpraševanja + priporočilo osebja
+- **Multi-Location Benchmark** — top/bottom performer per lokacija
+- **Food Waste Tracking** — 6 razlogov, dnevni trend, top odpadki
 
-### 📊 Poročila & Dashboard
-- **Dashboard** v živo (dnevni promet, št. računov, povprečni račun, napitnine)
-- **Urni graf** prometa
-- **Top izdelki** po prodaji
-- **Načini plačila** (gotovina / kartica / darilna kartica)
-- **Tedenska statistika** (7-dnevni trend)
-- **Mesečna poročila** (CSV export računov)
-- **Rezervacije** miz (koledar)
+### 🍳 Kuhinja (KDS)
+- **Real-time WebSocket** (brez zakasnitve)
+- **Multi-Step Routing** — 4 postaje (Vroča, Hladna, Pijača, Sladice)
+- **Timer z opozorili** (>10min rdeči ring)
+- **Klic mize** z zvokom
+- **Wolt/Deliverect** naročila direktno v KDS
+
+### 👔 HR & Osebje
+- **Employee Scheduling** — tedenski razpdel (grid operaterji × 7 dni)
+- **Clock In/Out** — hitri gumbi per operater
+- **Labor Cost %** — strošek dela / promet
+- **Tip Pooling** — 3 metode (hours, role, hybrid) z avto-distribucijo
+
+### 📦 Inventory
+- **CRUD** z minimalnimi količinami in low-stock alerti
+- **Recipe Manager** — povezava meni postavke z inventarjem
+- **Auto-deduct** ob plačilu
+- **Food Cost %** per jed
+- **Food Waste Tracking** — 6 razlogov, avto-odštevanje iz zaloge
+
+### 🎨 AI & Avtomatizacija
+- **AI slike jedi** — ZAI image generation (professional food photography)
+- **Upsell AI Engine** — "Ali želite pijačo?" v Kiosk in Online Meni
+- **Happy Hour** — časovno odvisne cene (avtomatski popusti)
+- **Combo Meals** — set meniji z izbiro pod-itemov
+- **Email/SMS notifikacije** — rezervacije, online naročila
+
+### 👥 CRM & Loyalty (Starbucks nivo)
+- **Loyalty App** s 5 tabi: Domov, Naroči, Kartica, Nagrade, Dosežki
+- **4 level-i** (Novinec → Bronca → Srebro → Zlato) z progress bar
+- **8 nagrad** z unovčevanjem in voucher kodami
+- **Order Ahead** — mobile naročanje pred prihodom
+- **Predplačilna kartica** (Wallet) — polnitev, transakcije
+- **Gamification** — 12 badge-ov + 3 izzivi z progress bar
+- **Push notifikacije** (PWA, VAPID)
+- **QR kartica** zvestobe za predstavitev natakarju
+
+### 🧮 Računovodstvo
+- **4 formati izvoza**: CSV (Excel), Pantheon, QuickBooks, XML (eDavki)
+- **DDV breakdown** po stopnjah (22%, 9.5%)
+- **Načini plačila** z deleži
+- **Storno računi** z negativnim zneskom
 
 ### 🎨 UX/UI
 - **Dark mode** (next-themes)
 - **Dvojezičnost** SI/EN
-- **Tipkovne bližnjice** (1–5 za preklop med pogledi, Esc za nazaj)
-- **PWA** (service worker, manifest.json — delo tudi offline)
-- **Mobilno responsive** (touch-friendly, min 44px tarče)
-- **Sticky footer** (vedno na dnu, tudi na kratkih straneh)
+- **PWA** z offline delom (service worker)
+- **Tipkovne bližnjice** (1–5 za pogledi, Esc nazaj)
+- **Mobile responsive** (touch-friendly, min 44px tarče)
+- **AI slike** v POS, Online Meni, Kiosk, Loyalty Order Ahead
 
 ---
 
@@ -87,14 +115,34 @@
 | Framework | **Next.js 16** (App Router, Turbopack) |
 | Jezik | **TypeScript 5** |
 | Styling | **Tailwind CSS 4** + **shadcn/ui** (New York) |
-| ORM | **Prisma** + SQLite |
+| ORM | **Prisma** + SQLite (15+ modelov) |
 | State | **Zustand** (client) + **TanStack Query** (server) |
 | Real-time | **socket.io** (mini-service, port 3003) |
-| Fiskalizacija | **crypto** (RSA-SHA256, MD5) + **qrcode** |
+| Fiskalizacija | **crypto** (RSA-SHA256, MD5, WS-Security) + **qrcode** |
+| AI slike | **z-ai-web-dev-sdk** (image generation) |
+| Plačila | **Sumup** + **Stripe** (Apple Pay/Google Pay) |
+| Dostava | **Wolt Partner API** + **Deliverect API** |
+| Rezervacije | **OpenTable/Resy API** |
+| Push | **Web Push API** (VAPID) |
 | Avtentikacija | **NextAuth.js v4** (PIN login) |
 | PWA | service worker + manifest.json |
 | Ikone | **lucide-react** |
 | Toasti | **sonner** |
+
+---
+
+## 📱 Aplikacije & Route
+
+| Route | Aplikacija | Uporabnik |
+|-------|-----------|-----------|
+| `/` | POS Blagajna | Blagajnik |
+| `/natakar` | Tableside Ordering | Natakar |
+| `/meni` | Online Meni (QR) | Gost |
+| `/kiosk` | Self-Service Kiosk | Gost |
+| `/cdu` | Customer Display | Gost |
+| `/zvestoba` | Loyalty App | Stranka |
+| `/sledi/[id]` | Sledenje naročila | Gost |
+| `/print/receipt/[id]` | PDF račun | Gost |
 
 ---
 

@@ -7,35 +7,49 @@ in projekt uporablja [Semantic Versioning](https://semver.org/lang/sl/).
 
 ---
 
-## [Nepublikovano]
+## [Nepublikovano] — December 2025 (100+ funkcij)
 
-### Dodano — Izpopolnitev (Toast POS konkurenca)
+### Dodano — Priority 1, 2, 3 (UI analiza)
+- **AI slike jedi** — ZAI image generation za meni postavke (professional food photography)
+  - Integrirano v POS, Online Meni, Kiosk, Loyalty Order Ahead
+  - ImageManager z batch generiranjem in ročnim upload
+- **Order Ahead** v Loyalty — mobile naročanje pred prihodom (Starbucks style)
+  - Pickup time, dinein/takeaway, loyalty točke avtomatsko
+- **Upsell AI Engine** — "Ali želite pijačo?" v Kiosk in Online Meni
+  - Market basket analysis, confidence scoring
+- **Push notifikacije** (PWA) — VAPID, toggle v Loyalty Home
+- **Gamification** — 12 badge-ov + 3 izzivi z progress bar
+- **Predplačilna kartica** (Wallet) — polnitev, transakcije, zgodovina
+
+### Dodano — Faza 3 (napredno)
+- **Self-Service Kiosk** (`/kiosk`) — celozaslonski z AI slikami in upsell
+- **AI Demand Forecasting** — napoved povpraševanja + priporočilo osebja
+- **Customer Display Unit** (`/cdu`) — drugi zaslon za gosta (BroadcastChannel sync)
+- **Apple Pay / Google Pay** (Stripe Terminal) — 5. način plačila
+- **Combo Meals** — set meniji z izbiro pod-itemov in fiksno ceno
+- **Računovodstvo** — 4 formati izvoza (CSV, Pantheon, QuickBooks, XML/eDavki)
+- **Loyalty App** (`/zvestoba`) — 5 tabov, 4 level-i, 8 nagrad, QR kartica
+- **Deliverect** — agregator 8 dostavnih platform (UberEats, DoorDash, Glovo, Bolt, itd.)
+- **OpenTable/Resy** — sinhronizacija rezervacij z avtomatskim iskanjem mize
+
+### Dodano — Faza 2 (srednje)
+- **Happy Hour** — časovno odvisne cene z avtomatskimi popusti
+- **Multi-Step KDS Routing** — 4 postaje (Vroča, Hladna, Pijača, Sladice)
+- **Wolt integracija** — webhook, avtomatska kreacija naročil
+
+### Dodano — Faza 1 (hitri dosežki)
+- **Menu Engineering** — Bostonska matrika (Zvezde/Konji/Uganke/Psi)
+- **Tip Pooling** — 3 metode distribucije napitnin (hours, role, hybrid)
+- **Multi-Location Benchmark** — primerjava med restavracijami
+- **Food Waste Tracking** — 6 razlogov, dnevni trend, avto-odštevanje
+
+### Dodano — Multi-tenant + FURS + Sumup
+- **Multi-tenant SaaS** — več restavracij v eni instalaciji
+- **FURS produkcija** — resničen SOAP klic z WS-Security in mutual TLS
+- **Sumup terminal** — real-time polling, preklic
 - **Tableside Ordering** (`/natakar`) — mobilna aplikacija za natakarje
-  - PIN login z localStorage persistenco
-  - Bottom navigation: Mize | Meni | Naročila
-  - Mize z avto-osvežitvami (10s polling), prikaz postavk/zneska za zasedene
-  - Meni z iskanjem, kategorijami, item modal (količina, opomba)
-  - Cart drawer + "Pošlji v kuhinjo" (POST /api/orders + send-to-kitchen)
-  - Moja naročila z avto-osvežitvami (5s)
-- **Email/SMS notifikacije** (`lib/notifications.ts`)
-  - Predloge: rezervacije, online naročila, "naročilo pripravljeno"
-  - Integrirano v `/api/reservations` (SMS ob potrditvi)
-  - Integrirano v `/api/orders/guest` (email ob online naročilu)
-  - Pripravljeno za SMTP/Twilio v produkciji
-- **Employee Scheduling + Labor Cost**
-  - Prisma: `Schedule` (unique [operatorId, date]) + `Timesheet` modela
-  - Operator: `hourlyRate Float @default(12)` za labor cost izračun
-  - API: `/api/schedules` (CRUD z week filter), `/api/timesheets` (CRUD + clock)
-  - API: `/api/timesheets/clock` (hitri in/out), `/api/labor-cost` (analiza)
-  - Komponenta `scheduling-view.tsx` z 3 zavihki:
-    - **Tedenski razpored** — grid operaterji × 7 dni, modal za dodajanje shifts
-    - **Clock In/Out** — hitri gumbi per operater, dnevnik ur
-    - **Labor Cost** — KPI (strošek dela, promet, labor %, ure), per-operator breakdown
-  - Idealni labor cost %: 25–30% (v restavracijah)
-  - Nov "Razpored" gumb v sidebar (desktop) in "Več" menu (mobile)
-
-### Dodano
-- **Napitnine (Tips)** — UI v plačilnem dialogu (%, fiksni EUR, hitri gumbi 5/10/15 %, 1/2/5 €)
+- **Employee Scheduling** — Clock In/Out, Labor Cost %
+- **Email/SMS notifikacije** — rezervacije, online naročila
 - Prikaz napitnin v dashboardu (dnevne napitnine)
 - Prikaz napitnin v zaključku smene (skupne napitnine)
 - Prisma: `tip Float @default(0)` na `Order`
