@@ -35,6 +35,7 @@ import { ComboMealsView } from "@/components/pos/combo-meals-view";
 import { AccountingView } from "@/components/pos/accounting-view";
 import { DeliverectView } from "@/components/pos/deliverect-view";
 import { OpenTableView } from "@/components/pos/opentable-view";
+import { ImagesView } from "@/components/pos/images-view";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { PinLoginDialog, getStoredOperator, type Operator } from "@/components/pos/pin-login";
 import { Toaster, toast } from "sonner";
@@ -178,6 +179,7 @@ export default function Home() {
             {activeView === "accounting" && <AccountingView />}
             {activeView === "deliverect" && <DeliverectView />}
             {activeView === "opentable" && <OpenTableView />}
+            {activeView === "images" && <ImagesView />}
           </div>
         </main>
       </div>

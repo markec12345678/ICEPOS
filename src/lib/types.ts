@@ -24,6 +24,7 @@ export interface MenuItem {
   fat?: number | null;
   isFavorite?: boolean;
   isDailySpecial?: boolean;
+  imageUrl?: string | null;
   createdAt: string;
 }
 

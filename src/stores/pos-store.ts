@@ -46,7 +46,8 @@ interface PosState {
     | "combos"
     | "accounting"
     | "deliverect"
-    | "opentable";
+    | "opentable"
+    | "images";
   setActiveView: (
     v:
       | "tables"
@@ -77,6 +78,7 @@ interface PosState {
       | "accounting"
       | "deliverect"
       | "opentable"
+      | "images"
   ) => void;
 
   // Selected table
