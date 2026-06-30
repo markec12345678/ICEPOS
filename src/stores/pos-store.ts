@@ -45,7 +45,8 @@ interface PosState {
     | "forecast"
     | "combos"
     | "accounting"
-    | "deliverect";
+    | "deliverect"
+    | "opentable";
   setActiveView: (
     v:
       | "tables"
@@ -75,6 +76,7 @@ interface PosState {
       | "combos"
       | "accounting"
       | "deliverect"
+      | "opentable"
   ) => void;
 
   // Selected table
