@@ -25,6 +25,7 @@ import {
   Trash2,
   Clock3,
   Bike,
+  Brain,
 } from "lucide-react";
 import {
   Sheet,
@@ -62,6 +63,7 @@ export function PosFooter() {
     { id: "waste" as const, label: "Odpadki", desc: "Food waste tracking", icon: Trash2 },
     { id: "happy-hour" as const, label: "Happy Hour", desc: "Časovno odvisne cene", icon: Clock3 },
     { id: "wolt" as const, label: "Wolt dostava", desc: "Integracija z Wolt", icon: Bike },
+    { id: "forecast" as const, label: "AI napoved", desc: "Demand forecasting", icon: Brain },
     { id: "weekly" as const, label: "Tedenska statistika", desc: "Po dnevih v tednu", icon: CalendarClock },
     { id: "monthly" as const, label: "Mesečno poročilo", desc: "Statistika meseca", icon: CalendarRange },
     { id: "zreport" as const, label: "Z-report", desc: "Dnevni zaključek", icon: FileBarChart },
