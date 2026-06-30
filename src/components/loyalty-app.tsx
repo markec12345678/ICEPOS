@@ -88,7 +88,7 @@ export function LoyaltyApp() {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
-  const [tab, setTab] = useState<"home" | "rewards" | "order" | "achievements" | "history">("home");
+  const [tab, setTab] = useState<"home" | "rewards" | "order" | "wallet" | "achievements" | "history">("home");
   const [loading, setLoading] = useState(true);
   const [qrUrl, setQrUrl] = useState<string>("");
 
@@ -205,6 +205,7 @@ export function LoyaltyApp() {
         {tab === "order" && (
           <OrderAheadTab token={token} customer={customer} />
         )}
+        {tab === "wallet" && <WalletTab token={token} />}
         {tab === "achievements" && <AchievementsTab customer={customer} />}
         {tab === "history" && <HistoryTab orders={orders} />}
       </main>
@@ -607,15 +608,15 @@ function BottomNav({
   active,
   onChange,
 }: {
-  active: "home" | "rewards" | "order" | "achievements" | "history";
-  onChange: (v: "home" | "rewards" | "order" | "achievements" | "history") => void;
+  active: "home" | "rewards" | "order" | "wallet" | "achievements" | "history";
+  onChange: (v: "home" | "rewards" | "order" | "wallet" | "achievements" | "history") => void;
 }) {
   const items = [
     { id: "home" as const, label: "Domov", icon: Star },
     { id: "order" as const, label: "Naroči", icon: Utensils },
+    { id: "wallet" as const, label: "Kartica", icon: ShoppingBag },
     { id: "rewards" as const, label: "Nagrade", icon: Gift },
     { id: "achievements" as const, label: "Dosežki", icon: Award },
-    { id: "history" as const, label: "Zgodovina", icon: ShoppingBag },
   ];
 
   return (
@@ -1051,6 +1052,173 @@ function AchievementsTab({ customer }: { customer: Customer }) {
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Wallet Tab — predplačilna kartica (kot Starbucks)
+// ============================================================
+
+interface WalletTransaction {
+  id: string;
+  type: "topup" | "spend";
+  amount: number;
+  description: string;
+  timestamp: string;
+}
+
+function WalletTab({ token }: { token: string }) {
+  const [balance, setBalance] = useState(0);
+  const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [topupAmount, setTopupAmount] = useState("");
+  const [processing, setProcessing] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/loyalty/wallet?token=${token}`);
+      const data = await res.json();
+      setBalance(data.balance || 0);
+      setTransactions(data.transactions || []);
+    } catch {
+      toast.error("Napaka pri nalaganju kartice");
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function topup() {
+    const amount = parseFloat(topupAmount);
+    if (!amount || amount <= 0) {
+      toast.error("Vnesi veljaven znesek");
+      return;
+    }
+    setProcessing(true);
+    try {
+      const res = await fetch("/api/loyalty/wallet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token,
+          action: "topup",
+          amount,
+          description: "Polnitev preko aplikacije",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Napaka");
+        return;
+      }
+      toast.success(data.message);
+      setTopupAmount("");
+      load();
+    } catch {
+      toast.error("Napaka pri polnjenju");
+    } finally {
+      setProcessing(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-32 items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const quickAmounts = [10, 20, 50, 100];
+
+  return (
+    <div className="space-y-4">
+      {/* Balance card */}
+      <div className="rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-6 text-white shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-white/80">Stanje kartice</p>
+            <p className="text-5xl font-bold tabular-nums">{formatEUR(balance)}</p>
+          </div>
+          <div className="text-5xl">💳</div>
+        </div>
+        <p className="mt-3 text-xs text-white/70">
+          Uporabite za plačilo v restavraciji ali online naročila
+        </p>
+      </div>
+
+      {/* Top up */}
+      <div className="rounded-xl border bg-card p-4">
+        <h3 className="mb-3 font-semibold">Naloži sredstva</h3>
+        <div className="flex gap-2">
+          <Input
+            type="number"
+            step="0.01"
+            value={topupAmount}
+            onChange={(e) => setTopupAmount(e.target.value)}
+            placeholder="0.00"
+            className="text-lg"
+          />
+          <Button onClick={topup} disabled={processing || !topupAmount}>
+            {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : "Naloži"}
+          </Button>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {quickAmounts.map((amt) => (
+            <button
+              key={amt}
+              onClick={() => setTopupAmount(String(amt))}
+              className="rounded-md border border-border px-3 py-1 text-sm font-medium hover:bg-muted"
+            >
+              {amt}€
+            </button>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          V POC: simulacija polnjenja. V produkciji: Stripe Payment Intent.
+        </p>
+      </div>
+
+      {/* Transactions */}
+      <div>
+        <h3 className="mb-2 font-semibold">Zgodovina transakcij</h3>
+        {transactions.length === 0 ? (
+          <div className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">
+            Ni transakcij. Naložite sredstva za začetek.
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {transactions.map((tx) => (
+              <div
+                key={tx.id}
+                className="flex items-center justify-between rounded-lg border bg-card p-3"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{tx.type === "topup" ? "⬆️" : "⬇️"}</span>
+                  <div>
+                    <p className="text-sm font-medium">{tx.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(tx.timestamp).toLocaleString("sl-SI")}
+                    </p>
+                  </div>
+                </div>
+                <span
+                  className={`font-bold tabular-nums ${
+                    tx.amount > 0 ? "text-emerald-600" : "text-rose-600"
+                  }`}
+                >
+                  {tx.amount > 0 ? "+" : ""}
+                  {formatEUR(tx.amount)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
