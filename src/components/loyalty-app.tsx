@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { formatEUR, formatDateTime, CATEGORIES, type MenuItem } from "@/lib/types";
 import QRCode from "qrcode";
+import { PushNotificationToggle } from "@/components/push-notification-toggle";
 
 // ============================================================
 // Tipi
@@ -384,6 +385,9 @@ function HomeTab({
           year: "numeric",
         })}
       </div>
+
+      {/* Push notifications */}
+      <PushNotificationToggle />
     </div>
   );
 }
