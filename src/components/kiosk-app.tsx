@@ -28,6 +28,8 @@ import {
   Store,
 } from "lucide-react";
 import { CATEGORIES, formatEUR, type MenuItem } from "@/lib/types";
+import { getUpsellSuggestions, shouldShowUpsell } from "@/lib/upsell";
+import { UpsellBanner } from "@/components/upsell-banner";
 
 // ============================================================
 // Tipi
@@ -267,6 +269,19 @@ export function KioskApp() {
 
       {/* Menu grid — touch friendly */}
       <main className="flex-1 overflow-y-auto p-4 pb-24">
+        {/* Upsell AI predlogi */}
+        {shouldShowUpsell(cartCount, cartTotal) && menu.length > 0 && (
+          <div className="mb-4">
+            <UpsellBanner
+              suggestions={getUpsellSuggestions(
+                cart.map((c) => c.menuItem),
+                menu
+              )}
+              onAdd={addToCart}
+            />
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((item) => (
             <button
