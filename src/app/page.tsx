@@ -32,6 +32,7 @@ import { HappyHourView } from "@/components/pos/happy-hour-view";
 import { WoltView } from "@/components/pos/wolt-view";
 import { ForecastView } from "@/components/pos/forecast-view";
 import { ComboMealsView } from "@/components/pos/combo-meals-view";
+import { AccountingView } from "@/components/pos/accounting-view";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { PinLoginDialog, getStoredOperator, type Operator } from "@/components/pos/pin-login";
 import { Toaster, toast } from "sonner";
@@ -172,6 +173,7 @@ export default function Home() {
             {activeView === "wolt" && <WoltView />}
             {activeView === "forecast" && <ForecastView />}
             {activeView === "combos" && <ComboMealsView />}
+            {activeView === "accounting" && <AccountingView />}
           </div>
         </main>
       </div>
