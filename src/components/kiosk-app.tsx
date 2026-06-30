@@ -26,6 +26,7 @@ import {
   Clock,
   Receipt,
   Store,
+  Printer,
 } from "lucide-react";
 import { CATEGORIES, formatEUR, type MenuItem } from "@/lib/types";
 import { getUpsellSuggestions, shouldShowUpsell } from "@/lib/upsell";
@@ -191,8 +192,26 @@ export function KioskApp() {
                 Sledite statusu na: /sledi/{orderId}
               </p>
             </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => window.open(`/print/receipt/${orderId}`, "_blank")}
+              >
+                <Printer className="mr-2 h-5 w-5" />
+                Natisni račun
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => window.open(`/sledi/${orderId}`, "_self")}
+              >
+                <Clock className="mr-2 h-5 w-5" />
+                Sledi naročilu
+              </Button>
+            </div>
             <Button
-              className="mt-6 w-full"
+              className="mt-4 w-full"
               size="lg"
               onClick={() => {
                 setOrderId(null);
