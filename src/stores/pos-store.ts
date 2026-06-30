@@ -44,7 +44,8 @@ interface PosState {
     | "wolt"
     | "forecast"
     | "combos"
-    | "accounting";
+    | "accounting"
+    | "deliverect";
   setActiveView: (
     v:
       | "tables"
@@ -73,6 +74,7 @@ interface PosState {
       | "forecast"
       | "combos"
       | "accounting"
+      | "deliverect"
   ) => void;
 
   // Selected table
