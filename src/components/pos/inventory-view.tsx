@@ -51,6 +51,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { authHeaders } from "@/components/pos/pin-login";
+import { InventoryImport } from "@/components/pos/inventory-import";
 
 interface InventoryItem {
   id: string;
@@ -102,6 +103,7 @@ export function InventoryView() {
   const [restocking, setRestocking] = useState<InventoryItem | null>(null);
   const [restockQty, setRestockQty] = useState("");
   const [showRecipes, setShowRecipes] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   // Recipes
   const { data: recipes, refetch: refetchRecipes } = useFetch<{
@@ -250,14 +252,28 @@ export function InventoryView() {
             {totalItems} izdelkov &middot; {lowStockCount} z nizko zalogo
           </p>
         </div>
-        <Button
-          onClick={() => setCreating(true)}
-          className="bg-amber-600 hover:bg-amber-700"
-        >
-          <Plus className="mr-1.5 h-4 w-4" />
-          Nov izdelek
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowImport(!showImport)}
+          >
+            <PackagePlus className="mr-1.5 h-4 w-4" />
+            {showImport ? "Skrij uvoz" : "Uvozi artikle"}
+          </Button>
+          <Button
+            onClick={() => setCreating(true)}
+            className="bg-amber-600 hover:bg-amber-700"
+          >
+            <Plus className="mr-1.5 h-4 w-4" />
+            Nov izdelek
+          </Button>
+        </div>
       </div>
+
+      {/* Import panel */}
+      {showImport && (
+        <InventoryImport onImported={refetch} />
+      )}
 
       {/* Iskalnik */}
       <div className="relative max-w-md">
