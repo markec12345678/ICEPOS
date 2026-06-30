@@ -41,7 +41,8 @@ interface PosState {
     | "benchmark"
     | "waste"
     | "happy-hour"
-    | "wolt";
+    | "wolt"
+    | "forecast";
   setActiveView: (
     v:
       | "tables"
@@ -67,6 +68,7 @@ interface PosState {
       | "waste"
       | "happy-hour"
       | "wolt"
+      | "forecast"
   ) => void;
 
   // Selected table
