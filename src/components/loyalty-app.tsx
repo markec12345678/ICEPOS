@@ -35,6 +35,11 @@ import {
 import { formatEUR, formatDateTime, CATEGORIES, type MenuItem } from "@/lib/types";
 import QRCode from "qrcode";
 import { PushNotificationToggle } from "@/components/push-notification-toggle";
+import {
+  getBadgesWithStatus,
+  getActiveChallenges,
+  countUnlockedBadges,
+} from "@/lib/gamification";
 
 // ============================================================
 // Tipi
@@ -83,7 +88,7 @@ export function LoyaltyApp() {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [rewards, setRewards] = useState<Reward[]>([]);
-  const [tab, setTab] = useState<"home" | "rewards" | "order" | "history">("home");
+  const [tab, setTab] = useState<"home" | "rewards" | "order" | "achievements" | "history">("home");
   const [loading, setLoading] = useState(true);
   const [qrUrl, setQrUrl] = useState<string>("");
 
@@ -200,6 +205,7 @@ export function LoyaltyApp() {
         {tab === "order" && (
           <OrderAheadTab token={token} customer={customer} />
         )}
+        {tab === "achievements" && <AchievementsTab customer={customer} />}
         {tab === "history" && <HistoryTab orders={orders} />}
       </main>
 
@@ -601,14 +607,15 @@ function BottomNav({
   active,
   onChange,
 }: {
-  active: "home" | "rewards" | "order" | "history";
-  onChange: (v: "home" | "rewards" | "order" | "history") => void;
+  active: "home" | "rewards" | "order" | "achievements" | "history";
+  onChange: (v: "home" | "rewards" | "order" | "achievements" | "history") => void;
 }) {
   const items = [
     { id: "home" as const, label: "Domov", icon: Star },
     { id: "order" as const, label: "Naroči", icon: Utensils },
     { id: "rewards" as const, label: "Nagrade", icon: Gift },
-    { id: "history" as const, label: "Zgodovina", icon: Award },
+    { id: "achievements" as const, label: "Dosežki", icon: Award },
+    { id: "history" as const, label: "Zgodovina", icon: ShoppingBag },
   ];
 
   return (
@@ -930,6 +937,121 @@ function OrderAheadTab({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// ============================================================
+// Achievements Tab — badge-i in izzivi (Gamification)
+// ============================================================
+
+function AchievementsTab({ customer }: { customer: Customer }) {
+  const badges = getBadgesWithStatus({
+    visitCount: customer.visitCount,
+    totalSpent: customer.totalSpent,
+    points: customer.points,
+    level: customer.level,
+  });
+  const challenges = getActiveChallenges({
+    visitCount: customer.visitCount,
+    totalSpent: customer.totalSpent,
+    points: customer.points,
+  });
+  const unlockedCount = countUnlockedBadges(badges);
+
+  return (
+    <div className="space-y-4">
+      {/* Summary */}
+      <div className="rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 p-5 text-white shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-white/80">Odklenjeni badge-i</p>
+            <p className="text-4xl font-bold">
+              {unlockedCount}
+              <span className="text-xl text-white/70">/{badges.length}</span>
+            </p>
+          </div>
+          <div className="text-5xl">🏆</div>
+        </div>
+      </div>
+
+      {/* Active challenges */}
+      <div>
+        <h3 className="mb-2 flex items-center gap-1.5 text-lg font-semibold">
+          🎯 Aktivni izzivi
+        </h3>
+        <div className="space-y-2">
+          {challenges.map((challenge) => (
+            <div
+              key={challenge.id}
+              className={`rounded-xl border p-3 ${
+                challenge.completed
+                  ? "border-emerald-300 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20"
+                  : "border-border bg-card"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{challenge.icon}</span>
+                <div className="flex-1">
+                  <p className="font-medium">{challenge.name}</p>
+                  <p className="text-xs text-muted-foreground">{challenge.description}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-medium text-amber-600">
+                    +{challenge.rewardPoints} točk
+                  </p>
+                  {challenge.completed && (
+                    <Badge variant="outline" className="border-emerald-300 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400">
+                      ✓ Končano
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="mt-2 flex items-center gap-2">
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      challenge.completed
+                        ? "bg-emerald-500"
+                        : "bg-purple-500"
+                    }`}
+                    style={{ width: `${Math.min(100, (challenge.progress / challenge.target) * 100)}%` }}
+                  />
+                </div>
+                <span className="text-xs font-medium tabular-nums">
+                  {challenge.progress}/{challenge.target}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Badges grid */}
+      <div>
+        <h3 className="mb-2 flex items-center gap-1.5 text-lg font-semibold">
+          🏅 Badge-i
+        </h3>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+          {badges.map((badge) => (
+            <div
+              key={badge.id}
+              className={`rounded-xl border p-3 text-center ${
+                badge.unlocked
+                  ? "border-amber-300 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20"
+                  : "border-border opacity-50"
+              }`}
+            >
+              <div className={`text-3xl ${badge.unlocked ? "" : "grayscale"}`}>
+                {badge.unlocked ? badge.icon : "🔒"}
+              </div>
+              <p className="mt-1 text-xs font-medium leading-tight">{badge.name}</p>
+              <p className="text-[10px] text-muted-foreground">{badge.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
