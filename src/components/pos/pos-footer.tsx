@@ -70,7 +70,7 @@ export function PosFooter() {
     { id: "settings" as const, label: "Nastavitve", desc: "Podjetje in FURS", icon: Settings },
   ];
 
-  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards", "scheduling", "menu-engineering", "benchmark", "waste", "happy-hour", "wolt"].includes(activeView);
+  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards", "scheduling", "menu-engineering", "benchmark", "waste", "happy-hour", "wolt", "forecast"].includes(activeView);
 
   return (
     <footer className="sticky bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:hidden print:hidden">
@@ -294,6 +294,12 @@ export function PosSidebar() {
       label: "Wolt dostava",
       desc: "Integracija z Wolt",
       icon: Bike,
+    },
+    {
+      id: "forecast" as const,
+      label: "AI napoved",
+      desc: "Demand forecasting",
+      icon: Brain,
     },
   ];
 
