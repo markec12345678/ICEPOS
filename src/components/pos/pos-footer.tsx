@@ -26,6 +26,7 @@ import {
   Clock3,
   Bike,
   Brain,
+  Layers,
 } from "lucide-react";
 import {
   Sheet,
@@ -64,13 +65,14 @@ export function PosFooter() {
     { id: "happy-hour" as const, label: "Happy Hour", desc: "Časovno odvisne cene", icon: Clock3 },
     { id: "wolt" as const, label: "Wolt dostava", desc: "Integracija z Wolt", icon: Bike },
     { id: "forecast" as const, label: "AI napoved", desc: "Demand forecasting", icon: Brain },
+    { id: "combos" as const, label: "Combo meniji", desc: "Set meniji z izbiro", icon: Layers },
     { id: "weekly" as const, label: "Tedenska statistika", desc: "Po dnevih v tednu", icon: CalendarClock },
     { id: "monthly" as const, label: "Mesečno poročilo", desc: "Statistika meseca", icon: CalendarRange },
     { id: "zreport" as const, label: "Z-report", desc: "Dnevni zaključek", icon: FileBarChart },
     { id: "settings" as const, label: "Nastavitve", desc: "Podjetje in FURS", icon: Settings },
   ];
 
-  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards", "scheduling", "menu-engineering", "benchmark", "waste", "happy-hour", "wolt", "forecast"].includes(activeView);
+  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards", "scheduling", "menu-engineering", "benchmark", "waste", "happy-hour", "wolt", "forecast", "combos"].includes(activeView);
 
   return (
     <footer className="sticky bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:hidden print:hidden">
@@ -300,6 +302,12 @@ export function PosSidebar() {
       label: "AI napoved",
       desc: "Demand forecasting",
       icon: Brain,
+    },
+    {
+      id: "combos" as const,
+      label: "Combo meniji",
+      desc: "Set meniji z izbiro",
+      icon: Layers,
     },
   ];
 

@@ -55,6 +55,7 @@ model Restaurant {
   giftCards       GiftCard[]
   wasteLogs       WasteLog[]
   happyHours      HappyHour[]
+  comboMeals      ComboMeal[]
 }
 
 // ============================================================
@@ -366,4 +367,37 @@ model HappyHour {
   active        Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// ============================================================
+// COMBO MEALS — set meniji z izbiro pod-itemov
+// ============================================================
+
+model ComboMeal {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name          String   // "Lunch Meni 1", "Biftek meni", itd.
+  description   String?
+  price         Float    // fiksna cena combo-ja (manjša od vsote posameznih)
+  active        Boolean  @default(true)
+  // Slike/ikona (opcijsko)
+  icon          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  slots         ComboSlot[]
+}
+
+// Slot v combo-ju (npr. "Izberi 1 juho", "Izberi 1 glavno jed", "Izberi 1 pijačo")
+model ComboSlot {
+  id            String   @id @default(cuid())
+  comboMealId   String
+  comboMeal     ComboMeal @relation(fields: [comboMealId], references: [id], onDelete: Cascade)
+  name          String   // "Juha", "Glavna jed", "Pijača"
+  required      Boolean  @default(true) // ali mora gost izbrati
+  minSelect     Int      @default(1) // min št. izborov
+  maxSelect     Int      @default(1) // max št. izborov
+  // Povezani MenuItem-i (lahko izbere iz teh)
+  itemIds       String   // JSON array menuItemId-jev
+  createdAt     DateTime @default(now())
 }
