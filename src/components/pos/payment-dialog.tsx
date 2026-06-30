@@ -29,6 +29,7 @@ import {
   Loader2,
   CheckCircle,
   XCircle,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FursQrCode } from "@/components/pos/furs-qr-code";
@@ -68,7 +69,7 @@ export function PaymentDialog() {
   } = usePosStore();
 
   const { data: tables, refetch } = useFetch<TableWithOrders[]>("/api/tables");
-  const [method, setMethod] = useState<"cash" | "card" | "giftcard" | "sumup">("cash");
+  const [method, setMethod] = useState<"cash" | "card" | "giftcard" | "sumup" | "wallet">("cash");
   const [tendered, setTendered] = useState<string>("");
   const [processing, setProcessing] = useState(false);
   const [paid, setPaid] = useState<PaidResult | null>(null);
@@ -367,6 +368,18 @@ export function PaymentDialog() {
                   <Smartphone className="h-6 w-6" />
                   <span className="text-sm font-medium">Sumup terminal</span>
                 </button>
+                <button
+                  onClick={() => setMethod("wallet")}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 transition-all hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                    method === "wallet"
+                      ? "border-purple-500 bg-purple-50 dark:bg-purple-950/30"
+                      : "border-border hover:bg-muted hover:border-purple-200"
+                  )}
+                >
+                  <Wallet className="h-6 w-6" />
+                  <span className="text-sm font-medium">Apple/Google Pay</span>
+                </button>
               </div>
 
               {method === "cash" && (
@@ -475,6 +488,10 @@ export function PaymentDialog() {
 
               {method === "sumup" && (
                 <SumupPaymentBlock amount={grandTotal} orderId={openOrder?.id} />
+              )}
+
+              {method === "wallet" && (
+                <WalletPaymentBlock amount={grandTotal} orderId={openOrder?.id} />
               )}
 
               {/* Stranka (loyalty) — vedno prikazano */}
@@ -996,6 +1013,216 @@ function SumupPaymentBlock({
             <XCircle className="h-5 w-5" />
             <span className="font-medium">Plačilo preklicano</span>
           </div>
+          <Button variant="outline" size="sm" onClick={reset}>
+            Poskusi znova
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// Apple Pay / Google Pay Payment Block (Stripe)
+// ============================================================
+
+interface WalletState {
+  status: "idle" | "creating" | "pending" | "success" | "failed" | "not-configured";
+  clientSecret?: string;
+  paymentIntentId?: string;
+  errorMessage?: string;
+}
+
+function WalletPaymentBlock({
+  amount,
+  orderId,
+}: {
+  amount: number;
+  orderId?: string;
+}) {
+  const [state, setState] = useState<WalletState>({ status: "idle" });
+  const [stripeConfigured, setStripeConfigured] = useState<boolean | null>(null);
+
+  // Preveri ali je Stripe konfiguriran
+  useEffect(() => {
+    fetch("/api/stripe/publishable-key")
+      .then((r) => r.json())
+      .then((data) => setStripeConfigured(data.configured))
+      .catch(() => setStripeConfigured(false));
+  }, []);
+
+  const startPayment = async () => {
+    setState({ status: "creating" });
+    try {
+      const res = await fetch("/api/stripe/create-intent", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          amount,
+          orderId,
+          methods: ["card", "apple_pay", "google_pay"],
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setState({
+          status: "failed",
+          errorMessage: data.error || "Napaka pri ustvarjanju plačila",
+        });
+        toast.error(data.error || "Stripe napaka");
+        return;
+      }
+
+      setState({
+        status: "pending",
+        clientSecret: data.client_secret,
+        paymentIntentId: data.id,
+      });
+
+      // Polling statusa (vsako 2s)
+      const interval = setInterval(async () => {
+        if (!data.id) return;
+        try {
+          const statusRes = await fetch(`/api/stripe/status/${data.id}`, {
+            headers: authHeaders(),
+          });
+          const statusData = await statusRes.json();
+          if (statusData.status === "succeeded") {
+            setState({
+              status: "success",
+              paymentIntentId: data.id,
+            });
+            clearInterval(interval);
+            toast.success("Plačilo uspešno (Apple/Google Pay)!");
+          } else if (statusData.status === "canceled" || statusData.status === "failed") {
+            setState({
+              status: "failed",
+              paymentIntentId: data.id,
+              errorMessage: statusData.error?.message || "Plačilo neuspešno",
+            });
+            clearInterval(interval);
+            toast.error("Plačilo neuspešno");
+          }
+        } catch {
+          // ignore poll errors
+        }
+      }, 2000);
+
+      // Timeout po 60s
+      setTimeout(() => {
+        clearInterval(interval);
+        setState((prev) =>
+          prev.status === "pending"
+            ? { status: "failed", errorMessage: "Timeout (60s)" }
+            : prev
+        );
+      }, 60000);
+    } catch (e) {
+      setState({
+        status: "failed",
+        errorMessage: (e as Error).message,
+      });
+      toast.error("Napaka pri Stripe klicu");
+    }
+  };
+
+  const reset = () => setState({ status: "idle" });
+
+  // Stripe ni konfiguriran
+  if (stripeConfigured === false) {
+    return (
+      <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900 dark:bg-amber-950/20">
+        <div className="flex items-center gap-2">
+          <Wallet className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+          <span className="font-medium text-amber-800 dark:text-amber-300">
+            Apple Pay / Google Pay
+          </span>
+          <Badge variant="outline" className="ml-auto border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-400">
+            {formatEUR(amount)}
+          </Badge>
+        </div>
+        <p className="text-sm text-amber-700 dark:text-amber-400">
+          Stripe ni konfiguriran. Za Apple Pay/Google Pay dodaj v .env:
+        </p>
+        <pre className="rounded bg-amber-100/50 p-2 text-xs dark:bg-amber-950/40">
+{`STRIPE_SECRET_KEY=sk_test_xxx
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxx`}
+        </pre>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 rounded-lg border border-purple-200 bg-purple-50/50 p-4 dark:border-purple-900 dark:bg-purple-950/20">
+      <div className="flex items-center gap-2">
+        <Wallet className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+        <span className="font-medium text-purple-800 dark:text-purple-300">
+          Apple Pay / Google Pay
+        </span>
+        <Badge variant="outline" className="ml-auto border-purple-300 text-purple-700 dark:border-purple-800 dark:text-purple-400">
+          {formatEUR(amount)}
+        </Badge>
+      </div>
+
+      {state.status === "idle" && (
+        <>
+          <p className="text-sm text-muted-foreground">
+            Gost naj približa telefon/uro ali kartico. Podprto: Apple Pay, Google Pay, kontaktne kartice.
+          </p>
+          <Button
+            onClick={startPayment}
+            className="w-full bg-purple-600 hover:bg-purple-700"
+            disabled={stripeConfigured === null}
+          >
+            <Wallet className="mr-2 h-4 w-4" />
+            Pripravi plačilo
+          </Button>
+        </>
+      )}
+
+      {state.status === "creating" && (
+        <div className="flex items-center justify-center gap-2 py-4 text-purple-700 dark:text-purple-400">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="text-sm">Pripravljam plačilo...</span>
+        </div>
+      )}
+
+      {state.status === "pending" && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-purple-700 dark:text-purple-400">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm font-medium">Čakam na plačilo...</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Gost naj potrdi plačilo na telefonu/s uri. Status se osvežuje samodejno.
+          </p>
+          <div className="rounded-lg bg-purple-100/50 p-2 text-xs dark:bg-purple-950/40">
+            <p className="font-mono">PaymentIntent: {state.paymentIntentId}</p>
+          </div>
+        </div>
+      )}
+
+      {state.status === "success" && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+            <CheckCircle className="h-5 w-5" />
+            <span className="font-medium">Plačilo uspešno!</span>
+          </div>
+          <Button variant="outline" size="sm" onClick={reset}>
+            Novo plačilo
+          </Button>
+        </div>
+      )}
+
+      {state.status === "failed" && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+            <XCircle className="h-5 w-5" />
+            <span className="font-medium">Plačilo neuspešno</span>
+          </div>
+          {state.errorMessage && (
+            <p className="text-xs text-muted-foreground">{state.errorMessage}</p>
+          )}
           <Button variant="outline" size="sm" onClick={reset}>
             Poskusi znova
           </Button>
