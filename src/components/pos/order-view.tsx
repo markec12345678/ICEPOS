@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFetch } from "@/hooks/use-fetch";
 import { usePosStore } from "@/stores/pos-store";
+import { updateCDU, clearCDU } from "@/lib/cdu-sync";
 import {
   CATEGORIES,
   formatEUR,
@@ -176,6 +177,25 @@ export function OrderView() {
   // Popust in končna cena
   const discountAmount = (cartTotals.total * discountPercent) / 100;
   const finalTotal = cartTotals.total - discountAmount;
+
+  // Sinhroniziraj voziček z Customer Display Unit (CDU)
+  useEffect(() => {
+    if (cart.length === 0) {
+      clearCDU();
+      return;
+    }
+    updateCDU({
+      items: cart.map((c) => ({
+        name: c.menuItem.name,
+        quantity: c.quantity,
+        unitPrice: c.menuItem.price,
+        note: c.note,
+      })),
+      total: Math.round(finalTotal * 100) / 100,
+      tableName: tables?.find((t) => t.id === selectedTableId)?.name,
+      operator: undefined, // TODO: pridobi iz PIN login-a
+    });
+  }, [cart, finalTotal, selectedTableId, tables]);
 
   async function handleSave() {
     if (!selectedTableId || cart.length === 0) {
