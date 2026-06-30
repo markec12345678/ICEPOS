@@ -289,16 +289,25 @@ export function KioskApp() {
               onClick={() => addToCart(item)}
               className="flex items-center justify-between rounded-2xl border-2 bg-card p-4 text-left transition-all active:scale-98 hover:border-primary"
             >
-              <div className="flex-1 pr-3">
-                <p className="text-base font-semibold leading-tight">{item.name}</p>
-                {item.desc && (
-                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                    {item.desc}
-                  </p>
+              <div className="flex flex-1 items-center gap-3 pr-3">
+                {item.imageUrl && (
+                  <img
+                    src={item.imageUrl}
+                    alt={item.name}
+                    className="h-16 w-16 shrink-0 rounded-xl object-cover"
+                  />
                 )}
-                <p className="mt-2 text-lg font-bold text-primary">
-                  {formatEUR(item.price)}
-                </p>
+                <div className="flex-1">
+                  <p className="text-base font-semibold leading-tight">{item.name}</p>
+                  {item.desc && (
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                      {item.desc}
+                    </p>
+                  )}
+                  <p className="mt-2 text-lg font-bold text-primary">
+                    {formatEUR(item.price)}
+                  </p>
+                </div>
               </div>
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <Plus className="h-6 w-6" />

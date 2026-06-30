@@ -463,8 +463,18 @@ export function OrderView() {
                 className="group cursor-pointer p-3 transition-all duration-200 hover:-translate-y-1 hover:border-amber-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.98] dark:hover:border-amber-700"
               >
                 <div className="mb-2 flex items-start justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 text-lg dark:from-amber-950/40 dark:to-orange-950/40">
-                    {CATEGORIES.find((c) => c.id === m.category)?.icon || "🍽️"}
+                  <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg">
+                    {m.imageUrl ? (
+                      <img
+                        src={m.imageUrl}
+                        alt={m.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-amber-100 to-orange-100 text-lg dark:from-amber-950/40 dark:to-orange-950/40">
+                        {CATEGORIES.find((c) => c.id === m.category)?.icon || "🍽️"}
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-0.5">
                     {m.isFavorite && (

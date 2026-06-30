@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { formatEUR, type MenuItem, CATEGORIES } from "@/lib/types";
 import { Star, UtensilsCrossed, ShoppingCart } from "lucide-react";
+import { getUpsellSuggestions, shouldShowUpsell } from "@/lib/upsell";
+import { UpsellBanner } from "@/components/upsell-banner";
 
 // EU alergeni (1169/2011) z ikonami in prevodi
 const ALLERGEN_INFO: Record<string, { icon: string; sl: string; en: string }> = {
@@ -262,6 +264,19 @@ export function MenuClient({ items, tableNumber, reservations, issuer }: MenuCli
           <>Select dishes below and click <strong>"Submit order"</strong> — the kitchen will prepare it shortly!</>
         )}
       </div>
+
+      {/* Upsell AI predlogi */}
+      {shouldShowUpsell(itemCount, total) && items.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <UpsellBanner
+            suggestions={getUpsellSuggestions(
+              cart.map((c) => c.menuItem),
+              items
+            )}
+            onAdd={addToCart}
+          />
+        </div>
+      )}
 
       {/* Dnevna ponudba */}
       {dailySpecials.length > 0 && (
@@ -609,6 +624,20 @@ function ItemCard({
         boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
       }}
     >
+      {item.imageUrl && (
+        <img
+          src={item.imageUrl}
+          alt={name}
+          style={{
+            width: 60,
+            height: 60,
+            borderRadius: 8,
+            objectFit: "cover",
+            marginRight: 10,
+            flexShrink: 0,
+          }}
+        />
+      )}
       <div style={{ flex: 1 }}>
         <div
           style={{
