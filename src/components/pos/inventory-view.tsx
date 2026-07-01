@@ -48,11 +48,13 @@ import {
   ChefHat,
   Link2,
   X,
+  ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { authHeaders } from "@/components/pos/pin-login";
 import { InventoryImport } from "@/components/pos/inventory-import";
 import { BulkRestock } from "@/components/pos/bulk-restock";
+import { ReorderReport } from "@/components/pos/reorder-report";
 
 interface InventoryItem {
   id: string;
@@ -106,6 +108,7 @@ export function InventoryView() {
   const [showRecipes, setShowRecipes] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showBulkRestock, setShowBulkRestock] = useState(false);
+  const [showReorder, setShowReorder] = useState(false);
 
   // Recipes
   const { data: recipes, refetch: refetchRecipes } = useFetch<{
@@ -258,7 +261,19 @@ export function InventoryView() {
           <Button
             variant="outline"
             onClick={() => {
+              setShowReorder(!showReorder);
+              setShowBulkRestock(false);
+              setShowImport(false);
+            }}
+          >
+            <ShoppingCart className="mr-1.5 h-4 w-4" />
+            {showReorder ? "Skrij" : "Naroči"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
               setShowBulkRestock(!showBulkRestock);
+              setShowReorder(false);
               setShowImport(false);
             }}
           >
@@ -270,6 +285,7 @@ export function InventoryView() {
             onClick={() => {
               setShowImport(!showImport);
               setShowBulkRestock(false);
+              setShowReorder(false);
             }}
           >
             <PackagePlus className="mr-1.5 h-4 w-4" />
@@ -284,6 +300,11 @@ export function InventoryView() {
           </Button>
         </div>
       </div>
+
+      {/* Reorder report panel */}
+      {showReorder && (
+        <ReorderReport onUpdated={refetch} />
+      )}
 
       {/* Bulk restock panel */}
       {showBulkRestock && (
