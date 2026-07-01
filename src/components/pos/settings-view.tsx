@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,15 @@ import {
   Database,
   Info,
   KeyRound,
+  CreditCard,
+  Smartphone,
+  Bike,
+  Truck,
+  CalendarCheck,
+  Bell,
+  CheckCircle2,
+  XCircle,
+  Loader2,
 } from "lucide-react";
 
 const STORAGE_KEY = "icepos-si-settings";
@@ -311,6 +320,22 @@ export function SettingsView() {
         </div>
       </Card>
 
+      {/* Integrations status */}
+      <Card className="p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50 text-purple-700 dark:bg-purple-950/30 dark:text-purple-400">
+            <CreditCard className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="font-bold">Integracije</h3>
+            <p className="text-xs text-muted-foreground">
+              Status vseh integracij in povezav
+            </p>
+          </div>
+        </div>
+        <IntegrationsPanel />
+      </Card>
+
       {/* Info */}
       <Card className="border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900 dark:bg-amber-950/20">
         <div className="flex gap-3">
@@ -328,6 +353,152 @@ export function SettingsView() {
           </div>
         </div>
       </Card>
+    </div>
+  );
+}
+
+// ============================================================
+// Integrations Panel — status vseh integracij
+// ============================================================
+
+interface IntegrationStatus {
+  configured: boolean;
+  env?: string;
+  message?: string;
+}
+
+function IntegrationsPanel() {
+  const [statuses, setStatuses] = useState<Record<string, IntegrationStatus>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadAll() {
+      const results: Record<string, IntegrationStatus> = {};
+
+      // FURS
+      try {
+        const res = await fetch("/api/furs/status");
+        if (res.ok) {
+          const data = await res.json();
+          results.furs = { configured: data.configured, env: data.env, message: data.mode };
+        }
+      } catch { results.furs = { configured: false }; }
+
+      // Sumup
+      results.sumup = { configured: false, message: "Nastavi SUMUP_API_KEY v .env" };
+
+      // Stripe
+      try {
+        const res = await fetch("/api/stripe/publishable-key");
+        if (res.ok) {
+          const data = await res.json();
+          results.stripe = { configured: data.configured };
+        }
+      } catch { results.stripe = { configured: false }; }
+
+      // Wolt
+      try {
+        const res = await fetch("/api/wolt/status");
+        if (res.ok) {
+          const data = await res.json();
+          results.wolt = { configured: data.configured, env: data.env };
+        }
+      } catch { results.wolt = { configured: false }; }
+
+      // Deliverect
+      try {
+        const res = await fetch("/api/deliverect/status");
+        if (res.ok) {
+          const data = await res.json();
+          results.deliverect = { configured: data.configured, env: data.env };
+        }
+      } catch { results.deliverect = { configured: false }; }
+
+      // OpenTable
+      try {
+        const res = await fetch("/api/opentable/status");
+        if (res.ok) {
+          const data = await res.json();
+          results.opentable = { configured: data.configured };
+        }
+      } catch { results.opentable = { configured: false }; }
+
+      setStatuses(results);
+      setLoading(false);
+    }
+    loadAll();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const integrations = [
+    { id: "furs", name: "FURS fiskalizacija", icon: ShieldCheck, desc: "ZOI, EOR, XML, QR koda" },
+    { id: "sumup", name: "Sumup terminal", icon: Smartphone, desc: "Plačilni terminal" },
+    { id: "stripe", name: "Apple Pay / Google Pay", icon: CreditCard, desc: "Stripe Terminal (NFC)" },
+    { id: "wolt", name: "Wolt dostava", icon: Bike, desc: "Webhook + avto naročila" },
+    { id: "deliverect", name: "Deliverect (8 platform)", icon: Truck, desc: "UberEats, DoorDash, Glovo, itd." },
+    { id: "opentable", name: "OpenTable/Resy", icon: CalendarCheck, desc: "Sinhronizacija rezervacij" },
+  ];
+
+  return (
+    <div className="space-y-2">
+      {integrations.map((int) => {
+        const status = statuses[int.id] || { configured: false };
+        const Icon = int.icon;
+        return (
+          <div
+            key={int.id}
+            className={`flex items-center justify-between rounded-lg border p-3 ${
+              status.configured
+                ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/10"
+                : "border-amber-200 bg-amber-50/30 dark:border-amber-800 dark:bg-amber-950/10"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={`flex h-9 w-9 items-center justify-center rounded-lg ${
+                  status.configured
+                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+                    : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">{int.name}</p>
+                <p className="text-xs text-muted-foreground">{int.desc}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {status.env && (
+                <Badge variant="outline" className="text-xs">
+                  {status.env}
+                </Badge>
+              )}
+              {status.configured ? (
+                <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+                  <CheckCircle2 className="mr-1 h-3 w-3" />
+                  Povezan
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-400">
+                  <XCircle className="mr-1 h-3 w-3" />
+                  Ni konfiguriran
+                </Badge>
+              )}
+            </div>
+          </div>
+        );
+      })}
+      <p className="pt-2 text-xs text-muted-foreground">
+        💡 Nastavi API ključe v .env datoteki. Po spremembi restartaj aplikacijo.
+      </p>
     </div>
   );
 }
