@@ -52,6 +52,7 @@ import {
 import { cn } from "@/lib/utils";
 import { authHeaders } from "@/components/pos/pin-login";
 import { InventoryImport } from "@/components/pos/inventory-import";
+import { BulkRestock } from "@/components/pos/bulk-restock";
 
 interface InventoryItem {
   id: string;
@@ -104,6 +105,7 @@ export function InventoryView() {
   const [restockQty, setRestockQty] = useState("");
   const [showRecipes, setShowRecipes] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showBulkRestock, setShowBulkRestock] = useState(false);
 
   // Recipes
   const { data: recipes, refetch: refetchRecipes } = useFetch<{
@@ -255,7 +257,20 @@ export function InventoryView() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            onClick={() => setShowImport(!showImport)}
+            onClick={() => {
+              setShowBulkRestock(!showBulkRestock);
+              setShowImport(false);
+            }}
+          >
+            <Boxes className="mr-1.5 h-4 w-4" />
+            {showBulkRestock ? "Skrij" : "Bulk zaloga"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setShowImport(!showImport);
+              setShowBulkRestock(false);
+            }}
           >
             <PackagePlus className="mr-1.5 h-4 w-4" />
             {showImport ? "Skrij uvoz" : "Uvozi artikle"}
@@ -269,6 +284,11 @@ export function InventoryView() {
           </Button>
         </div>
       </div>
+
+      {/* Bulk restock panel */}
+      {showBulkRestock && (
+        <BulkRestock onImported={refetch} />
+      )}
 
       {/* Import panel */}
       {showImport && (
