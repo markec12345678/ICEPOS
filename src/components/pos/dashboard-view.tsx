@@ -14,12 +14,17 @@ import {
   CreditCard,
   Trophy,
   AlertCircle,
+  Package,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardHeader } from "@/components/pos/dashboard-header";
+import { usePosStore } from "@/stores/pos-store";
 
 export function DashboardView() {
   const { data, loading, error } = useFetch<DashboardStats>("/api/stats");
+  const { data: lowStock } = useFetch<{ id: string; name: string; quantity: number; unit: string; minQuantity: number; category: string }[]>("/api/inventory/low-stock");
+  const setActiveView = usePosStore((s) => s.setActiveView);
 
   if (loading) {
     return (
@@ -51,6 +56,31 @@ export function DashboardView() {
     <div className="space-y-4">
       {/* Header: aktivna smena + rezervacije + hitre akcije */}
       <DashboardHeader />
+
+      {/* Low-stock alert banner */}
+      {lowStock && lowStock.length > 0 && (
+        <button
+          onClick={() => setActiveView("inventory")}
+          className="flex w-full items-center gap-3 rounded-xl border-2 border-rose-300 bg-rose-50 p-3 text-left transition-all hover:border-rose-400 hover:shadow-sm dark:border-rose-800 dark:bg-rose-950/20"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-100 dark:bg-rose-950">
+            <AlertTriangle className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-rose-800 dark:text-rose-300">
+              {lowStock.length} artiklov z nizko zalogo
+            </p>
+            <p className="text-xs text-rose-600 dark:text-rose-400">
+              {lowStock.slice(0, 5).map((i) => i.name).join(", ")}
+              {lowStock.length > 5 && ` +${lowStock.length - 5} več`}
+            </p>
+          </div>
+          <div className="flex items-center gap-1 text-sm font-medium text-rose-600 dark:text-rose-400">
+            <Package className="h-4 w-4" />
+            Uredi zalogo →
+          </div>
+        </button>
+      )}
 
       {/* KPI kartice */}
       <div className={cn("grid grid-cols-2 gap-3", data.todayTips > 0 ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
