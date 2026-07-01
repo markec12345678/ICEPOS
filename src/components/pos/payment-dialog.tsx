@@ -30,6 +30,8 @@ import {
   CheckCircle,
   XCircle,
   Wallet,
+  Mail,
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FursQrCode } from "@/components/pos/furs-qr-code";
@@ -785,6 +787,9 @@ function ReceiptView({
         </div>
       </div>
 
+      {/* Email receipt */}
+      <EmailReceiptSection orderId={paid.id} />
+
       <div className="flex gap-2 border-t border-border px-5 py-4 print:hidden">
         <Button
           variant="outline"
@@ -1225,6 +1230,85 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxx`}
           )}
           <Button variant="outline" size="sm" onClick={reset}>
             Poskusi znova
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// Email Receipt Section — pošiljanje računa na email
+// ============================================================
+
+function EmailReceiptSection({ orderId }: { orderId: string }) {
+  const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  async function sendReceipt() {
+    if (!email || !email.includes("@")) {
+      toast.error("Vnesi veljaven email");
+      return;
+    }
+    setSending(true);
+    try {
+      const res = await fetch(`/api/orders/${orderId}/email-receipt`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Napaka");
+        return;
+      }
+      toast.success(`Račun poslan na ${email}`);
+      setSent(true);
+    } catch {
+      toast.error("Napaka pri pošiljanju");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="border-t border-border px-5 py-3 print:hidden">
+      {sent ? (
+        <div className="flex items-center gap-2 rounded-lg bg-emerald-50 p-2 text-sm text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
+          <CheckCircle className="h-4 w-4" />
+          Račun poslan na {email}
+          <button
+            onClick={() => { setSent(false); setEmail(""); }}
+            className="ml-auto text-xs underline"
+          >
+            Pošlji še enkrat
+          </button>
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="gost@email.com"
+              className="pl-9"
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={sendReceipt}
+            disabled={sending || !email}
+          >
+            {sending ? (
+              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+            ) : (
+              <Send className="mr-1 h-3 w-3" />
+            )}
+            {sending ? "Pošiljam..." : "Pošlji račun"}
           </Button>
         </div>
       )}

@@ -16,8 +16,10 @@ import {
   Mail,
   RefreshCw,
   Printer,
+  Send,
 } from "lucide-react";
 import { formatEUR } from "@/lib/types";
+import { authHeaders } from "@/components/pos/pin-login";
 
 interface ReorderItem {
   id: string;
@@ -321,6 +323,15 @@ export function ReorderReport({ onUpdated }: { onUpdated: () => void }) {
                       </tr>
                     </tfoot>
                   </table>
+
+                  {/* Send order email */}
+                  <div className="border-t p-2">
+                    <SupplierEmailButton
+                      supplier={supplier.supplier}
+                      items={supplier.items}
+                      contact={contact}
+                    />
+                  </div>
                 </div>
               )}
             </Card>
@@ -343,5 +354,82 @@ export function ReorderReport({ onUpdated }: { onUpdated: () => void }) {
         </p>
       </Card>
     </div>
+  );
+}
+
+// ============================================================
+// Supplier Email Button — pošlji naročilo dobavitelju
+// ============================================================
+
+function SupplierEmailButton({
+  supplier,
+  items,
+  contact,
+}: {
+  supplier: string;
+  items: ReorderItem[];
+  contact?: { phone: string; email: string; website: string };
+}) {
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  async function sendOrder() {
+    if (!contact || contact.email === "—") {
+      toast.error("Ni email naslova za tega dobavitelja");
+      return;
+    }
+    setSending(true);
+    try {
+      const res = await fetch("/api/inventory/reorder-email", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          supplier,
+          email: contact.email,
+          items: items.map((i) => ({
+            name: i.name,
+            quantity: i.suggestedQty,
+            unit: i.unit,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Napaka");
+        return;
+      }
+      toast.success(data.message);
+      setSent(true);
+    } catch {
+      toast.error("Napaka pri pošiljanju");
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (sent) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg bg-emerald-50 p-2 text-sm text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
+        <CheckCircle2 className="h-4 w-4" />
+        Naročilo poslano na {contact?.email}
+      </div>
+    );
+  }
+
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      className="w-full"
+      onClick={sendOrder}
+      disabled={sending || !contact || contact.email === "—"}
+    >
+      {sending ? (
+        <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+      ) : (
+        <Send className="mr-1.5 h-3 w-3" />
+      )}
+      {sending ? "Pošiljam..." : `Pošlji naročilo na ${contact?.email || "—"}`}
+    </Button>
   );
 }
