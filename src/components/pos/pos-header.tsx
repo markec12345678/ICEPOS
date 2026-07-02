@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Store, Clock, ShieldCheck, Wifi, UserCircle, LogOut, Keyboard, Search } from "lucide-react";
+import { Store, Clock, ShieldCheck, Wifi, UserCircle, LogOut, Keyboard, Search, TrendingUp } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LangToggle } from "@/components/lang-toggle";
 import { TenantSelector } from "@/components/pos/tenant-selector";
 import { NotificationCenter } from "@/components/notification-center";
+import { useFetch } from "@/hooks/use-fetch";
 import {
   getStoredOperator,
   clearStoredOperator,
@@ -15,11 +16,13 @@ import {
 } from "@/components/pos/pin-login";
 import { useTenantStore } from "@/stores/tenant-store";
 import { toast } from "sonner";
+import { formatEUR, type DashboardStats } from "@/lib/types";
 
 export function PosHeader() {
   const [now, setNow] = useState(new Date());
   const [operator, setOperator] = useState<Operator | null>(null);
   const currentTenant = useTenantStore((s) => s.current);
+  const { data: stats } = useFetch<DashboardStats>("/api/stats");
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
@@ -85,6 +88,15 @@ export function PosHeader() {
         </div>
 
         <div className="hidden items-center gap-2 md:flex">
+          {stats && stats.todayRevenue > 0 && (
+            <Badge
+              variant="outline"
+              className="gap-1.5 border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
+            >
+              <TrendingUp className="h-3.5 w-3.5" />
+              {formatEUR(stats.todayRevenue)}
+            </Badge>
+          )}
           <Badge
             variant="outline"
             className="gap-1.5 border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400"
