@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useFetch } from "@/hooks/use-fetch";
 import { usePosStore } from "@/stores/pos-store";
-import { formatEUR, formatTime, type Table, type Order } from "@/lib/types";
+import { formatEUR, formatTime, type Table, type Order, type DashboardStats } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,7 @@ type TableWithOrders = Table & {
 
 export function TablesView() {
   const { data, loading, error, refetch } = useFetch<TableWithOrders[]>("/api/tables");
+  const { data: stats } = useFetch<DashboardStats>("/api/stats");
   const selectTable = usePosStore((s) => s.selectTable);
   const [section, setSection] = useState<string>("Vse");
   const [search, setSearch] = useState("");
@@ -133,11 +134,18 @@ export function TablesView() {
   return (
     <div className="space-y-4 animate-fade-in">
       {/* Stat strip */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
         <StatCard label="Skupaj miz" value={String(tables.length)} accent="neutral" />
         <StatCard label="Zasedene" value={String(openCount)} accent="amber" />
         <StatCard label="Proste" value={String(tables.length - openCount)} accent="emerald" />
         <StatCard label="Rezervacije danes" value={String(reservationsToday)} accent="amber" />
+        {stats && (
+          <StatCard
+            label="Prihodek danes"
+            value={formatEUR(stats.todayRevenue)}
+            accent="emerald"
+          />
+        )}
       </div>
 
       {/* Section filter + iskalnik */}
