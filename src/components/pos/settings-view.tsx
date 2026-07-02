@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { authHeaders } from "@/components/pos/pin-login";
 import {
   Building2,
   ShieldCheck,
@@ -25,6 +26,9 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  Download,
+  Mail,
+  FileText,
 } from "lucide-react";
 
 const STORAGE_KEY = "icepos-si-settings";
@@ -336,6 +340,22 @@ export function SettingsView() {
         <IntegrationsPanel />
       </Card>
 
+      {/* Backup & Reports */}
+      <Card className="p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
+            <Database className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="font-bold">Varnostne kopije & Poročila</h3>
+            <p className="text-xs text-muted-foreground">
+              Izvoz podatkov in dnevna poročila
+            </p>
+          </div>
+        </div>
+        <BackupReportSection />
+      </Card>
+
       {/* Info */}
       <Card className="border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900 dark:bg-amber-950/20">
         <div className="flex gap-3">
@@ -498,6 +518,153 @@ function IntegrationsPanel() {
       })}
       <p className="pt-2 text-xs text-muted-foreground">
         💡 Nastavi API ključe v .env datoteki. Po spremembi restartaj aplikacijo.
+      </p>
+    </div>
+  );
+}
+
+// ============================================================
+// Backup & Report Section
+// ============================================================
+
+function BackupReportSection() {
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportEmail, setReportEmail] = useState("");
+  const [reportSent, setReportSent] = useState(false);
+
+  async function downloadBackup() {
+    setBackupLoading(true);
+    try {
+      const res = await fetch("/api/backup", {
+        headers: authHeaders(),
+      });
+      if (!res.ok) {
+        toast.error("Napaka pri izvozu");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Varnostna kopija prenesena");
+    } catch {
+      toast.error("Napaka");
+    } finally {
+      setBackupLoading(false);
+    }
+  }
+
+  async function sendDailyReport() {
+    if (!reportEmail || !reportEmail.includes("@")) {
+      toast.error("Vnesi veljaven email");
+      return;
+    }
+    setReportLoading(true);
+    try {
+      const res = await fetch("/api/daily-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ email: reportEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Napaka");
+        return;
+      }
+      toast.success(data.message);
+      setReportSent(true);
+    } catch {
+      toast.error("Napaka");
+    } finally {
+      setReportLoading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Backup */}
+      <div className="flex items-center justify-between rounded-lg border p-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400">
+            <Download className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-sm font-medium">Varnostna kopija (JSON)</p>
+            <p className="text-xs text-muted-foreground">
+              Izvozi vse podatke: meni, mize, zaloge, stranke, računi
+            </p>
+          </div>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={downloadBackup}
+          disabled={backupLoading}
+        >
+          {backupLoading ? (
+            <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+          ) : (
+            <Download className="mr-1.5 h-3 w-3" />
+          )}
+          {backupLoading ? "Izvažam..." : "Izvozi"}
+        </Button>
+      </div>
+
+      {/* Daily Report */}
+      <div className="rounded-lg border p-3">
+        <div className="mb-2 flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+            <FileText className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-sm font-medium">Dnevno poročilo na email</p>
+            <p className="text-xs text-muted-foreground">
+              Prihodek, računi, napitnine, top izdelki, low-stock, urna statistika
+            </p>
+          </div>
+        </div>
+        {reportSent ? (
+          <div className="flex items-center gap-2 rounded-lg bg-emerald-50 p-2 text-sm text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400">
+            <CheckCircle2 className="h-4 w-4" />
+            Poročilo poslano na {reportEmail}
+            <button
+              onClick={() => setReportSent(false)}
+              className="ml-auto text-xs underline"
+            >
+              Pošlji znova
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <Input
+              type="email"
+              value={reportEmail}
+              onChange={(e) => setReportEmail(e.target.value)}
+              placeholder="manager@restavracija.si"
+              className="flex-1"
+            />
+            <Button
+              size="sm"
+              onClick={sendDailyReport}
+              disabled={reportLoading || !reportEmail}
+            >
+              {reportLoading ? (
+                <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+              ) : (
+                <Mail className="mr-1.5 h-3 w-3" />
+              )}
+              {reportLoading ? "Pošiljam..." : "Pošlji"}
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        💡 Varnostno kopijo priporočamo vsak teden. Dnevno poročilo lahko nastaviš kot cron job za avtomatsko pošiljanje.
       </p>
     </div>
   );
