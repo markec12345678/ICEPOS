@@ -40,6 +40,7 @@ import {
   AlertCircle,
   BookOpen,
   Calculator,
+  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -274,6 +275,38 @@ export function MenuAdminView() {
                     })()}
                   </div>
                   <div className="col-span-3 flex items-center justify-end gap-1 sm:col-span-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`h-7 w-7 ${m.isFavorite ? "text-amber-500" : "text-muted-foreground"}`}
+                      onClick={async () => {
+                        await fetch(`/api/menu/${m.id}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ isFavorite: !m.isFavorite }),
+                        });
+                        refetch();
+                      }}
+                      title="Priljubljena"
+                    >
+                      <Star className={`h-3.5 w-3.5 ${m.isFavorite ? "fill-amber-400" : ""}`} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`h-7 w-7 text-[10px] font-bold ${m.isDailySpecial ? "text-rose-600" : "text-muted-foreground"}`}
+                      onClick={async () => {
+                        await fetch(`/api/menu/${m.id}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ isDailySpecial: !m.isDailySpecial }),
+                        });
+                        refetch();
+                      }}
+                      title="Dnevna ponudba"
+                    >
+                      DANA
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
