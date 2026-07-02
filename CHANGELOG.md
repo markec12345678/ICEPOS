@@ -7,12 +7,38 @@ in projekt uporablja [Semantic Versioning](https://semver.org/lang/sl/).
 
 ---
 
-## [Nepublikovano] — December 2025 (100+ funkcij)
+## [Nepublikovano] — December 2025 (52+ funkcij, 100% AI slike)
 
-### Dodano — Priority 1, 2, 3 (UI analiza)
-- **AI slike jedi** — ZAI image generation za meni postavke (professional food photography)
-  - Integrirano v POS, Online Meni, Kiosk, Loyalty Order Ahead
-  - ImageManager z batch generiranjem in ročnim upload
+### Dodano — Finalne izboljšave
+- **Backup API** (JSON izvoz vseh podatkov) + UI v Settings
+- **Daily Report** — dnevno poročilo na email (prihodek, računi, napitnine, top izdelki, low-stock, urna statistika)
+- **Notification Center** — bell ikona z števcem (low-stock, odprta naročila, rezervacije, smena)
+- **Globalni search** (Ctrl+K) — 26 funkcij, grupirano po kategorijah, ↑↓ navigacija
+- **Keyboard shortcuts help** (?) — overlay z vsemi bližnjicami
+- **Delete AI slik** v ImageManager (Trash2 gumb v hover overlay)
+- **Dark mode v Kiosku** — Sun/Moon toggle z localStorage
+- **Hitri "Nov račun" gumb** na Mize view (najde prvo prosto mizo)
+- **Ctrl+K hint** v PosHeader (⌘K badge)
+- **5 KPI na Računi** view (št. računov, prihodek, povp. račun, napitnine, storno)
+- **Prihodek danes** badge na Mize view
+- **Hitri preklop** priljubljene/dnevna ponudba v meni seznamu (⭐ in DANA gumb)
+- **Auto-apply Happy Hour** v POS OrderView (prečrtana cena + popust + -% badge)
+- **Happy Hour banner** v OrderView (ime, ura, popust, št. postavk)
+- **Allergen-check API** — preveri alergene stranke ob izbiri jedi
+- **Angleški prevodi** za vseh 34 meni postavk (100%)
+- **Reorder email** — pošlji naročilo dobavitelju na email
+- **Email račun** — pošlji račun na email po plačilu
+- **Integrations panel** v Settings (6 integracij s statusom)
+- **Low-stock banner** na Dashboard (klik = Zaloga)
+- **Tiskanje računa** na kiosku + sledenje naročilu
+- **Reorder report** — pametni predlog naročil z kontakti dobaviteljev
+- **Bulk restock** — hitri vnos zalog za 371 artiklov
+- **Katalog 361 evropskih živil** z 16 kategorijami
+- **Uvoz dobavnic** (ročno + CSV paste)
+- **Food Waste Tracking** — 6 razlogov, dnevni trend, top odpadki
+- **AI Demand Forecasting** — napoved povpraševanja + priporočilo osebja
+- **Link-images API** — poveže slike na disku z meni postavkami
+- **Translate-all API** — posodobi angleške prevode za vse postavke
 - **Order Ahead** v Loyalty — mobile naročanje pred prihodom (Starbucks style)
   - Pickup time, dinein/takeaway, loyalty točke avtomatsko
 - **Upsell AI Engine** — "Ali želite pijačo?" v Kiosk in Online Meni
