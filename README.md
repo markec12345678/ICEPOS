@@ -106,6 +106,31 @@
 - **Mobile responsive** (touch-friendly, min 44px tarče)
 - **AI slike** v POS, Online Meni, Kiosk, Loyalty Order Ahead
 
+### ⚡ Real-time operacije (novo 2025)
+- **Activity feed** — real-time timeline (plačila, naročila, rezervacije, napitnine)
+- **Live server status** — aktivni natakarji z odprtimi mizami in prodajo
+- **Table turn time** — povprečno trajanje mize po dnevih in sekcijah
+- **Out-of-stock banner** — alert na vrhu POS z warning zvokom
+- **Sound feedback** — 5 zvokov (success/info/warning/kitchen/error) z toggle
+- **Quick stats widget** — povprečni čas mize, postavk v teku, zasedenost
+
+### 🛡️ Varnost & Kvaliteta (novo 2025)
+- **Allergen filter** — 14 EU alergenov v OrderView (varnost gostov)
+- **KitchenDisplay prep timer** — 3-stopinjska urgensa + progress bar
+- **Customer feedback** — ocene jedi/strežbe z distribucijo in odgovori
+- **Quick re-order** — ponovno naročilo zadnjega računa stranke
+- **VIP nagrade** — 4 milestone-i z bonus točkami
+- **Multi-currency** — EUR/HRK/USD prikaz za turiste
+- **Offline indikator** — pravi online/offline badge
+- **Daily target** — progress bar s ciljem prometa (vikend višji)
+
+### 🎯 Produktivnost (novo 2025)
+- **Sidebar collapse** — skrčenje na ikone za več prostora
+- **Order timer** — stopwatch v TablesView z urgency barvami
+- **Global search** (Ctrl+K) — 26 funkcij
+- **Notification center** — bell z 4 tipi obvestil
+- **Keyboard shortcuts** (?) — overlay z vsemi bližnjicami
+
 ---
 
 ## 🛠️ Tehnološki sklad
@@ -115,7 +140,7 @@
 | Framework | **Next.js 16** (App Router, Turbopack) |
 | Jezik | **TypeScript 5** |
 | Styling | **Tailwind CSS 4** + **shadcn/ui** (New York) |
-| ORM | **Prisma** + SQLite (15+ modelov) |
+| ORM | **Prisma** + SQLite (20+ modelov) |
 | State | **Zustand** (client) + **TanStack Query** (server) |
 | Real-time | **socket.io** (mini-service, port 3003) |
 | Fiskalizacija | **crypto** (RSA-SHA256, MD5, WS-Security) + **qrcode** |

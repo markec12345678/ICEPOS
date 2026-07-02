@@ -7,6 +7,41 @@ in projekt uporablja [Semantic Versioning](https://semver.org/lang/sl/).
 
 ---
 
+## [Nepublikovano] — Julij 2025 (74+ funkcij, profesionalna izboljšava)
+
+### Dodano — UX izboljšave (6 funkcij)
+- **Offline indikator** — pravi online/offline badge v headerju (rdeč WifiOff ko ni povezave)
+- **Sidebar collapsed/expand mode** — gumb za skrčenje na ikone (w-16), več prostora za vsebino
+- **Daily target progress bar** — pametni cilj prometa v Dashboard (1.500€ delavnik / 2.500€ vikend, flame pri 80%, trophy ob dosegu)
+- **Multi-currency prikaz** — EUR/HRK/USD za turiste z CurrencyToggle v headerju (računi vedno v EUR za FURS)
+- **Order timer/stopwatch** — v TablesView z urgency barvami (normal/warning/urgent po 45/90 min)
+- **VIP nagrade** — 4 milestone-i (500/1000/2000/5000€) z bonus točkami v CRM analitiki
+
+### Dodano — Real-time operacije (5 funkcij)
+- **Sound/avdio feedback** — Web Audio API sistem (5 zvokov: success/info/warning/kitchen/error) z SoundToggle
+- **Quick stats widget** — 2. vrstica v TablesView (povprečni čas mize, postavk v teku, dolge mize, zasedenost)
+- **Activity feed** — real-time timeline v Dashboard (plačila, naročila, rezervacije, napitnine), auto-refresh 30s
+- **Table turn time analitika** — povprečno trajanje mize po dnevih, dnevih v tednu, sekcijah
+- **Quick re-order** — ponovno naročilo zadnjega računa stranke z enim klikom
+
+### Dodano — Varnost in kvaliteta (5 funkcij)
+- **Allergen filter** — 14 EU alergenov z ikonami v OrderView (skrije jedi z izbranimi alergeni za varnost gostov)
+- **KitchenDisplay prep timer** — 3-stopinjska urgensa (normal/warning/urgent) + progress bar + ZAMUDA badge
+- **Customer feedback sistem** — ocene jedi/strežbe/ambienta z distribucijo, trendom, tag analitiko, odgovori
+- **Live server status** — aktivni natakarji z odprtimi mizami, današnjo prodajo in urgency barvami v Dashboard
+- **Out-of-stock alert banner** — prikaze se na vrhu POS ko so artikli prazni, warning zvok, razširljiv seznam
+
+### Tehnične izboljšave
+- **Prisma**: dodan Feedback model (foodRating, serviceRating, ambienceRating, overallRating, comment, tags, response)
+- **Novi APIji**: /api/activity-feed, /api/tables/turn-time, /api/customers/[id]/last-order, /api/customers/[id]/vip-bonus, /api/feedback, /api/feedback/[id], /api/operators/live-status, /api/inventory/out-of-stock
+- **Novi hook-i**: useOnlineStatus, useNow (formatElapsed, getUrgencyLevel), useSoundFeedback
+- **Nove lib datoteke**: multi-currency.ts, allergens.ts
+- **116 API rute** (+7 od prej)
+- **49 POS komponent** (+8 od prej)
+- **20 Prisma modelov** (+1 Feedback)
+
+---
+
 ## [Nepublikovano] — December 2025 (52+ funkcij, 100% AI slike)
 
 ### Dodano — Finalne izboljšave
