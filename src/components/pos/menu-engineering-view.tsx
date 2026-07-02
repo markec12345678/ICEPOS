@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { MenuCostAnalysis } from "@/components/pos/menu-cost-analysis";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -326,6 +327,12 @@ export function MenuEngineeringView() {
           </table>
         </div>
       </Card>
+
+      {/* Menu Cost Analysis — detalna analiza stroškov */}
+      <div>
+        <h3 className="mb-3 text-sm font-semibold">💰 Analiza stroškov in marž</h3>
+        <MenuCostAnalysis items={data.items} />
+      </div>
 
       {/* Info card */}
       <Card className="p-4 bg-muted/30">

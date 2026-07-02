@@ -6,6 +6,7 @@ import { usePosStore } from "@/stores/pos-store";
 import { formatEUR, formatTime, type Table, type Order, type DashboardStats } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useNow, formatElapsed, getUrgencyLevel } from "@/hooks/use-now";
+import { OrderFlagsDisplay } from "@/components/pos/order-flags";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -382,6 +383,7 @@ export function TablesView() {
                               </span>
                             </div>
                           )}
+                          {openOrder?.flags && <OrderFlagsDisplay flags={openOrder.flags} />}
                         </div>
                       ) : hasReservationSoon ? (
                         <div className="mt-3 space-y-1">

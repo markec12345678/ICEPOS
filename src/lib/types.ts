@@ -75,6 +75,8 @@ export interface Order {
   stornoZoi: string | null;
   stornoEor: string | null;
   tip?: number;
+  flags?: string | null; // JSON array: ["vip", "birthday", "rush", "allergy"]
+  customerId?: string | null;
 }
 
 export interface Modifier {

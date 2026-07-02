@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { formatSecondaryCurrency } from "@/lib/multi-currency";
 import { ALLERGEN_INFO, ALLERGEN_KEYS, parseAllergens } from "@/lib/allergens";
 import { CustomerLookup } from "@/components/pos/customer-lookup";
+import { OrderFlagsManager } from "@/components/pos/order-flags";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -395,6 +396,14 @@ export function OrderView() {
             />
           </div>
         </div>
+
+        {/* Order priority flags */}
+        {openOrder && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Oznake:</span>
+            <OrderFlagsManager orderId={openOrder.id} />
+          </div>
+        )}
 
         {/* Happy Hour banner */}
         {happyHourPrices?.active && happyHourPrices.happyHours.length > 0 && (
@@ -889,10 +898,10 @@ export function OrderView() {
               Ponastovi
             </Button>
             <div className="ml-auto flex gap-1">
-              {[5, 10, 15].map((p) => (
+              {[5, 10, 15, 20].map((p) => (
                 <Button
                   key={p}
-                  variant="outline"
+                  variant={discountPercent === p ? "default" : "outline"}
                   size="sm"
                   className="h-8 px-2 text-xs"
                   onClick={() => setDiscountPercent(p)}

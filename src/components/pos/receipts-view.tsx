@@ -33,6 +33,8 @@ import {
   AlertCircle,
   Eye,
   Download,
+  Mail,
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FursQrCode } from "@/components/pos/furs-qr-code";
@@ -50,6 +52,9 @@ export function ReceiptsView() {
   const [stornoTarget, setStornoTarget] = useState<Receipt | null>(null);
   const [stornoReason, setStornoReason] = useState("");
   const [stornoBusy, setStornoBusy] = useState(false);
+  const [emailTarget, setEmailTarget] = useState<Receipt | null>(null);
+  const [emailAddress, setEmailAddress] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
 
   const receipts = data || [];
   const filtered = receipts.filter((r) => {
@@ -93,6 +98,31 @@ export function ReceiptsView() {
       toast.error((e as Error).message || "Napaka pri stornu");
     } finally {
       setStornoBusy(false);
+    }
+  }
+
+  async function sendEmail() {
+    if (!emailTarget || !emailAddress) return;
+    setEmailBusy(true);
+    try {
+      const res = await fetch(`/api/orders/${emailTarget.id}/email-receipt`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailAddress }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Napaka");
+      }
+      toast.success(`Račun poslan na ${emailAddress}`, {
+        description: emailTarget.invoiceNumber,
+      });
+      setEmailTarget(null);
+      setEmailAddress("");
+    } catch (e) {
+      toast.error((e as Error).message || "Napaka pri pošiljanju");
+    } finally {
+      setEmailBusy(false);
     }
   }
 
@@ -305,6 +335,18 @@ export function ReceiptsView() {
                         title="Natisni"
                       >
                         <Printer className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-sky-600 hover:bg-sky-50 hover:text-sky-700 dark:text-sky-400 dark:hover:bg-sky-950/40"
+                        onClick={() => {
+                          setEmailTarget(r);
+                          setEmailAddress("");
+                        }}
+                        title="Pošlji na email"
+                      >
+                        <Mail className="h-4 w-4" />
                       </Button>
                       {!isStorno && !storniran && (
                         <Button
@@ -604,6 +646,64 @@ export function ReceiptsView() {
               disabled={stornoBusy || !stornoReason.trim()}
             >
               {stornoBusy ? "Storniram..." : "Potrdi storno"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email dialog */}
+      <Dialog open={!!emailTarget} onOpenChange={(o) => !o && setEmailTarget(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-sky-600" />
+              Pošlji račun na email
+            </DialogTitle>
+            <DialogDescription>
+              Račun {emailTarget?.invoiceNumber} ({formatEUR(emailTarget?.total || 0)}) bo poslan na vneseni email.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">Email naslovnik</label>
+              <Input
+                type="email"
+                value={emailAddress}
+                onChange={(e) => setEmailAddress(e.target.value)}
+                placeholder="gost@example.com"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && emailAddress && !emailBusy) {
+                    sendEmail();
+                  }
+                }}
+              />
+            </div>
+            <div className="rounded-lg bg-sky-50 p-3 text-xs text-sky-700 dark:bg-sky-950/30 dark:text-sky-400">
+              <p className="font-semibold">📧 Račun bo vseboval:</p>
+              <ul className="mt-1 space-y-0.5">
+                <li>• PDF prilogo z računom</li>
+                <li>• QR kodo za FURS</li>
+                <li>• Vse postavke in cene</li>
+              </ul>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setEmailTarget(null)} disabled={emailBusy}>
+              Prekliči
+            </Button>
+            <Button
+              onClick={sendEmail}
+              disabled={emailBusy || !emailAddress}
+              className="bg-sky-600 hover:bg-sky-700"
+            >
+              {emailBusy ? (
+                "Pošiljam..."
+              ) : (
+                <>
+                  <Send className="mr-1.5 h-4 w-4" />
+                  Pošlji
+                </>
+              )}
             </Button>
           </div>
         </DialogContent>
