@@ -7,6 +7,7 @@ import { Store, Clock, ShieldCheck, Wifi, WifiOff, UserCircle, LogOut, Keyboard,
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LangToggle } from "@/components/lang-toggle";
 import { CurrencyToggle } from "@/components/currency-toggle";
+import { SoundToggle } from "@/components/sound-toggle";
 import { TenantSelector } from "@/components/pos/tenant-selector";
 import { NotificationCenter } from "@/components/notification-center";
 import { useFetch } from "@/hooks/use-fetch";
@@ -184,6 +185,7 @@ export function PosHeader() {
             <Keyboard className="h-4 w-4" />
           </Button>
           <ThemeToggle />
+          <SoundToggle />
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
@@ -205,6 +207,7 @@ export function PosHeader() {
           <CurrencyToggle />
           <LangToggle />
           <ThemeToggle />
+          <SoundToggle />
         </div>
       </div>
       <div className="border-t border-border/60 bg-muted/30 px-4 py-1.5 md:px-6">

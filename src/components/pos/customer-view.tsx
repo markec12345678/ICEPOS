@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useFetch } from "@/hooks/use-fetch";
+import { usePosStore } from "@/stores/pos-store";
+import { playFeedbackSound } from "@/hooks/use-sound-feedback";
 import { formatEUR, formatDateTime } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +45,8 @@ import {
   StickyNote,
   Crown,
   Receipt,
+  RotateCcw,
+  ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { authHeaders } from "@/components/pos/pin-login";
@@ -644,6 +648,9 @@ function CustomerDetailDialog({
               </div>
             </Card>
 
+            {/* Quick re-order: ponovi zadnje naročilo */}
+            <QuickReorderSection customerId={id} customerName={data.name} />
+
             <Separator />
 
             {/* Zadnja naročila */}
@@ -760,5 +767,198 @@ function DetailStat({
       </div>
       <p className="mt-1 truncate text-lg font-bold tabular-nums">{value}</p>
     </div>
+  );
+}
+
+/**
+ * Quick re-order sekcija — pridobi zadnje naročilo stranke in omogoča
+ * ponovno dodajanje v košarico z enim klikom.
+ */
+function QuickReorderSection({
+  customerId,
+  customerName,
+}: {
+  customerId: string;
+  customerName: string;
+}) {
+  const [lastOrder, setLastOrder] = useState<{
+    order: {
+      id: string;
+      paidAt: string | null;
+      total: number;
+      tip: number;
+      paymentMethod: string | null;
+      tableName: string | null;
+      items: {
+        id: string;
+        quantity: number;
+        unitPrice: number;
+        note: string | null;
+        modifiers: string | null;
+        menuItem: {
+          id: string;
+          name: string;
+          nameEn: string | null;
+          price: number;
+          category: string;
+          imageUrl: string | null;
+          available: boolean;
+          stillAvailable: boolean;
+        };
+      }[];
+    } | null;
+    daysAgo: number;
+  } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [reordering, setReordering] = useState(false);
+
+  const { addCartItem, setActiveView } = usePosStore();
+
+  useEffect(() => {
+    let active = true;
+    fetch(`/api/customers/${customerId}/last-order`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (active) {
+          setLastOrder(d);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [customerId]);
+
+  if (loading) {
+    return <Skeleton className="h-24 rounded-lg" />;
+  }
+
+  if (!lastOrder || !lastOrder.order) {
+    return (
+      <Card className="p-3">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <RotateCcw className="h-4 w-4" />
+          <span>Za to stranko še ni zadnjega naročila za ponovitev.</span>
+        </div>
+      </Card>
+    );
+  }
+
+  const order = lastOrder.order;
+  const unavailableItems = order.items.filter((i) => !i.menuItem.stillAvailable);
+
+  async function handleReorder() {
+    setReordering(true);
+    try {
+      const availableItems = order.items.filter((i) => i.menuItem.stillAvailable);
+      if (availableItems.length === 0) {
+        toast.error("Niče od postavk ni več na voljo");
+        return;
+      }
+
+      // Dodaj vse postavke v košarico
+      for (const item of availableItems) {
+        addCartItem(
+          {
+            id: item.menuItem.id,
+            name: item.menuItem.name,
+            nameEn: item.menuItem.nameEn || undefined,
+            category: item.menuItem.category,
+            price: item.menuItem.price,
+            vatRate: 22, // default
+            available: true,
+            desc: null,
+            descEn: null,
+            allergens: null,
+            calories: null,
+            protein: null,
+            carbs: null,
+            fat: null,
+            isFavorite: false,
+            isDailySpecial: false,
+            imageUrl: item.menuItem.imageUrl,
+            createdAt: "",
+          },
+          item.quantity,
+          [],
+          item.note || undefined
+        );
+      }
+
+      playFeedbackSound("info");
+      toast.success(`Ponovljeno naročilo za ${customerName}`, {
+        description: `${availableItems.length} postavk dodanih v košarico${unavailableItems.length > 0 ? ` · ${unavailableItems.length} ni več na voljo` : ""}`,
+        duration: 4000,
+        action: {
+          label: "Pojdi na naročilo",
+          onClick: () => setActiveView("order"),
+        },
+      });
+    } catch {
+      toast.error("Napaka pri ponavljanju naročila");
+    } finally {
+      setReordering(false);
+    }
+  }
+
+  return (
+    <Card className="overflow-hidden border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:border-amber-900 dark:from-amber-950/20 dark:to-orange-950/20">
+      <div className="flex items-center justify-between gap-2 border-b border-amber-200/50 bg-amber-100/30 p-2.5 dark:border-amber-900/50 dark:bg-amber-950/20">
+        <div className="flex items-center gap-2">
+          <RotateCcw className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <span className="text-sm font-semibold">Ponovi zadnje naročilo</span>
+          <Badge variant="secondary" className="text-[10px]">
+            pred {lastOrder.daysAgo} d
+          </Badge>
+        </div>
+        <Button
+          size="sm"
+          className="gap-1.5 bg-amber-600 hover:bg-amber-700"
+          disabled={reordering || order.items.every((i) => !i.menuItem.stillAvailable)}
+          onClick={handleReorder}
+        >
+          {reordering ? (
+            <AlertCircle className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <ShoppingCart className="h-3.5 w-3.5" />
+          )}
+          Ponovi naročilo
+        </Button>
+      </div>
+      <div className="max-h-32 overflow-y-auto p-2">
+        {order.items.map((item) => (
+          <div
+            key={item.id}
+            className={cn(
+              "flex items-center justify-between gap-2 py-1 text-xs",
+              !item.menuItem.stillAvailable && "opacity-50 line-through"
+            )}
+          >
+            <span className="flex items-center gap-1.5">
+              <span className="font-medium">{item.quantity}×</span>
+              <span>{item.menuItem.name}</span>
+              {!item.menuItem.stillAvailable && (
+                <Badge variant="outline" className="text-[9px] text-rose-600">NI NA VOLJO</Badge>
+              )}
+            </span>
+            <span className="text-muted-foreground">
+              {formatEUR(item.unitPrice * item.quantity)}
+            </span>
+          </div>
+        ))}
+        <div className="mt-1 flex items-center justify-between border-t border-border/40 pt-1 text-xs font-semibold">
+          <span>Skupaj</span>
+          <span>{formatEUR(order.total)}</span>
+        </div>
+      </div>
+      {unavailableItems.length > 0 && (
+        <div className="border-t border-rose-200/50 bg-rose-50/30 p-2 text-[10px] text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/20 dark:text-rose-400">
+          ⚠️ {unavailableItems.length} postavk ni več na voljo in bo izpuščenih
+        </div>
+      )}
+    </Card>
   );
 }

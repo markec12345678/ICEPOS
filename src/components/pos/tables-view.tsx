@@ -126,6 +126,24 @@ export function TablesView() {
     0
   );
 
+  // Povprečni čas odprtih miz + skupno postavk
+  const openOrders = tables.flatMap((t) =>
+    t.orders.filter((o) => o.status === "open")
+  );
+  const totalOpenItems = openOrders.reduce((s, o) => s + (o.items?.length || 0), 0);
+  const avgTableMinutes = openOrders.length > 0
+    ? Math.round(
+        openOrders.reduce((s, o) => {
+          const diff = now.getTime() - new Date(o.createdAt).getTime();
+          return s + diff / 60000;
+        }, 0) / openOrders.length
+      )
+    : 0;
+  const longTables = openOrders.filter((o) => {
+    const diff = now.getTime() - new Date(o.createdAt).getTime();
+    return diff / 60000 >= 90;
+  }).length;
+
   // Ikone za sekcije
   const sectionIcons: Record<string, string> = {
     Dvorana: "🏛️",
@@ -136,7 +154,7 @@ export function TablesView() {
 
   return (
     <div className="space-y-4 animate-fade-in">
-      {/* Stat strip */}
+      {/* Stat strip — prva vrstica */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-5">
         <StatCard label="Skupaj miz" value={String(tables.length)} accent="neutral" />
         <StatCard label="Zasedene" value={String(openCount)} accent="amber" />
@@ -150,6 +168,32 @@ export function TablesView() {
           />
         )}
       </div>
+
+      {/* Stat strip — druga vrstica: real-time mize metrike */}
+      {openCount > 0 && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatCard
+            label="⏱️ Povprečni čas mize"
+            value={avgTableMinutes >= 60 ? `${Math.floor(avgTableMinutes / 60)}h ${avgTableMinutes % 60}m` : `${avgTableMinutes}m`}
+            accent={avgTableMinutes >= 90 ? "rose" : avgTableMinutes >= 45 ? "amber" : "emerald"}
+          />
+          <StatCard
+            label="🍽️ Postavk v teku"
+            value={String(totalOpenItems)}
+            accent="amber"
+          />
+          <StatCard
+            label="⚠️ Dolge mize (>90m)"
+            value={String(longTables)}
+            accent={longTables > 0 ? "rose" : "emerald"}
+          />
+          <StatCard
+            label="📊 Zasedenost"
+            value={`${tables.length > 0 ? Math.round((openCount / tables.length) * 100) : 0}%`}
+            accent={openCount / Math.max(tables.length, 1) > 0.7 ? "rose" : "neutral"}
+          />
+        </div>
+      )}
 
       {/* Section filter + iskalnik + hitri nov račun */}
       <div className="flex flex-wrap items-center gap-2">
@@ -412,14 +456,15 @@ function StatCard({
 }: {
   label: string;
   value: string;
-  accent: "neutral" | "amber" | "emerald";
+  accent: "neutral" | "amber" | "emerald" | "rose";
 }) {
   return (
     <Card
       className={cn(
         "p-3 transition-shadow hover:shadow-sm",
         accent === "amber" && "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20",
-        accent === "emerald" && "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20"
+        accent === "emerald" && "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20",
+        accent === "rose" && "border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20"
       )}
     >
       <p className="text-xs text-muted-foreground">{label}</p>
@@ -428,6 +473,7 @@ function StatCard({
           "mt-1 text-2xl font-bold",
           accent === "amber" && "text-amber-700 dark:text-amber-400",
           accent === "emerald" && "text-emerald-700 dark:text-emerald-400",
+          accent === "rose" && "text-rose-700 dark:text-rose-400",
           accent === "neutral" && "text-foreground"
         )}
       >

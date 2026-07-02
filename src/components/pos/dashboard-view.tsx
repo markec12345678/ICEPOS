@@ -25,6 +25,8 @@ import { cn } from "@/lib/utils";
 import { DashboardHeader } from "@/components/pos/dashboard-header";
 import { usePosStore } from "@/stores/pos-store";
 import { Progress } from "@/components/ui/progress";
+import { ActivityFeed } from "@/components/pos/activity-feed";
+import { TableTurnTime } from "@/components/pos/table-turn-time";
 
 export function DashboardView() {
   const { data, loading, error, refetch } = useFetch<DashboardStats>("/api/stats");
@@ -223,6 +225,12 @@ export function DashboardView() {
           )}
         </Card>
       </div>
+
+      {/* Activity feed — real-time timeline zadnjih aktivnosti */}
+      <ActivityFeed />
+
+      {/* Table turn time analitika */}
+      <TableTurnTime />
 
       {/* Statistika po kategorijah + Načini plačila */}
       <div className="grid gap-4 lg:grid-cols-3">

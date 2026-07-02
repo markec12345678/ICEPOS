@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { io, Socket } from "socket.io-client";
+import { useEffect, useState } from "react";
+import { io } from "socket.io-client";
 import { usePosStore } from "@/stores/pos-store";
 import { useTenantStore } from "@/stores/tenant-store";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { playFeedbackSound } from "@/hooks/use-sound-feedback";
 import { PosHeader } from "@/components/pos/pos-header";
 import { PosSidebar, PosFooter } from "@/components/pos/pos-footer";
 import { TablesView } from "@/components/pos/tables-view";
@@ -103,22 +104,8 @@ export default function Home() {
         duration: 8000,
       });
 
-      // Poskusi predvajati zvok (če browser dovoli)
-      try {
-        const audioCtx = new (window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-        const oscillator = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        oscillator.connect(gain);
-        gain.connect(audioCtx.destination);
-        oscillator.frequency.value = 880;
-        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.5);
-      } catch {
-        // zvok ni kritičen
-      }
+      // Predvajaj kitchen zvok (upošteva sound enabled flag)
+      playFeedbackSound("kitchen");
     });
 
     return () => {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePosStore } from "@/stores/pos-store";
 import { useFetch } from "@/hooks/use-fetch";
+import { playFeedbackSound } from "@/hooks/use-sound-feedback";
 import { formatEUR, formatDateTime, type Order, type Table } from "@/lib/types";
 import {
   Dialog,
@@ -171,10 +172,12 @@ export function PaymentDialog() {
       }
       const result = (await res.json()) as PaidResult;
       setPaid(result);
+      playFeedbackSound("success");
       toast.success("Račun fiskaliziran preko FURS", {
         description: `ZOI: ${result.zoi?.slice(0, 16)}...`,
       });
     } catch (e) {
+      playFeedbackSound("error");
       toast.error((e as Error).message || "Napaka pri plačilu");
     } finally {
       setProcessing(false);
