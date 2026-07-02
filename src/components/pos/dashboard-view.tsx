@@ -1,6 +1,7 @@
 "use client";
 
 import { useFetch } from "@/hooks/use-fetch";
+import { useEffect } from "react";
 import { formatEUR, type DashboardStats } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,9 +23,18 @@ import { DashboardHeader } from "@/components/pos/dashboard-header";
 import { usePosStore } from "@/stores/pos-store";
 
 export function DashboardView() {
-  const { data, loading, error } = useFetch<DashboardStats>("/api/stats");
-  const { data: lowStock } = useFetch<{ id: string; name: string; quantity: number; unit: string; minQuantity: number; category: string }[]>("/api/inventory/low-stock");
+  const { data, loading, error, refetch } = useFetch<DashboardStats>("/api/stats");
+  const { data: lowStock, refetch: refetchLowStock } = useFetch<{ id: string; name: string; quantity: number; unit: string; minQuantity: number; category: string }[]>("/api/inventory/low-stock");
   const setActiveView = usePosStore((s) => s.setActiveView);
+
+  // Auto-refresh vsakih 30s
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetch();
+      refetchLowStock();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [refetch, refetchLowStock]);
 
   if (loading) {
     return (
@@ -81,6 +91,14 @@ export function DashboardView() {
           </div>
         </button>
       )}
+
+      {/* Live badge */}
+      <div className="flex items-center gap-2">
+        <span className="flex h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+        <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+          Live (avto-osvežitev vsakih 30s)
+        </span>
+      </div>
 
       {/* KPI kartice */}
       <div className={cn("grid grid-cols-2 gap-3", data.todayTips > 0 ? "lg:grid-cols-5" : "lg:grid-cols-4")}>
