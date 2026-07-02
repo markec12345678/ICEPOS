@@ -30,8 +30,10 @@ import {
   History,
   ArrowLeftRight,
   Users,
+  Calculator,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CashReconciliation } from "@/components/pos/cash-reconciliation";
 
 interface Shift {
   id: string;
@@ -55,6 +57,7 @@ export function ShiftView() {
   const [startOpen, setStartOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
   const [handoverOpen, setHandoverOpen] = useState(false);
+  const [showReconciliation, setShowReconciliation] = useState(false);
 
   // Auto-refresh aktivne smene vsako minuto (za timer)
   useEffect(() => {
@@ -77,6 +80,7 @@ export function ShiftView() {
 
       {/* Aktivna smena */}
       {activeShift ? (
+        <>
         <Card className="overflow-hidden border-emerald-200 p-0 dark:border-emerald-900">
           <div className="bg-emerald-50 p-4 dark:bg-emerald-950/30">
             <div className="flex items-center justify-between">
@@ -138,7 +142,15 @@ export function ShiftView() {
                 className="flex-1 bg-amber-600 hover:bg-amber-700"
               >
                 <ArrowLeftRight className="mr-2 h-4 w-4" />
-                Izmenjaj smeno
+                Izmenjaj
+              </Button>
+              <Button
+                onClick={() => setShowReconciliation(!showReconciliation)}
+                variant="outline"
+                className="flex-1 border-sky-300 text-sky-700 hover:bg-sky-50 dark:border-sky-800 dark:text-sky-400 dark:hover:bg-sky-950/30"
+              >
+                <Calculator className="mr-2 h-4 w-4" />
+                Uskladi
               </Button>
               <Button
                 onClick={() => setEndOpen(true)}
@@ -150,6 +162,12 @@ export function ShiftView() {
             </div>
           </div>
         </Card>
+
+      {/* Cash reconciliation */}
+      {showReconciliation && activeShift && (
+        <CashReconciliation shiftId={activeShift.id} />
+      )}
+      </>
       ) : (
         <Card className="p-8 text-center">
           <UserCircle className="mx-auto mb-3 h-12 w-12 text-muted-foreground/40" />

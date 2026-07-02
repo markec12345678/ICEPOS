@@ -30,6 +30,7 @@ import { TableTurnTime } from "@/components/pos/table-turn-time";
 import { LiveServerStatus } from "@/components/pos/live-server-status";
 import { SalesHeatmap } from "@/components/pos/sales-heatmap";
 import { SectionStats } from "@/components/pos/section-stats";
+import { BirthdayReminders } from "@/components/pos/birthday-reminders";
 
 export function DashboardView() {
   const { data, loading, error, refetch } = useFetch<DashboardStats>("/api/stats");
@@ -234,6 +235,9 @@ export function DashboardView() {
         <ActivityFeed />
         <LiveServerStatus />
       </div>
+
+      {/* Birthday reminders */}
+      <BirthdayReminders />
 
       {/* Table turn time analitika */}
       <TableTurnTime />

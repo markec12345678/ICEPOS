@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MenuCostAnalysis } from "@/components/pos/menu-cost-analysis";
+import { MenuPopularity } from "@/components/pos/menu-popularity";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -327,6 +328,12 @@ export function MenuEngineeringView() {
           </table>
         </div>
       </Card>
+
+      {/* Menu Popularity — ranking po prodaji */}
+      <div>
+        <h3 className="mb-3 text-sm font-semibold">🏆 Ranking popularnosti</h3>
+        <MenuPopularity />
+      </div>
 
       {/* Menu Cost Analysis — detalna analiza stroškov */}
       <div>

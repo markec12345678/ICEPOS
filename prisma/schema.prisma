@@ -270,6 +270,7 @@ model Customer {
   visitCount  Int      @default(0)
   allergens   String?
   note        String?
+  birthday    DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   orders      Order[]
