@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { EndOfDayReport } from "@/components/pos/end-of-day-report";
 
 interface ZReport {
   date: string;
@@ -361,6 +362,10 @@ export function ZReportView() {
           </Card>
         </>
       )}
+
+      {/* Celovit dnevni report */}
+      <Separator className="my-6" />
+      <EndOfDayReport />
     </div>
   );
 }

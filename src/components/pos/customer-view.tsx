@@ -49,6 +49,7 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { VisitAnalytics } from "@/components/pos/visit-analytics";
 import { authHeaders } from "@/components/pos/pin-login";
 
 interface CustomerOrder {
@@ -650,6 +651,14 @@ function CustomerDetailDialog({
 
             {/* Quick re-order: ponovi zadnje naročilo */}
             <QuickReorderSection customerId={id} customerName={data.name} />
+
+            <Separator />
+
+            {/* Visit analytics */}
+            <div>
+              <p className="mb-2 text-sm font-semibold">📊 Analitika obiskov</p>
+              <VisitAnalytics customerId={id} />
+            </div>
 
             <Separator />
 

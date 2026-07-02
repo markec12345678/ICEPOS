@@ -7,12 +7,13 @@ import { formatEUR, formatTime, type Table, type Order, type DashboardStats } fr
 import { cn } from "@/lib/utils";
 import { useNow, formatElapsed, getUrgencyLevel } from "@/hooks/use-now";
 import { OrderFlagsDisplay } from "@/components/pos/order-flags";
+import { TableMergeDialog } from "@/components/pos/table-merge-dialog";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { Users, Receipt, AlertCircle, LayoutGrid, CalendarDays, Search, QrCode, Plus, Timer } from "lucide-react";
+import { Users, Receipt, AlertCircle, LayoutGrid, CalendarDays, Search, QrCode, Plus, Timer, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 interface Reservation {
@@ -37,6 +38,7 @@ export function TablesView() {
   const [search, setSearch] = useState("");
   const [prevOpenCount, setPrevOpenCount] = useState<number>(0);
   const now = useNow(1000); // vsako sekundo za timer
+  const [mergeSourceId, setMergeSourceId] = useState<string | null>(null);
 
   // Auto-refresh vsakih 10s — zazna nova online naročila gostov
   useEffect(() => {
@@ -428,6 +430,20 @@ export function TablesView() {
                         <QrCode className="h-3 w-3" />
                         Meni za gosta
                       </a>
+                      {/* Merge gumb — samo za zasedene mize */}
+                      {occupied && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setMergeSourceId(t.id);
+                          }}
+                          className="mt-1 flex w-full items-center justify-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-medium text-amber-700 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400 dark:hover:bg-amber-900/30"
+                          title="Združi z drugo mizo"
+                        >
+                          <ArrowRight className="h-3 w-3" />
+                          Združi mizo
+                        </button>
+                      )}
                     </Card>
                   );
                 })}
@@ -447,6 +463,15 @@ export function TablesView() {
           Javni meni za goste
         </a>
       </p>
+
+      {/* Table merge dialog */}
+      <TableMergeDialog
+        open={!!mergeSourceId}
+        onOpenChange={(o) => !o && setMergeSourceId(null)}
+        sourceTableId={mergeSourceId}
+        tables={data || []}
+        onMerged={() => refetch()}
+      />
     </div>
   );
 }
