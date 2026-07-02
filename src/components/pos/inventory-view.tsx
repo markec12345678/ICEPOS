@@ -50,6 +50,7 @@ import {
   X,
   ShoppingCart,
   TrendingDown,
+  Truck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { authHeaders } from "@/components/pos/pin-login";
@@ -58,6 +59,7 @@ import { BulkRestock } from "@/components/pos/bulk-restock";
 import { ReorderReport } from "@/components/pos/reorder-report";
 import { InventoryValuation } from "@/components/pos/inventory-valuation";
 import { InventoryConsumption } from "@/components/pos/inventory-consumption";
+import { SmartReorder } from "@/components/pos/smart-reorder";
 
 interface InventoryItem {
   id: string;
@@ -114,6 +116,7 @@ export function InventoryView() {
   const [showReorder, setShowReorder] = useState(false);
   const [showValuation, setShowValuation] = useState(false);
   const [showConsumption, setShowConsumption] = useState(false);
+  const [showSmartReorder, setShowSmartReorder] = useState(false);
 
   // Recipes
   const { data: recipes, refetch: refetchRecipes } = useFetch<{
@@ -318,10 +321,26 @@ export function InventoryView() {
               setShowBulkRestock(false);
               setShowReorder(false);
               setShowImport(false);
+              setShowSmartReorder(false);
             }}
           >
             <TrendingDown className="mr-1.5 h-4 w-4" />
             {showConsumption ? "Skrij porabo" : "Poraba"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setShowSmartReorder(!showSmartReorder);
+              setShowConsumption(false);
+              setShowValuation(false);
+              setShowBulkRestock(false);
+              setShowReorder(false);
+              setShowImport(false);
+            }}
+            className={showSmartReorder ? "border-amber-500 text-amber-700 dark:text-amber-400" : ""}
+          >
+            <Truck className="mr-1.5 h-4 w-4" />
+            {showSmartReorder ? "Skrij predloge" : "Pametno naroči"}
           </Button>
           <Button
             onClick={() => setCreating(true)}
@@ -356,6 +375,11 @@ export function InventoryView() {
       {/* Consumption dashboard */}
       {showConsumption && (
         <InventoryConsumption />
+      )}
+
+      {/* Smart reorder dashboard */}
+      {showSmartReorder && (
+        <SmartReorder />
       )}
 
       {/* Iskalnik */}

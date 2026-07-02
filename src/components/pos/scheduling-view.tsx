@@ -32,8 +32,10 @@ import {
   DollarSign,
   Timer,
   Coins,
+  Activity,
 } from "lucide-react";
 import { formatEUR } from "@/lib/types";
+import { LaborCostTracker } from "@/components/pos/labor-cost-tracker";
 
 // ============================================================
 // Tipi
@@ -103,7 +105,7 @@ const ROLES = [
 // ============================================================
 
 export function SchedulingView() {
-  const [tab, setTab] = useState<"week" | "clock" | "labor" | "tips">("week");
+  const [tab, setTab] = useState<"week" | "clock" | "labor" | "tips" | "live">("week");
   const [weekStart, setWeekStart] = useState(getWeekStart(new Date()));
 
   return (
@@ -129,6 +131,10 @@ export function SchedulingView() {
           <TrendingUp className="mr-1.5 h-4 w-4" />
           Labor Cost
         </TabButton>
+        <TabButton active={tab === "live"} onClick={() => setTab("live")}>
+          <Activity className="mr-1.5 h-4 w-4" />
+          Live Tracker
+        </TabButton>
         <TabButton active={tab === "tips"} onClick={() => setTab("tips")}>
           <Coins className="mr-1.5 h-4 w-4" />
           Tip Pool
@@ -140,6 +146,8 @@ export function SchedulingView() {
       )}
       {tab === "clock" && <ClockView />}
       {tab === "labor" && <LaborCostView />}
+
+      {tab === "live" && <LaborCostTracker />}
       {tab === "tips" && <TipPoolView />}
     </div>
   );

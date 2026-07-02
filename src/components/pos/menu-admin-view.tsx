@@ -251,8 +251,28 @@ export function MenuAdminView() {
                   <div className="col-span-3 text-right font-semibold sm:col-span-2">
                     {formatEUR(m.price)}
                   </div>
-                  <div className="col-span-2 text-center text-xs text-muted-foreground sm:col-span-1">
-                    {(m.vatRate * 100).toFixed(1)}%
+                  <div className="col-span-2 text-center sm:col-span-1">
+                    <button
+                      onClick={async () => {
+                        const newRate = m.vatRate === 0.095 ? 0.22 : 0.095;
+                        await fetch(`/api/menu/${m.id}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ vatRate: newRate }),
+                        });
+                        refetch();
+                        toast.success(`DDV spremenjen: ${m.name} → ${(newRate * 100).toFixed(1)}%`);
+                      }}
+                      className={cn(
+                        "rounded-md px-2 py-0.5 text-xs font-semibold transition-colors hover:scale-105",
+                        m.vatRate === 0.095
+                          ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-400"
+                          : "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-950/50 dark:text-amber-400"
+                      )}
+                      title="Klik za preklop DDV (9,5% ↔ 22%)"
+                    >
+                      {(m.vatRate * 100).toFixed(1)}%
+                    </button>
                   </div>
                   {/* Food cost % */}
                   <div className="col-span-2 text-center sm:col-span-2">
