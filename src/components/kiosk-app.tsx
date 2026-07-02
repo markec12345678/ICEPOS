@@ -27,6 +27,8 @@ import {
   Receipt,
   Store,
   Printer,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { CATEGORIES, formatEUR, type MenuItem } from "@/lib/types";
 import { getUpsellSuggestions, shouldShowUpsell } from "@/lib/upsell";
@@ -56,6 +58,22 @@ export function KioskApp() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    // Preberi dark mode iz localStorage
+    const stored = localStorage.getItem("kiosk-dark");
+    if (stored === "true") setDarkMode(true);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("kiosk-dark", String(darkMode));
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [darkMode]);
 
   useEffect(() => {
     fetch("/api/menu")
@@ -241,15 +259,26 @@ export function KioskApp() {
               <p className="text-xs text-muted-foreground">Gostilna Pri Marku</p>
             </div>
           </div>
-          <Button
-            size="lg"
-            className="gap-2 px-6"
-            disabled={cart.length === 0}
-            onClick={() => setCheckoutOpen(true)}
-          >
-            <ShoppingCart className="h-5 w-5" />
-            {cartCount} · {formatEUR(cartTotal)}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => setDarkMode(!darkMode)}
+              title="Preklopi temo"
+            >
+              {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+            <Button
+              size="lg"
+              className="gap-2 px-6"
+              disabled={cart.length === 0}
+              onClick={() => setCheckoutOpen(true)}
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {cartCount} · {formatEUR(cartTotal)}
+            </Button>
+          </div>
         </div>
 
         {/* Iskanje */}

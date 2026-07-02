@@ -11,6 +11,7 @@ import {
   Upload,
   Check,
   X,
+  Trash2,
 } from "lucide-react";
 import { formatEUR, type MenuItem } from "@/lib/types";
 import { authHeaders } from "@/components/pos/pin-login";
@@ -24,6 +25,29 @@ export function ImageManager({
 }) {
   const [generating, setGenerating] = useState<string | null>(null);
   const [batchLoading, setBatchLoading] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  async function deleteImage(itemId: string, name: string) {
+    if (!confirm(`Izbriši sliko za "${name}"?`)) return;
+    setDeleting(itemId);
+    try {
+      const res = await fetch(`/api/menu/${itemId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ imageUrl: null }),
+      });
+      if (!res.ok) {
+        toast.error("Napaka pri brisanju");
+        return;
+      }
+      toast.success(`Slika za "${name}" izbrisana`);
+      onUpdated();
+    } catch {
+      toast.error("Napaka");
+    } finally {
+      setDeleting(null);
+    }
+  }
 
   async function generateImage(itemId: string, name: string) {
     setGenerating(itemId);
@@ -136,8 +160,8 @@ export function ImageManager({
                   <ImageIcon className="h-8 w-8 text-muted-foreground" />
                 </div>
               )}
-              {/* Generate button overlay */}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity hover:opacity-100">
+              {/* Generate + Delete buttons overlay */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/50 opacity-0 transition-opacity hover:opacity-100">
                 <Button
                   size="sm"
                   onClick={() => generateImage(item.id, item.name)}
@@ -150,6 +174,21 @@ export function ImageManager({
                   )}
                   {item.imageUrl ? "Ponovi" : "AI"}
                 </Button>
+                {item.imageUrl && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-rose-400 bg-rose-500/90 text-white hover:bg-rose-600"
+                    onClick={() => deleteImage(item.id, item.name)}
+                    disabled={deleting === item.id}
+                  >
+                    {deleting === item.id ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3 w-3" />
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
             {/* Info */}
