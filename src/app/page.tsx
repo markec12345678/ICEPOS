@@ -38,6 +38,7 @@ import { OpenTableView } from "@/components/pos/opentable-view";
 import { ImagesView } from "@/components/pos/images-view";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { KeyboardShortcutsHelp } from "@/components/keyboard-shortcuts-help";
+import { GlobalSearch } from "@/components/global-search";
 import { PinLoginDialog, getStoredOperator, type Operator } from "@/components/pos/pin-login";
 import { Toaster, toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -188,6 +189,7 @@ export default function Home() {
       <PosFooter />
       <PaymentDialog />
       <KeyboardShortcutsHelp />
+      <GlobalSearch />
       <PinLoginDialog
         open={loginOpen}
         onOpenChange={setLoginOpen}

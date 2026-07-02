@@ -7,9 +7,10 @@ import { formatEUR, formatTime, type Table, type Order, type DashboardStats } fr
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { Users, Receipt, AlertCircle, LayoutGrid, CalendarDays, Search, QrCode } from "lucide-react";
+import { Users, Receipt, AlertCircle, LayoutGrid, CalendarDays, Search, QrCode, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 interface Reservation {
@@ -148,7 +149,7 @@ export function TablesView() {
         )}
       </div>
 
-      {/* Section filter + iskalnik */}
+      {/* Section filter + iskalnik + hitri nov račun */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap gap-2">
           {sections.map((s) => (
@@ -176,6 +177,24 @@ export function TablesView() {
             className="pl-9"
           />
         </div>
+        <Button
+          onClick={() => {
+            const freeTable = tables.find(
+              (t) => !t.orders.some((o) => o.status === "open")
+            );
+            if (freeTable) {
+              selectTable(freeTable.id);
+              toast.success(`Miza ${freeTable.name} odprta`);
+            } else {
+              toast.error("Ni prostih miz");
+            }
+          }}
+          className="bg-amber-600 hover:bg-amber-700"
+          size="sm"
+        >
+          <Plus className="mr-1.5 h-4 w-4" />
+          Nov račun
+        </Button>
       </div>
 
       {/* Vizualni tloris po sekcijah */}
