@@ -33,10 +33,12 @@ import {
   Wallet,
   Mail,
   Send,
+  UtensilsCrossed,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FursQrCode } from "@/components/pos/furs-qr-code";
 import { SplitBillDialog } from "@/components/pos/split-bill-dialog";
+import { ItemSplitDialog } from "@/components/pos/item-split-dialog";
 import { authHeaders } from "@/components/pos/pin-login";
 
 type TableWithOrders = Table & {
@@ -77,6 +79,7 @@ export function PaymentDialog() {
   const [processing, setProcessing] = useState(false);
   const [paid, setPaid] = useState<PaidResult | null>(null);
   const [splitOpen, setSplitOpen] = useState(false);
+  const [itemSplitOpen, setItemSplitOpen] = useState(false);
   const [giftCardCode, setGiftCardCode] = useState("");
   const [gcBalance, setGcBalance] = useState<number | null>(null);
   const [gcError, setGcError] = useState("");
@@ -580,10 +583,21 @@ export function PaymentDialog() {
                   className="col-span-1"
                   onClick={() => setSplitOpen(true)}
                   disabled={cart.length === 0}
-                  title="Razdeli račun med več oseb"
+                  title="Razdeli račun med več oseb (enaki deli)"
                 >
                   <Users className="mr-1.5 h-4 w-4" />
                   Razdeli
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="col-span-1"
+                  onClick={() => setItemSplitOpen(true)}
+                  disabled={cart.length === 0}
+                  title="Razdeli po postavkah (vsak plača svoje)"
+                >
+                  <UtensilsCrossed className="mr-1.5 h-4 w-4" />
+                  Po postavkah
                 </Button>
                 <Button
                   onClick={processPayment}
@@ -613,6 +627,18 @@ export function PaymentDialog() {
       <SplitBillDialog
         open={splitOpen}
         onOpenChange={setSplitOpen}
+        total={total}
+      />
+
+      <ItemSplitDialog
+        open={itemSplitOpen}
+        onOpenChange={setItemSplitOpen}
+        items={cart.map((c) => ({
+          lineId: c.lineId,
+          menuItem: { id: c.menuItem.id, name: c.menuItem.name, price: c.menuItem.price },
+          quantity: c.quantity,
+          unitPrice: c.menuItem.price,
+        }))}
         total={total}
       />
     </Dialog>

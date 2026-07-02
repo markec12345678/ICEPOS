@@ -49,6 +49,7 @@ import {
   Link2,
   X,
   ShoppingCart,
+  TrendingDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { authHeaders } from "@/components/pos/pin-login";
@@ -56,6 +57,7 @@ import { InventoryImport } from "@/components/pos/inventory-import";
 import { BulkRestock } from "@/components/pos/bulk-restock";
 import { ReorderReport } from "@/components/pos/reorder-report";
 import { InventoryValuation } from "@/components/pos/inventory-valuation";
+import { InventoryConsumption } from "@/components/pos/inventory-consumption";
 
 interface InventoryItem {
   id: string;
@@ -111,6 +113,7 @@ export function InventoryView() {
   const [showBulkRestock, setShowBulkRestock] = useState(false);
   const [showReorder, setShowReorder] = useState(false);
   const [showValuation, setShowValuation] = useState(false);
+  const [showConsumption, setShowConsumption] = useState(false);
 
   // Recipes
   const { data: recipes, refetch: refetchRecipes } = useFetch<{
@@ -301,10 +304,24 @@ export function InventoryView() {
               setShowBulkRestock(false);
               setShowReorder(false);
               setShowImport(false);
+              setShowConsumption(false);
             }}
           >
             <Euro className="mr-1.5 h-4 w-4" />
             {showValuation ? "Skrij vrednost" : "Vrednost zalog"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setShowConsumption(!showConsumption);
+              setShowValuation(false);
+              setShowBulkRestock(false);
+              setShowReorder(false);
+              setShowImport(false);
+            }}
+          >
+            <TrendingDown className="mr-1.5 h-4 w-4" />
+            {showConsumption ? "Skrij porabo" : "Poraba"}
           </Button>
           <Button
             onClick={() => setCreating(true)}
@@ -334,6 +351,11 @@ export function InventoryView() {
       {/* Valuation dashboard */}
       {showValuation && (
         <InventoryValuation />
+      )}
+
+      {/* Consumption dashboard */}
+      {showConsumption && (
+        <InventoryConsumption />
       )}
 
       {/* Iskalnik */}
