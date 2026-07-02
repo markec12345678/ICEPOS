@@ -56,6 +56,7 @@ model Restaurant {
   wasteLogs       WasteLog[]
   happyHours      HappyHour[]
   comboMeals      ComboMeal[]
+  feedbacks       Feedback[]
 }
 
 // ============================================================
@@ -403,4 +404,30 @@ model ComboSlot {
   // Povezani MenuItem-i (lahko izbere iz teh)
   itemIds       String   // JSON array menuItemId-jev
   createdAt     DateTime @default(now())
+}
+
+// Povratna informacija strank (ocene jedi, service, experience)
+model Feedback {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  orderId       String?  // povezava z računom (opcijsko)
+  customerId    String?  // povezava s stranko (opcijsko)
+  customerName  String?  // ime stranke (če ni prijavljena)
+  // Ocene (1-5 zvezdic)
+  foodRating    Int      // ocena hrane
+  serviceRating Int      // ocena strežbe
+  ambienceRating Int?    // ocena ambienta (opcijsko)
+  overallRating Int      // skupna ocena
+  // Komentar
+  comment       String?
+  // Kategorije povratnih informacij
+  tags          String?  // JSON array: ["fast_service", "delicious", "cold_food", ...]
+  // Status
+  resolved      Boolean  @default(false) // ali so odgovorili na feedback
+  response      String?  // odgovor restavracije
+  respondedAt   DateTime?
+  // Metadata
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

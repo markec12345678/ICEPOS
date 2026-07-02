@@ -27,6 +27,7 @@ import { usePosStore } from "@/stores/pos-store";
 import { Progress } from "@/components/ui/progress";
 import { ActivityFeed } from "@/components/pos/activity-feed";
 import { TableTurnTime } from "@/components/pos/table-turn-time";
+import { LiveServerStatus } from "@/components/pos/live-server-status";
 
 export function DashboardView() {
   const { data, loading, error, refetch } = useFetch<DashboardStats>("/api/stats");
@@ -226,8 +227,11 @@ export function DashboardView() {
         </Card>
       </div>
 
-      {/* Activity feed — real-time timeline zadnjih aktivnosti */}
-      <ActivityFeed />
+      {/* Activity feed + Live server status — side by side na desktop */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <ActivityFeed />
+        <LiveServerStatus />
+      </div>
 
       {/* Table turn time analitika */}
       <TableTurnTime />

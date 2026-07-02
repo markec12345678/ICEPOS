@@ -14,6 +14,7 @@ import {
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { formatSecondaryCurrency } from "@/lib/multi-currency";
+import { ALLERGEN_INFO, ALLERGEN_KEYS, parseAllergens } from "@/lib/allergens";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -40,6 +42,8 @@ import {
   RotateCcw,
   Ban,
   Clock3,
+  ShieldAlert,
+  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -155,6 +159,8 @@ export function OrderView() {
   const [transferTarget, setTransferTarget] = useState<string>("");
   const [transferring, setTransferring] = useState(false);
   const [specialFilter, setSpecialFilter] = useState<"none" | "favorite" | "daily">("none");
+  const [excludedAllergens, setExcludedAllergens] = useState<string[]>([]);
+  const [allergenFilterOpen, setAllergenFilterOpen] = useState(false);
 
   // Cena postavke z modifierji (za prikaz v vozičku)
   function lineUnitPrice(c: (CartItem & { lineId: string })): number {
@@ -181,8 +187,15 @@ export function OrderView() {
           (m.desc || "").toLowerCase().includes(q)
       );
     }
+    // Allergen filter — izključi jedi, ki vsebujejo izbrane alergene
+    if (excludedAllergens.length > 0) {
+      items = items.filter((m) => {
+        const itemAllergens = parseAllergens(m.allergens);
+        return !excludedAllergens.some((a) => itemAllergens.includes(a));
+      });
+    }
     return items;
-  }, [menu, activeCategory, searchQuery, specialFilter]);
+  }, [menu, activeCategory, searchQuery, specialFilter, excludedAllergens]);
 
   const cartTotals = useMemo(() => {
     const subtotal = cart.reduce(
@@ -393,15 +406,92 @@ export function OrderView() {
           </div>
         )}
 
-        {/* Iskalnik */}
-        <div className="relative mb-3">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Išči jed ali pijačo..."
-            value={searchQuery}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+        {/* Iskalnik + allergen filter */}
+        <div className="relative mb-3 flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Išči jed ali pijačo..."
+              value={searchQuery}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Popover open={allergenFilterOpen} onOpenChange={setAllergenFilterOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant={excludedAllergens.length > 0 ? "default" : "outline"}
+                size="icon"
+                className={cn(
+                  "shrink-0",
+                  excludedAllergens.length > 0 && "bg-rose-600 hover:bg-rose-700"
+                )}
+                title="Filtriraj po alergenih"
+              >
+                <ShieldAlert className="h-4 w-4" />
+                {excludedAllergens.length > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">
+                    {excludedAllergens.length}
+                  </span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72" align="end">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShieldAlert className="h-4 w-4 text-rose-600" />
+                    <p className="text-sm font-semibold">Alergeni</p>
+                  </div>
+                  {excludedAllergens.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setExcludedAllergens([])}
+                    >
+                      Počisti
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Klikni alergene, ki jih gost ne sme jesti. Jedi, ki jih vsebujejo, bodo skrite.
+                </p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {ALLERGEN_KEYS.map((key) => {
+                    const info = ALLERGEN_INFO[key];
+                    if (!info) return null;
+                    const active = excludedAllergens.includes(key);
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => {
+                          setExcludedAllergens((prev) =>
+                            active ? prev.filter((a) => a !== key) : [...prev, key]
+                          );
+                        }}
+                        className={cn(
+                          "flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs transition-colors",
+                          active
+                            ? "bg-rose-100 text-rose-700 ring-1 ring-rose-300 dark:bg-rose-950/50 dark:text-rose-400 dark:ring-rose-800"
+                            : "bg-muted/50 hover:bg-muted text-muted-foreground"
+                        )}
+                      >
+                        <span>{info.icon}</span>
+                        <span className="truncate">{info.sl}</span>
+                        {active && <X className="ml-auto h-3 w-3" />}
+                      </button>
+                    );
+                  })}
+                </div>
+                {excludedAllergens.length > 0 && (
+                  <div className="rounded-md bg-rose-50 p-2 text-xs text-rose-700 dark:bg-rose-950/30 dark:text-rose-400">
+                    ⚠️ Skrite jedi, ki vsebujejo: {excludedAllergens.map((a) => ALLERGEN_INFO[a]?.sl).join(", ")}
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Kategorije + priljubljene/dnevno */}

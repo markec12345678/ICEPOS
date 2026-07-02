@@ -49,7 +49,8 @@ interface PosState {
     | "opentable"
     | "images"
     | "performance"
-    | "customer-analytics";
+    | "customer-analytics"
+    | "feedback";
   setActiveView: (
     v:
       | "tables"
@@ -83,6 +84,7 @@ interface PosState {
       | "images"
       | "performance"
       | "customer-analytics"
+      | "feedback"
   ) => void;
 
   // Selected table

@@ -39,6 +39,8 @@ import { OpenTableView } from "@/components/pos/opentable-view";
 import { ImagesView } from "@/components/pos/images-view";
 import { EmployeePerformanceView } from "@/components/pos/employee-performance-view";
 import { CustomerAnalyticsView } from "@/components/pos/customer-analytics-view";
+import { FeedbackView } from "@/components/pos/feedback-view";
+import { OutOfStockBanner } from "@/components/pos/out-of-stock-banner";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { KeyboardShortcutsHelp } from "@/components/keyboard-shortcuts-help";
 import { GlobalSearch } from "@/components/global-search";
@@ -117,6 +119,9 @@ export default function Home() {
     <div className="flex min-h-screen flex-col bg-background">
       <PosHeader />
 
+      {/* Out-of-stock alert banner */}
+      <OutOfStockBanner />
+
       {/* Alert bar: če ni prijavljenega operatorja */}
       <div data-debug-operator={operator ? "yes" : "no"}>
         {!operator && (
@@ -173,6 +178,7 @@ export default function Home() {
             {activeView === "images" && <ImagesView />}
             {activeView === "performance" && <EmployeePerformanceView />}
             {activeView === "customer-analytics" && <CustomerAnalyticsView />}
+            {activeView === "feedback" && <FeedbackView />}
           </div>
         </main>
       </div>

@@ -61,7 +61,14 @@ export function KitchenDisplayView() {
     ready: 0,
     total: 0,
   });
+  const [, setTick] = useState(0);
   const socketRef = useRef<Socket | null>(null);
+
+  // Real-time tick vsako sekundo — za posodobitev timerjev v OrderCard
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     // V development: Next.js na :3000, Caddy na :81 — poveži se prek Caddy
@@ -327,8 +334,12 @@ function KitchenOrderCard({
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;
 
-  // Če je več kot 10 minut, pokaži opozorilo
-  const isDelayed = elapsed > 600;
+  // 3-stopinjska urgensa: normal (<10m), warning (10-15m), urgent (>15m)
+  const urgency: "normal" | "warning" | "urgent" =
+    elapsed > 900 ? "urgent" : elapsed > 600 ? "warning" : "normal";
+
+  // Standardni čas priprave: 15 min (900s). Progress bar do 100%.
+  const prepProgress = Math.min(100, (elapsed / 900) * 100);
 
   // Filtriraj item-e po aktivni postaji
   const filteredItems = activeStation === "all"
@@ -341,13 +352,27 @@ function KitchenOrderCard({
   return (
     <Card
       className={cn(
-        "p-4 transition-all",
+        "relative overflow-hidden p-4 transition-all",
         order.status === "new" && "border-amber-300 bg-amber-50/30 dark:border-amber-800 dark:bg-amber-950/10",
         order.status === "preparing" && "border-sky-300 bg-sky-50/30 dark:border-sky-800 dark:bg-sky-950/10",
         order.status === "ready" && "border-emerald-300 bg-emerald-50/30 dark:border-emerald-800 dark:bg-emerald-950/10",
-        isDelayed && order.status !== "ready" && "ring-2 ring-rose-400"
+        urgency === "warning" && order.status !== "ready" && "ring-2 ring-amber-400",
+        urgency === "urgent" && order.status !== "ready" && "ring-2 ring-rose-500 animate-pulse"
       )}
     >
+      {/* Urgency progress bar na vrhu */}
+      {order.status !== "ready" && (
+        <div className="absolute inset-x-0 top-0 h-1 bg-muted/30">
+          <div
+            className={cn(
+              "h-full transition-all duration-1000",
+              urgency === "urgent" ? "bg-rose-500" : urgency === "warning" ? "bg-amber-500" : "bg-sky-500"
+            )}
+            style={{ width: `${prepProgress}%` }}
+          />
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-3 flex items-start justify-between">
         <div>
@@ -356,6 +381,11 @@ function KitchenOrderCard({
             {order.priority && (
               <Badge variant="destructive" className="text-[10px]">
                 PREDNOST
+              </Badge>
+            )}
+            {urgency === "urgent" && order.status !== "ready" && (
+              <Badge variant="destructive" className="animate-pulse text-[10px]">
+                ZAMUDA!
               </Badge>
             )}
           </div>
@@ -367,9 +397,11 @@ function KitchenOrderCard({
         <Badge
           variant="outline"
           className={cn(
-            "gap-1 font-mono",
-            isDelayed && order.status !== "ready"
+            "gap-1 font-mono tabular-nums",
+            urgency === "urgent" && order.status !== "ready"
               ? "border-rose-300 bg-rose-100 text-rose-700 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-400"
+              : urgency === "warning" && order.status !== "ready"
+              ? "border-amber-300 bg-amber-100 text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-400"
               : "border-border"
           )}
         >
