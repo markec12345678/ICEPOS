@@ -28,6 +28,8 @@ import {
   Receipt,
   Banknote,
   History,
+  ArrowLeftRight,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +54,7 @@ export function ShiftView() {
   );
   const [startOpen, setStartOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
+  const [handoverOpen, setHandoverOpen] = useState(false);
 
   // Auto-refresh aktivne smene vsako minuto (za timer)
   useEffect(() => {
@@ -129,13 +132,22 @@ export function ShiftView() {
               Začetek: {formatDateTime(activeShift.startTime)}
             </p>
 
-            <Button
-              onClick={() => setEndOpen(true)}
-              className="mt-4 w-full bg-rose-600 hover:bg-rose-700"
-            >
-              <Square className="mr-2 h-4 w-4" />
-              Zaključi smeno
-            </Button>
+            <div className="mt-4 flex gap-2">
+              <Button
+                onClick={() => setHandoverOpen(true)}
+                className="flex-1 bg-amber-600 hover:bg-amber-700"
+              >
+                <ArrowLeftRight className="mr-2 h-4 w-4" />
+                Izmenjaj smeno
+              </Button>
+              <Button
+                onClick={() => setEndOpen(true)}
+                className="flex-1 bg-rose-600 hover:bg-rose-700"
+              >
+                <Square className="mr-2 h-4 w-4" />
+                Zaključi
+              </Button>
+            </div>
           </div>
         </Card>
       ) : (
@@ -232,6 +244,19 @@ export function ShiftView() {
             refetch();
             refetchActive();
             toast.success("Smena zaključena");
+          }}
+        />
+      )}
+
+      {/* Handover dialog */}
+      {handoverOpen && activeShift && (
+        <HandoverDialog
+          shift={activeShift}
+          onClose={() => setHandoverOpen(false)}
+          onHandedOver={() => {
+            setHandoverOpen(false);
+            refetch();
+            refetchActive();
           }}
         />
       )}
@@ -508,6 +533,171 @@ function EndShiftDialog({
             {saving ? "Zaključujem..." : "Zaključi smeno"}
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * Handover dialog — izmenjava smene med blagajniki.
+ * Konča trenutno smeno in začne novo z drugim operaterjem.
+ */
+function HandoverDialog({
+  shift,
+  onClose,
+  onHandedOver,
+}: {
+  shift: Shift;
+  onClose: () => void;
+  onHandedOver: () => void;
+}) {
+  const [operators, setOperators] = useState<{ id: string; name: string; role: string }[]>([]);
+  const [selectedOperator, setSelectedOperator] = useState<string>("");
+  const [endCash, setEndCash] = useState<string>("");
+  const [note, setNote] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/operators")
+      .then((r) => r.json())
+      .then((data) => {
+        const ops = (Array.isArray(data) ? data : []).filter(
+          (o: { active?: boolean; name: string; id: string; role: string }) =>
+            o.active !== false && o.name !== shift.operator
+        );
+        setOperators(ops);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [shift.operator]);
+
+  async function handover() {
+    if (!selectedOperator) {
+      toast.error("Izberi operaterja za prevzem smene");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/shifts/handover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({
+          endCash: endCash ? parseFloat(endCash) : undefined,
+          note: note || undefined,
+          newOperatorId: selectedOperator,
+          startCash: endCash ? parseFloat(endCash) : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Napaka");
+
+      toast.success(`Smena izmenjana!`, {
+        description: `${shift.operator} → ${data.newShift.operator}. Nova smena aktivna.`,
+        duration: 5000,
+      });
+      onHandedOver();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Napaka pri izmenjavi");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ArrowLeftRight className="h-5 w-5 text-amber-600" />
+            Izmenjava smene
+          </DialogTitle>
+          <DialogDescription>
+            Končaj smeno ({shift.operator}) in začni novo z drugim blagajnikom
+          </DialogDescription>
+        </DialogHeader>
+
+        {loading ? (
+          <div className="py-8 text-center">
+            <Skeleton className="mx-auto h-8 w-32" />
+          </div>
+        ) : operators.length === 0 ? (
+          <div className="py-4 text-center text-sm text-muted-foreground">
+            <Users className="mx-auto mb-2 h-8 w-8 opacity-40" />
+            Ni drugih aktivnih operaterjev.
+            <br />
+            Najprej dodaj novega operaterja v nastavitvah.
+          </div>
+        ) : (
+          <div className="space-y-4 py-2">
+            {/* Trenutni operater */}
+            <div className="rounded-lg border border-border bg-muted/30 p-3">
+              <p className="text-xs text-muted-foreground">Trenutni blagajnik</p>
+              <p className="font-semibold">{shift.operator}</p>
+              <p className="text-xs text-muted-foreground">
+                Od {formatDateTime(shift.startTime)}
+              </p>
+            </div>
+
+            {/* Novi operater */}
+            <div>
+              <Label className="mb-1.5 block">Prevzemi smeno</Label>
+              <select
+                value={selectedOperator}
+                onChange={(e) => setSelectedOperator(e.target.value)}
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">— Izberi operaterja —</option>
+                {operators.map((op) => (
+                  <option key={op.id} value={op.id}>
+                    {op.name} ({op.role})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Končni blagajniški status */}
+            <div>
+              <Label className="mb-1.5 block">Končni status blagajne (EUR)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={endCash}
+                onChange={(e) => setEndCash(e.target.value)}
+                placeholder="0.00"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Novi operater prevzame ta znesek kot začetni status
+              </p>
+            </div>
+
+            {/* Opomba */}
+            <div>
+              <Label className="mb-1.5 block">Opomba (opcijsko)</Label>
+              <Input
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="npr. dogodki, posebna navodila..."
+                maxLength={200}
+              />
+            </div>
+          </div>
+        )}
+
+        {operators.length > 0 && (
+          <DialogFooter>
+            <Button variant="outline" onClick={onClose} disabled={saving}>
+              Prekliči
+            </Button>
+            <Button
+              onClick={handover}
+              disabled={saving || !selectedOperator}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              {saving ? "Izmenjujem..." : "Izmenjaj smeno"}
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -41,6 +41,9 @@ export function ModifierDialog({
   const { data: modifiers } = useFetch<Modifier[]>(
     item ? `/api/menu/${item.id}/modifiers` : "/api/menu/_/_/modifiers"
   );
+  const { data: noteSuggestions } = useFetch<{ notes: { note: string; count: number }[]; total: number }>(
+    item ? `/api/order-notes?menuItemId=${item.id}&limit=8` : "/api/order-notes?limit=8"
+  );
   const [quantity, setQuantity] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [note, setNote] = useState("");
@@ -148,6 +151,33 @@ export function ModifierDialog({
               placeholder="npr. brez čebule, dobra pečena, alergija na gluten"
               maxLength={200}
             />
+            {/* Predlogi pogostih opomb */}
+            {noteSuggestions && noteSuggestions.notes.length > 0 && (
+              <div className="mt-2">
+                <p className="mb-1 text-[10px] text-muted-foreground">
+                  💡 Pogoste opombe (klik za uporabo):
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {noteSuggestions.notes.slice(0, 6).map((s) => (
+                    <button
+                      key={s.note}
+                      type="button"
+                      onClick={() => setNote(s.note)}
+                      className={cn(
+                        "rounded-md px-2 py-1 text-xs transition-colors",
+                        note === s.note
+                          ? "bg-amber-100 text-amber-700 ring-1 ring-amber-300 dark:bg-amber-950/50 dark:text-amber-400"
+                          : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      )}
+                      title={`Uporabljeno ${s.count}×`}
+                    >
+                      {s.note}
+                      <span className="ml-1 text-[9px] opacity-60">({s.count})</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Količina */}

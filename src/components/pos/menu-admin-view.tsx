@@ -41,6 +41,8 @@ import {
   BookOpen,
   Calculator,
   Star,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -275,6 +277,26 @@ export function MenuAdminView() {
                     })()}
                   </div>
                   <div className="col-span-3 flex items-center justify-end gap-1 sm:col-span-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`h-7 w-7 ${m.available ? "text-emerald-600" : "text-muted-foreground"}`}
+                      onClick={async () => {
+                        await fetch(`/api/menu/${m.id}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ available: !m.available }),
+                        });
+                        refetch();
+                        toast.success(m.available ? `Skrito: ${m.name}` : `Aktivirano: ${m.name}`, {
+                          description: m.available ? "86 — jed ni več na voljo v meniju" : "Jed je spet na voljo",
+                          duration: 2000,
+                        });
+                      }}
+                      title={m.available ? "Skrij iz menija (86)" : "Prikaži v meniju"}
+                    >
+                      {m.available ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"

@@ -15,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatSecondaryCurrency } from "@/lib/multi-currency";
 import { ALLERGEN_INFO, ALLERGEN_KEYS, parseAllergens } from "@/lib/allergens";
+import { CustomerLookup } from "@/components/pos/customer-lookup";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -161,6 +162,7 @@ export function OrderView() {
   const [specialFilter, setSpecialFilter] = useState<"none" | "favorite" | "daily">("none");
   const [excludedAllergens, setExcludedAllergens] = useState<string[]>([]);
   const [allergenFilterOpen, setAllergenFilterOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<{ id: string; name: string; points: number; totalSpent: number; visitCount: number } | null>(null);
 
   // Cena postavke z modifierji (za prikaz v vozičku)
   function lineUnitPrice(c: (CartItem & { lineId: string })): number {
@@ -384,6 +386,13 @@ export function OrderView() {
                 </>
               )}
             </p>
+          </div>
+          {/* Quick customer lookup */}
+          <div className="ml-auto hidden sm:block">
+            <CustomerLookup
+              selectedCustomerId={selectedCustomer?.id || null}
+              onSelect={(c) => setSelectedCustomer(c)}
+            />
           </div>
         </div>
 
