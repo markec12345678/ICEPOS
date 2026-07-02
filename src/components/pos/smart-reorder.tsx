@@ -236,8 +236,8 @@ export function SmartReorder() {
           <p>• <strong>Dni do prazne</strong> = trenutna zaloga ÷ dnevna poraba</p>
           <p>• <strong>Predlagano</strong> = 14 dni porabe - trenutna zaloga</p>
           <p>• <strong>Lead time</strong>: 3 dni (privzeto) — naroči vsaj 3 dni preden zmanjka</p>
-          <p>• <strong className="text-rose-600">Kritično</strong>: zaloga <= 0 ali dni do prazne <= 3</p>
-          <p>• <strong className="text-amber-600">Visoko</strong>: dni do prazne <= 5</p>
+          <p>• <strong className="text-rose-600">Kritično</strong>: zaloga &le; 0 ali dni do prazne &le; 3</p>
+          <p>• <strong className="text-amber-600">Visoko</strong>: dni do prazne &le; 5</p>
         </div>
       </Card>
     </div>
