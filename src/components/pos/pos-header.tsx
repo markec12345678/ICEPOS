@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Store, Clock, ShieldCheck, Wifi, UserCircle, LogOut } from "lucide-react";
+import { Store, Clock, ShieldCheck, Wifi, UserCircle, LogOut, Keyboard } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LangToggle } from "@/components/lang-toggle";
 import { TenantSelector } from "@/components/pos/tenant-selector";
@@ -116,6 +116,18 @@ export function PosHeader() {
             </Button>
           )}
           <LangToggle />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden h-8 w-8 md:flex"
+            onClick={() => {
+              const event = new KeyboardEvent("keydown", { key: "?", bubbles: true });
+              window.dispatchEvent(event);
+            }}
+            title="Tipkovne bližnjice (?)"
+          >
+            <Keyboard className="h-4 w-4" />
+          </Button>
           <ThemeToggle />
         </div>
 
