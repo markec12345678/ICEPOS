@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Store, Clock, ShieldCheck, Wifi, UserCircle, LogOut, Keyboard } from "lucide-react";
+import { Store, Clock, ShieldCheck, Wifi, UserCircle, LogOut, Keyboard, Search } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LangToggle } from "@/components/lang-toggle";
 import { TenantSelector } from "@/components/pos/tenant-selector";
@@ -117,6 +117,19 @@ export function PosHeader() {
             </Button>
           )}
           <LangToggle />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="hidden h-8 gap-1.5 px-2 md:flex"
+            onClick={() => {
+              const event = new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true });
+              window.dispatchEvent(event);
+            }}
+            title="Iskanje (Ctrl+K)"
+          >
+            <Search className="h-3.5 w-3.5" />
+            <kbd className="rounded border bg-muted px-1 text-[10px] font-mono">⌘K</kbd>
+          </Button>
           <NotificationCenter />
           <Button
             variant="ghost"

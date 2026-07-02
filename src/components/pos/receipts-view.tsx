@@ -62,10 +62,11 @@ export function ReceiptsView() {
     );
   });
 
-  const totalSum = receipts
-    .filter((r) => r.status === "paid" && !r.stornoOf)
-    .reduce((s, r) => s + r.total, 0);
+  const validReceipts = receipts.filter((r) => r.status === "paid" && !r.stornoOf);
+  const totalSum = validReceipts.reduce((s, r) => s + r.total, 0);
   const stornoCount = receipts.filter((r) => r.stornoOf).length;
+  const tipsSum = validReceipts.reduce((s, r) => s + (r.tip || 0), 0);
+  const avgOrder = validReceipts.length > 0 ? totalSum / validReceipts.length : 0;
 
   async function handleStorno() {
     if (!stornoTarget) return;
@@ -141,15 +142,27 @@ export function ReceiptsView() {
       </div>
 
       {/* Stat strip */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <Card className="p-3">
           <p className="text-xs text-muted-foreground">Št. računov</p>
           <p className="mt-1 text-2xl font-bold">{receipts.length}</p>
         </Card>
         <Card className="p-3">
-          <p className="text-xs text-muted-foreground">Prihodek (brez stornov)</p>
+          <p className="text-xs text-muted-foreground">Prihodek</p>
           <p className="mt-1 text-2xl font-bold text-emerald-600">
             {formatEUR(totalSum)}
+          </p>
+        </Card>
+        <Card className="p-3">
+          <p className="text-xs text-muted-foreground">Povp. račun</p>
+          <p className="mt-1 text-2xl font-bold text-blue-600">
+            {formatEUR(avgOrder)}
+          </p>
+        </Card>
+        <Card className="p-3">
+          <p className="text-xs text-muted-foreground">Napitnine</p>
+          <p className="mt-1 text-2xl font-bold text-amber-600">
+            {formatEUR(tipsSum)}
           </p>
         </Card>
         <Card className="p-3">

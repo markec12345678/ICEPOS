@@ -15,6 +15,7 @@ const SHORTCUTS = [
   { key: "3", desc: "Računi" },
   { key: "4", desc: "Meni" },
   { key: "5", desc: "Pregled (Dashboard)" },
+  { key: "Ctrl+K", desc: "Globalno iskanje" },
   { key: "Esc", desc: "Nazaj na mize / zapri dialog" },
   { key: "?", desc: "Prikaži to pomoč" },
 ];
