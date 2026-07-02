@@ -38,6 +38,7 @@ import {
   Star,
   RotateCcw,
   Ban,
+  Clock3,
 } from "lucide-react";
 import {
   Dialog,
@@ -85,6 +86,28 @@ export function OrderView() {
 
   const { data: tables, refetch: refetchTables } = useFetch<TableWithOrders[]>("/api/tables");
   const { data: menu, loading: menuLoading } = useFetch<MenuItem[]>("/api/menu");
+  const { data: happyHourPrices } = useFetch<{
+    active: boolean;
+    items: { id: string; originalPrice: number; discountedPrice: number; discountAmount: number; hasDiscount: boolean; happyHourName?: string }[];
+    happyHours: { name: string; startTime: string; endTime: string; discountType: string; discountValue: number }[];
+  }>("/api/happy-hours/active-prices");
+
+  // Happy Hour price map
+  const happyHourMap = useMemo(() => {
+    const map = new Map<string, { discountedPrice: number; discountAmount: number; hasDiscount: boolean }>();
+    if (happyHourPrices?.items) {
+      for (const item of happyHourPrices.items) {
+        if (item.hasDiscount) {
+          map.set(item.id, {
+            discountedPrice: item.discountedPrice,
+            discountAmount: item.discountAmount,
+            hasDiscount: true,
+          });
+        }
+      }
+    }
+    return map;
+  }, [happyHourPrices]);
 
   const selectedTable = tables?.find((t) => t.id === selectedTableId);
   const openOrder = selectedTable?.orders.find((o) => o.status === "open");
@@ -349,6 +372,25 @@ export function OrderView() {
           </div>
         </div>
 
+        {/* Happy Hour banner */}
+        {happyHourPrices?.active && happyHourPrices.happyHours.length > 0 && (
+          <div className="mb-3 flex items-center gap-2 rounded-lg border-2 border-amber-300 bg-amber-50 p-2 dark:border-amber-800 dark:bg-amber-950/20">
+            <Clock3 className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div className="flex-1 text-xs">
+              <span className="font-bold text-amber-700 dark:text-amber-400">
+                {happyHourPrices.happyHours[0].name}
+              </span>
+              <span className="text-amber-600 dark:text-amber-500">
+                {" "}{happyHourPrices.happyHours[0].startTime}–{happyHourPrices.happyHours[0].endTime}
+                {" "}−{happyHourPrices.happyHours[0].discountValue}{happyHourPrices.happyHours[0].discountType === "percent" ? "%" : "€"} popust
+              </span>
+            </div>
+            <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white">
+              {happyHourPrices.discountedCount} postavk
+            </span>
+          </div>
+        )}
+
         {/* Iskalnik */}
         <div className="relative mb-3">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -496,9 +538,25 @@ export function OrderView() {
                   </p>
                 )}
                 <div className="mt-2 flex items-center justify-between">
-                  <span className="text-sm font-bold text-amber-700 dark:text-amber-400">
-                    {formatEUR(m.price)}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {happyHourMap.has(m.id) ? (
+                      <>
+                        <span className="text-sm font-bold text-amber-700 dark:text-amber-400">
+                          {formatEUR(happyHourMap.get(m.id)!.discountedPrice)}
+                        </span>
+                        <span className="text-xs text-muted-foreground line-through">
+                          {formatEUR(m.price)}
+                        </span>
+                        <span className="rounded bg-amber-100 px-1 text-[9px] font-bold text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                          -{Math.round((happyHourMap.get(m.id)!.discountAmount / m.price) * 100)}%
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-sm font-bold text-amber-700 dark:text-amber-400">
+                        {formatEUR(m.price)}
+                      </span>
+                    )}
+                  </div>
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500 text-white opacity-0 shadow-sm transition-all duration-200 group-hover:scale-110 group-hover:opacity-100 group-focus-visible:opacity-100">
                     <Plus className="h-3.5 w-3.5" />
                   </span>
