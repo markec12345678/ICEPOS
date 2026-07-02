@@ -37,6 +37,7 @@ import { DeliverectView } from "@/components/pos/deliverect-view";
 import { OpenTableView } from "@/components/pos/opentable-view";
 import { ImagesView } from "@/components/pos/images-view";
 import { EmployeePerformanceView } from "@/components/pos/employee-performance-view";
+import { CustomerAnalyticsView } from "@/components/pos/customer-analytics-view";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { KeyboardShortcutsHelp } from "@/components/keyboard-shortcuts-help";
 import { GlobalSearch } from "@/components/global-search";
@@ -184,6 +185,7 @@ export default function Home() {
             {activeView === "opentable" && <OpenTableView />}
             {activeView === "images" && <ImagesView />}
             {activeView === "performance" && <EmployeePerformanceView />}
+            {activeView === "customer-analytics" && <CustomerAnalyticsView />}
           </div>
         </main>
       </div>

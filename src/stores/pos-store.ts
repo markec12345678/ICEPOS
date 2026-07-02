@@ -48,7 +48,8 @@ interface PosState {
     | "deliverect"
     | "opentable"
     | "images"
-    | "performance";
+    | "performance"
+    | "customer-analytics";
   setActiveView: (
     v:
       | "tables"
@@ -81,6 +82,7 @@ interface PosState {
       | "opentable"
       | "images"
       | "performance"
+      | "customer-analytics"
   ) => void;
 
   // Selected table
