@@ -7,6 +7,7 @@ import { Store, Clock, ShieldCheck, Wifi, UserCircle, LogOut, Keyboard } from "l
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LangToggle } from "@/components/lang-toggle";
 import { TenantSelector } from "@/components/pos/tenant-selector";
+import { NotificationCenter } from "@/components/notification-center";
 import {
   getStoredOperator,
   clearStoredOperator,
@@ -116,6 +117,7 @@ export function PosHeader() {
             </Button>
           )}
           <LangToggle />
+          <NotificationCenter />
           <Button
             variant="ghost"
             size="icon"
