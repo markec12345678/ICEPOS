@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -22,6 +23,8 @@ import {
   Mail,
   Clock,
   Coins,
+  Gift,
+  Sparkles,
 } from "lucide-react";
 import { formatEUR } from "@/lib/types";
 
@@ -244,6 +247,9 @@ export function CustomerAnalyticsView() {
         </Card>
       )}
 
+      {/* VIP Nagrade — Milestone bonus točke */}
+      <VipRewardsSection customers={data.customers} onRewardGiven={load} />
+
       {/* Vse stranke tabela */}
       <Card className="overflow-hidden">
         <div className="border-b bg-muted/50 p-3">
@@ -321,5 +327,160 @@ export function CustomerAnalyticsView() {
         </div>
       </Card>
     </div>
+  );
+}
+
+// VIP Milestone konfiguracija
+const VIP_MILESTONES = [
+  { threshold: 500, bonusPoints: 50, label: "Bronca VIP", emoji: "🥉", color: "amber" },
+  { threshold: 1000, bonusPoints: 100, label: "Srebro VIP", emoji: "🥈", color: "slate" },
+  { threshold: 2000, bonusPoints: 250, label: "Zlato VIP", emoji: "🥇", color: "amber" },
+  { threshold: 5000, bonusPoints: 500, label: "Platinum VIP", emoji: "💎", color: "violet" },
+];
+
+/**
+ * VIP Rewards sekcija — prikaže stranke, ki so dosegle VIP milestone,
+ * in omogoča dodelitev bonus točk z enim klikom.
+ */
+function VipRewardsSection({
+  customers,
+  onRewardGiven,
+}: {
+  customers: CustomerStat[];
+  onRewardGiven: () => void;
+}) {
+  const [rewarding, setRewarding] = useState<string | null>(null);
+
+  // Najdi stranke, ki so dosegle vsaj en milestone (>= 500€)
+  const vipEligible = customers.filter((c) => c.totalSpent >= 500);
+
+  // Za vsako VIP stranko izračunaj dobljene in naslednji milestone
+  const vipData = vipEligible.map((c) => {
+    const achieved = VIP_MILESTONES.filter((m) => c.totalSpent >= m.threshold);
+    const nextMilestone = VIP_MILESTONES.find((m) => c.totalSpent < m.threshold);
+    const highestAchieved = achieved[achieved.length - 1];
+    return {
+      ...c,
+      achieved,
+      nextMilestone,
+      highestAchieved,
+    };
+  });
+
+  async function grantBonus(customerId: string, threshold: number, customerName: string) {
+    setRewarding(customerId);
+    try {
+      const res = await fetch(`/api/customers/${customerId}/vip-bonus`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ milestoneThreshold: threshold }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Napaka");
+      toast.success(data.message || `Bonus točke dodeljene!`, {
+        description: `${customerName} — prejeto ${data.milestone.bonusPoints} točk`,
+      });
+      onRewardGiven();
+    } catch (e) {
+      toast.error("Napaka pri dodeljevanju bonusa", {
+        description: e instanceof Error ? e.message : "Neznana napaka",
+      });
+    } finally {
+      setRewarding(null);
+    }
+  }
+
+  if (vipData.length === 0) {
+    return (
+      <Card className="p-4">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Gift className="h-4 w-4" />
+          <span>
+            VIP nagrade se aktivirajo, ko stranka porabi vsaj <strong>500 €</strong>.
+            Trenutno še ni VIP strank — spodbujajte vračanje gostov!
+          </span>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="border-b bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 p-3">
+        <h3 className="flex items-center gap-2 text-sm font-semibold">
+          <Sparkles className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+          VIP Nagrade — Milestone bonus točke
+          <Badge variant="secondary" className="ml-1">{vipData.length} upravičenih</Badge>
+        </h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Dodeli bonus točke strankam, ki so dosegle VIP milestone. Pridelijo se avtomatsko ob dosegu praga porabe.
+        </p>
+      </div>
+      <div className="divide-y">
+        {vipData.slice(0, 10).map((c) => (
+          <div key={c.id} className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <p className="font-medium">{c.name}</p>
+                {c.highestAchieved && (
+                  <Badge variant="outline" className="gap-1 border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950/50 dark:text-violet-300">
+                    {c.highestAchieved.emoji} {c.highestAchieved.label}
+                  </Badge>
+                )}
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span>💰 {formatEUR(c.totalSpent)} skupaj</span>
+                <span>🎯 {c.points} točk</span>
+                <span>🔄 {c.visitCount} obiskov</span>
+                {c.nextMilestone && (
+                  <span className="text-amber-600 dark:text-amber-400">
+                    → Naslednji: {c.nextMilestone.emoji} {c.nextMilestone.label} ({formatEUR(c.nextMilestone.threshold - c.totalSpent)} do)
+                  </span>
+                )}
+              </div>
+              {/* Milestone badges */}
+              <div className="mt-2 flex flex-wrap gap-1">
+                {VIP_MILESTONES.map((m) => {
+                  const achieved = c.totalSpent >= m.threshold;
+                  return (
+                    <span
+                      key={m.threshold}
+                      className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
+                        achieved
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {m.emoji} {m.label}
+                      {achieved && <span>✓</span>}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {VIP_MILESTONES.filter((m) => c.totalSpent >= m.threshold).map((m) => (
+                <Button
+                  key={m.threshold}
+                  size="sm"
+                  variant="outline"
+                  className="gap-1 border-violet-300 hover:bg-violet-50 dark:border-violet-800 dark:hover:bg-violet-950/50"
+                  disabled={rewarding === c.id}
+                  onClick={() => grantBonus(c.id, m.threshold, c.name)}
+                  title={`Dodeli ${m.bonusPoints} bonus točk (${m.label})`}
+                >
+                  {rewarding === c.id ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Gift className="h-3 w-3" />
+                  )}
+                  +{m.bonusPoints}
+                </Button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
   );
 }

@@ -17,10 +17,14 @@ import {
   AlertCircle,
   Package,
   AlertTriangle,
+  Target,
+  Flame,
+  CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardHeader } from "@/components/pos/dashboard-header";
 import { usePosStore } from "@/stores/pos-store";
+import { Progress } from "@/components/ui/progress";
 
 export function DashboardView() {
   const { data, loading, error, refetch } = useFetch<DashboardStats>("/api/stats");
@@ -135,6 +139,9 @@ export function DashboardView() {
           />
         )}
       </div>
+
+      {/* Daily target progress bar */}
+      <DailyTargetCard revenue={data.todayRevenue} orders={data.todayOrders} />
 
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Urna statistika */}
@@ -362,6 +369,112 @@ function KpiCard({
         </div>
       </div>
       <p className="mt-2 text-2xl font-bold">{value}</p>
+    </Card>
+  );
+}
+
+/**
+ * Dnevni cilj prometa s progress bar.
+ * Cilj je pametno izračunan: 1.500 € osnovni cilj, ali 2.500 € vikend (pet/ned/sob).
+ * Če je promet > 80% cilja, prikaže flame ikono (vroč dan).
+ * Če je cilj dosežen, prikaže zeleno CheckCircle2.
+ */
+function DailyTargetCard({ revenue, orders }: { revenue: number; orders: number }) {
+  const now = new Date();
+  const day = now.getDay(); // 0=ned, 5=pet, 6=sob
+  const isWeekend = day === 5 || day === 6 || day === 0;
+  const target = isWeekend ? 2500 : 1500;
+  const percent = Math.min(100, Math.round((revenue / target) * 100));
+  const remaining = Math.max(0, target - revenue);
+  const achieved = revenue >= target;
+  const hot = percent >= 80 && !achieved;
+
+  // Ocenjeni preostali čas v dnevu (do 23:00)
+  const hour = now.getHours();
+  const hoursLeft = Math.max(0, 23 - hour);
+  const targetPerHourLeft = hoursLeft > 0 ? remaining / hoursLeft : remaining;
+
+  return (
+    <Card className={cn(
+      "overflow-hidden p-5 transition-colors",
+      achieved && "border-emerald-300 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/20",
+      hot && "border-orange-300 bg-orange-50/50 dark:border-orange-800 dark:bg-orange-950/20"
+    )}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            {achieved ? (
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            ) : hot ? (
+              <Flame className="h-5 w-5 text-orange-500 dark:text-orange-400" />
+            ) : (
+              <Target className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            )}
+            <h3 className="text-sm font-semibold">
+              {achieved
+                ? "🎉 Dnevni cilj dosežen!"
+                : hot
+                ? "🔥 Blizu cilja!"
+                : "Dnevni cilj prometa"}
+            </h3>
+            {isWeekend && (
+              <Badge variant="secondary" className="text-[10px]">Vikend</Badge>
+            )}
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {achieved
+              ? `Čestitke! Presežen cilj za ${formatEUR(revenue - target)}.`
+              : `Še ${formatEUR(remaining)} do cilja · ${hoursLeft}h do zaključka`}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className={cn(
+            "text-2xl font-bold",
+            achieved && "text-emerald-600 dark:text-emerald-400",
+            hot && "text-orange-600 dark:text-orange-400"
+          )}>
+            {percent}%
+          </p>
+          <p className="text-[10px] text-muted-foreground">
+            {formatEUR(revenue)} / {formatEUR(target)}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3">
+        <Progress
+          value={percent}
+          className={cn(
+            "h-3",
+            achieved && "[&>[data-slot=progress-indicator]]:bg-emerald-500",
+            hot && "[&>[data-slot=progress-indicator]]:bg-orange-500"
+          )}
+        />
+      </div>
+
+      {!achieved && hoursLeft > 0 && (
+        <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+          <span>
+            📊 Potreben promet/h: <strong className="text-foreground">{formatEUR(targetPerHourLeft)}</strong>
+          </span>
+          <span>
+            🍽️ Računov danes: <strong className="text-foreground">{orders}</strong>
+          </span>
+          <span>
+            💰 Povprečni račun:{" "}
+            <strong className="text-foreground">
+              {formatEUR(orders > 0 ? revenue / orders : 0)}
+            </strong>
+          </span>
+        </div>
+      )}
+
+      {achieved && (
+        <div className="mt-3 flex items-center gap-2 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+          <Trophy className="h-3.5 w-3.5" />
+          Odlično delo, ekipa! 🏆
+        </div>
+      )}
     </Card>
   );
 }

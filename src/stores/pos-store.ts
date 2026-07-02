@@ -115,6 +115,14 @@ interface PosState {
   // Discount
   discountPercent: number;
   setDiscountPercent: (p: number) => void;
+
+  // Sidebar collapsed (desktop)
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+
+  // Multi-currency display (turisti)
+  displayCurrency: "EUR" | "HRK" | "USD";
+  setDisplayCurrency: (c: "EUR" | "HRK" | "USD") => void;
 }
 
 export const usePosStore = create<PosState>((set) => ({
@@ -196,4 +204,10 @@ export const usePosStore = create<PosState>((set) => ({
 
   discountPercent: 0,
   setDiscountPercent: (p) => set({ discountPercent: Math.min(100, Math.max(0, p)) }),
+
+  sidebarCollapsed: false,
+  setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+
+  displayCurrency: "EUR",
+  setDisplayCurrency: (c) => set({ displayCurrency: c }),
 }));

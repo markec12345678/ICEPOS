@@ -181,7 +181,7 @@ export function PosFooter() {
 }
 
 export function PosSidebar() {
-  const { activeView, setActiveView, cart } = usePosStore();
+  const { activeView, setActiveView, cart, sidebarCollapsed } = usePosStore();
   const cartCount = cart.reduce((s, c) => s + c.quantity, 0);
 
   const navItems = [
@@ -360,11 +360,18 @@ export function PosSidebar() {
   ];
 
   return (
-    <aside className="hidden w-60 shrink-0 border-r border-border bg-card md:flex md:flex-col print:hidden">
-      <div className="flex-1 space-y-1 overflow-y-auto p-3">
-        <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Blagajna
-        </p>
+    <aside
+      className={cn(
+        "hidden shrink-0 border-r border-border bg-card md:flex md:flex-col print:hidden transition-all duration-200",
+        sidebarCollapsed ? "w-16" : "w-60"
+      )}
+    >
+      <div className="flex-1 space-y-1 overflow-y-auto p-2">
+        {!sidebarCollapsed && (
+          <p className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Blagajna
+          </p>
+        )}
         {navItems.slice(0, 6).map((item) => {
           const Icon = item.icon;
           const active = activeView === item.id;
@@ -372,41 +379,50 @@ export function PosSidebar() {
             <button
               key={item.id}
               onClick={() => setActiveView(item.id)}
+              title={sidebarCollapsed ? item.label : undefined}
               className={cn(
-                "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all hover:translate-x-0.5",
+                "flex w-full items-center rounded-lg text-left transition-all hover:translate-x-0.5",
+                sidebarCollapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5",
                 active
                   ? "bg-amber-50 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200"
                   : "text-foreground hover:bg-muted"
               )}
             >
-              <Icon
-                className={cn(
-                  "h-5 w-5 shrink-0",
-                  active
-                    ? "text-amber-600 dark:text-amber-400"
-                    : "text-muted-foreground"
-                )}
-              />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{item.label}</span>
-                  {item.badge ? (
-                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[11px] font-bold text-white">
-                      {item.badge}
-                    </span>
-                  ) : null}
+              <span className="relative">
+                <Icon
+                  className={cn(
+                    "h-5 w-5 shrink-0",
+                    active
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-muted-foreground"
+                  )}
+                />
+                {item.badge ? (
+                  <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">
+                    {item.badge}
+                  </span>
+                ) : null}
+              </span>
+              {!sidebarCollapsed && (
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </div>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {item.desc}
+                  </p>
                 </div>
-                <p className="truncate text-xs text-muted-foreground">
-                  {item.desc}
-                </p>
-              </div>
+              )}
             </button>
           );
         })}
 
-        <p className="px-3 pb-2 pt-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Sistem
-        </p>
+        {!sidebarCollapsed && (
+          <p className="px-3 pb-2 pt-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Sistem
+          </p>
+        )}
+        {sidebarCollapsed && <div className="my-2 border-t border-border/60" />}
         {navItems.slice(6).map((item) => {
           const Icon = item.icon;
           const active = activeView === item.id;
@@ -414,8 +430,10 @@ export function PosSidebar() {
             <button
               key={item.id}
               onClick={() => setActiveView(item.id)}
+              title={sidebarCollapsed ? item.label : undefined}
               className={cn(
-                "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all hover:translate-x-0.5",
+                "flex w-full items-center rounded-lg text-left transition-all hover:translate-x-0.5",
+                sidebarCollapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5",
                 active
                   ? "bg-amber-50 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200"
                   : "text-foreground hover:bg-muted"
@@ -429,30 +447,34 @@ export function PosSidebar() {
                     : "text-muted-foreground"
                 )}
               />
-              <div className="min-w-0 flex-1">
-                <span className="text-sm font-medium">{item.label}</span>
-                <p className="truncate text-xs text-muted-foreground">
-                  {item.desc}
-                </p>
-              </div>
+              {!sidebarCollapsed && (
+                <div className="min-w-0 flex-1">
+                  <span className="text-sm font-medium">{item.label}</span>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {item.desc}
+                  </p>
+                </div>
+              )}
             </button>
           );
         })}
       </div>
 
-      <div className="border-t border-border p-3">
-        <div className="rounded-lg bg-gradient-to-br from-amber-50 to-orange-50 p-3 dark:from-amber-950/30 dark:to-orange-950/30">
-          <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
-            ICEPOS SI — FURS POC
-          </p>
-          <p className="mt-1 text-[11px] text-amber-700/80 dark:text-amber-400/70">
-            ZOI, EOR, XML, QR, storno, Z-report
-          </p>
-          <p className="mt-1 text-[10px] text-amber-600/60 dark:text-amber-500/50">
-            Bližnjice: 1-5 pogledi, Esc nazaj
-          </p>
+      {!sidebarCollapsed && (
+        <div className="border-t border-border p-3">
+          <div className="rounded-lg bg-gradient-to-br from-amber-50 to-orange-50 p-3 dark:from-amber-950/30 dark:to-orange-950/30">
+            <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
+              ICEPOS SI — FURS POC
+            </p>
+            <p className="mt-1 text-[11px] text-amber-700/80 dark:text-amber-400/70">
+              ZOI, EOR, XML, QR, storno, Z-report
+            </p>
+            <p className="mt-1 text-[10px] text-amber-600/60 dark:text-amber-500/50">
+              Bližnjice: 1-5 pogledi, Esc nazaj
+            </p>
+          </div>
         </div>
-      </div>
+      )}
     </aside>
   );
 }

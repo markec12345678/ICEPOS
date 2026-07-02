@@ -13,6 +13,7 @@ import {
   type Table,
 } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { formatSecondaryCurrency } from "@/lib/multi-currency";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -78,6 +79,7 @@ export function OrderView() {
     setPaymentOpen,
     discountPercent,
     setDiscountPercent,
+    displayCurrency,
   } = usePosStore();
 
   // Modifier dialog state
@@ -759,6 +761,11 @@ export function OrderView() {
                 {formatEUR(finalTotal)}
               </span>
             </div>
+            {displayCurrency !== "EUR" && finalTotal > 0 && (
+              <div className="flex justify-end text-xs text-muted-foreground">
+                {formatSecondaryCurrency(finalTotal, displayCurrency)}
+              </div>
+            )}
           </div>
 
           {/* Popust gumb */}

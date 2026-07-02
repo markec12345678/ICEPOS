@@ -3,12 +3,15 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Store, Clock, ShieldCheck, Wifi, UserCircle, LogOut, Keyboard, Search, TrendingUp } from "lucide-react";
+import { Store, Clock, ShieldCheck, Wifi, WifiOff, UserCircle, LogOut, Keyboard, Search, TrendingUp, PanelLeftClose, PanelLeft } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LangToggle } from "@/components/lang-toggle";
+import { CurrencyToggle } from "@/components/currency-toggle";
 import { TenantSelector } from "@/components/pos/tenant-selector";
 import { NotificationCenter } from "@/components/notification-center";
 import { useFetch } from "@/hooks/use-fetch";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { usePosStore } from "@/stores/pos-store";
 import {
   getStoredOperator,
   clearStoredOperator,
@@ -23,6 +26,9 @@ export function PosHeader() {
   const [operator, setOperator] = useState<Operator | null>(null);
   const currentTenant = useTenantStore((s) => s.current);
   const { data: stats } = useFetch<DashboardStats>("/api/stats");
+  const isOnline = useOnlineStatus();
+  const sidebarCollapsed = usePosStore((s) => s.sidebarCollapsed);
+  const setSidebarCollapsed = usePosStore((s) => s.setSidebarCollapsed);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
@@ -73,10 +79,19 @@ export function PosHeader() {
     <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hidden h-9 w-9 shrink-0 md:flex"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            title={sidebarCollapsed ? "Razširi stransko vrstico" : "Skrči stransko vrstico"}
+          >
+            {sidebarCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+          </Button>
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md">
             <Store className="h-5 w-5" />
           </div>
-          <div>
+          <div className="hidden sm:block">
             <h1 className="text-base font-bold leading-tight text-foreground md:text-lg">
               {currentTenant?.name || "Gostilna Pri Marku"}
             </h1>
@@ -104,13 +119,25 @@ export function PosHeader() {
             <ShieldCheck className="h-3.5 w-3.5" />
             SRS aktivna
           </Badge>
-          <Badge
-            variant="outline"
-            className="gap-1.5 border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400"
-          >
-            <Wifi className="h-3.5 w-3.5" />
-            Online
-          </Badge>
+          {isOnline ? (
+            <Badge
+              variant="outline"
+              className="gap-1.5 border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-400"
+              title="Naprava je povezana z internetom"
+            >
+              <Wifi className="h-3.5 w-3.5" />
+              Online
+            </Badge>
+          ) : (
+            <Badge
+              variant="outline"
+              className="gap-1.5 border-red-300 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-400"
+              title="Brez povezave — fiskalizacija bo čakala v vrsti"
+            >
+              <WifiOff className="h-3.5 w-3.5 animate-pulse" />
+              Offline
+            </Badge>
+          )}
           <Badge variant="secondary" className="gap-1.5">
             <Clock className="h-3.5 w-3.5" />
             {time}
@@ -129,6 +156,7 @@ export function PosHeader() {
             </Button>
           )}
           <LangToggle />
+          <CurrencyToggle />
           <Button
             variant="ghost"
             size="sm"
@@ -174,6 +202,7 @@ export function PosHeader() {
               {operator.name}
             </Button>
           )}
+          <CurrencyToggle />
           <LangToggle />
           <ThemeToggle />
         </div>

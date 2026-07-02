@@ -5,12 +5,13 @@ import { useFetch } from "@/hooks/use-fetch";
 import { usePosStore } from "@/stores/pos-store";
 import { formatEUR, formatTime, type Table, type Order, type DashboardStats } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { useNow, formatElapsed, getUrgencyLevel } from "@/hooks/use-now";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { Users, Receipt, AlertCircle, LayoutGrid, CalendarDays, Search, QrCode, Plus } from "lucide-react";
+import { Users, Receipt, AlertCircle, LayoutGrid, CalendarDays, Search, QrCode, Plus, Timer } from "lucide-react";
 import { toast } from "sonner";
 
 interface Reservation {
@@ -34,6 +35,7 @@ export function TablesView() {
   const [section, setSection] = useState<string>("Vse");
   const [search, setSearch] = useState("");
   const [prevOpenCount, setPrevOpenCount] = useState<number>(0);
+  const now = useNow(1000); // vsako sekundo za timer
 
   // Auto-refresh vsakih 10s — zazna nova online naročila gostov
   useEffect(() => {
@@ -252,7 +254,6 @@ export function TablesView() {
                   const openOrder = t.orders.find((o) => o.status === "open");
                   const occupied = !!openOrder;
                   const itemsCount = openOrder?.items.length || 0;
-                  const now = new Date();
                   const nowStr = `${String(now.getHours()).padStart(2, "0")}:${String(
                     now.getMinutes()
                   ).padStart(2, "0")}`;
@@ -260,6 +261,8 @@ export function TablesView() {
                     .filter((r) => r.time >= nowStr)
                     .sort((a, b) => a.time.localeCompare(b.time))[0];
                   const hasReservationSoon = !!nextReservation;
+                  const urgency = openOrder ? getUrgencyLevel(openOrder.createdAt, now) : "normal";
+                  const elapsed = openOrder ? formatElapsed(openOrder.createdAt, now) : "";
                   return (
                     <Card
                       key={t.id}
@@ -317,9 +320,23 @@ export function TablesView() {
                             {itemsCount} postavk
                           </Badge>
                           {openOrder && (
-                            <p className="text-xs text-muted-foreground">
-                              Od {formatTime(openOrder.createdAt)}
-                            </p>
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-semibold tabular-nums",
+                                  urgency === "urgent" && "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400",
+                                  urgency === "warning" && "bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-400",
+                                  urgency === "normal" && "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
+                                )}
+                                title={`Odprt od ${formatTime(openOrder.createdAt)}`}
+                              >
+                                {urgency === "urgent" ? <AlertCircle className="h-3 w-3" /> : <Timer className="h-3 w-3" />}
+                                {elapsed}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground">
+                                od {formatTime(openOrder.createdAt)}
+                              </span>
+                            </div>
                           )}
                         </div>
                       ) : hasReservationSoon ? (
