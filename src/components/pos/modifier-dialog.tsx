@@ -25,6 +25,20 @@ interface Modifier {
   priceDelta: number;
 }
 
+// Hitri prednastavljeni modifierji — pogoste opombe za kuhinjo
+const PRESET_NOTES = [
+  { label: "Brez čebule", icon: "🚫", desc: "Brez čebule" },
+  { label: "Dobro pečeno", icon: "🔥", desc: "Dobro pečeno / well done" },
+  { label: "Srednje", icon: "🌡️", desc: "Srednje pečeno / medium" },
+  { label: "Redko", icon: "🩸", desc: "Redko pečeno / rare" },
+  { label: "Ekstra začinjeno", icon: "🌶️", desc: "Ekstra začinjeno" },
+  { label: "Brez glutena", icon: "🌾", desc: "Brez glutena" },
+  { label: "Vegan", icon: "🌱", desc: "Vegan priprava" },
+  { label: "Ekstra porcija", icon: "➕", desc: "Ekstra porcija" },
+  { label: "Za poneti", icon: "📦", desc: "Za poneti" },
+  { label: "Brez ledov", icon: "🧊", desc: "Brez ledov (pijača)" },
+];
+
 interface ModifierDialogProps {
   item: MenuItem | null;
   open: boolean;
@@ -151,6 +165,47 @@ export function ModifierDialog({
               placeholder="npr. brez čebule, dobra pečena, alergija na gluten"
               maxLength={200}
             />
+            {/* Hitri preset modifierji */}
+            <div className="mt-2">
+              <p className="mb-1 text-[10px] text-muted-foreground">
+                ⚡ Hitri prednastavljeni:
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {PRESET_NOTES.map((preset) => {
+                  const isActive = note.toLowerCase().includes(preset.label.toLowerCase());
+                  return (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => {
+                        if (isActive) {
+                          // Odstrani iz note
+                          const regex = new RegExp(`\\s*${preset.label}\\s*,?\\s*`, "gi");
+                          setNote(note.replace(regex, "").trim().replace(/,$/, ""));
+                        } else {
+                          // Dodaj k note
+                          const newNote = note.trim()
+                            ? note.trim().endsWith(",")
+                              ? `${note} ${preset.label}`
+                              : `${note}, ${preset.label}`
+                            : preset.label;
+                          setNote(newNote);
+                        }
+                      }}
+                      className={cn(
+                        "rounded-md px-2 py-1 text-xs transition-colors",
+                        isActive
+                          ? "bg-amber-100 text-amber-700 ring-1 ring-amber-300 dark:bg-amber-950/50 dark:text-amber-400"
+                          : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      )}
+                      title={preset.desc}
+                    >
+                      {preset.icon} {preset.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             {/* Predlogi pogostih opomb */}
             {noteSuggestions && noteSuggestions.notes.length > 0 && (
               <div className="mt-2">

@@ -29,6 +29,7 @@ import { ActivityFeed } from "@/components/pos/activity-feed";
 import { TableTurnTime } from "@/components/pos/table-turn-time";
 import { LiveServerStatus } from "@/components/pos/live-server-status";
 import { SalesHeatmap } from "@/components/pos/sales-heatmap";
+import { SectionStats } from "@/components/pos/section-stats";
 
 export function DashboardView() {
   const { data, loading, error, refetch } = useFetch<DashboardStats>("/api/stats");
@@ -287,6 +288,9 @@ export function DashboardView() {
         )}
       </Card>
       </div>
+
+      {/* Section stats — analitika po sekcijah miz */}
+      <SectionStats />
 
       {/* Sales heatmap — analiza prometa po dnevih in urah */}
       <SalesHeatmap />

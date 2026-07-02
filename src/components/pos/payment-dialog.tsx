@@ -34,6 +34,7 @@ import {
   Mail,
   Send,
   UtensilsCrossed,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FursQrCode } from "@/components/pos/furs-qr-code";
@@ -80,6 +81,8 @@ export function PaymentDialog() {
   const [paid, setPaid] = useState<PaidResult | null>(null);
   const [splitOpen, setSplitOpen] = useState(false);
   const [itemSplitOpen, setItemSplitOpen] = useState(false);
+  const [duplicateWarning, setDuplicateWarning] = useState<{ type: string; message: string; severity: string } | null>(null);
+  const [duplicateConfirmed, setDuplicateConfirmed] = useState(false);
   const [giftCardCode, setGiftCardCode] = useState("");
   const [gcBalance, setGcBalance] = useState<number | null>(null);
   const [gcError, setGcError] = useState("");
@@ -140,6 +143,8 @@ export function PaymentDialog() {
       setTipMode("none");
       setTipPercent("10");
       setTipFixed("");
+      setDuplicateWarning(null);
+      setDuplicateConfirmed(false);
       refetch();
     }
   }
@@ -157,6 +162,33 @@ export function PaymentDialog() {
       toast.error("Vnesite kodo darilne kartice");
       return;
     }
+
+    // Duplicate check — preveri morebitno podvajanje plačila
+    if (!duplicateConfirmed) {
+      try {
+        const checkRes = await fetch("/api/orders/duplicate-check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tableId: openOrder.tableId,
+            total: grandTotal,
+            cartItems: cart.map((c) => ({ menuItemId: c.menuItem.id, quantity: c.quantity })),
+          }),
+        });
+        const checkData = await checkRes.json();
+        if (checkData.isDuplicate && checkData.warnings.length > 0) {
+          const warning = checkData.warnings[0];
+          setDuplicateWarning(warning);
+          // Za nevarne opozorila zahtevaj potrditev
+          if (warning.severity === "danger") {
+            return;
+          }
+        }
+      } catch {
+        // Če check ne uspe, nadaljuj (ni kritično)
+      }
+    }
+
     setProcessing(true);
     try {
       const payload: Record<string, unknown> = { paymentMethod: method };
@@ -575,6 +607,55 @@ export function PaymentDialog() {
                   </div>
                 )}
               </div>
+
+              {/* Duplicate warning */}
+              {duplicateWarning && (
+                <div className={cn(
+                  "rounded-lg border-2 p-3",
+                  duplicateWarning.severity === "danger"
+                    ? "border-rose-300 bg-rose-50 dark:border-rose-800 dark:bg-rose-950/30"
+                    : "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30"
+                )}>
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className={cn(
+                      "h-5 w-5 shrink-0 mt-0.5",
+                      duplicateWarning.severity === "danger" ? "text-rose-600 dark:text-rose-400" : "text-amber-600 dark:text-amber-400"
+                    )} />
+                    <div className="flex-1">
+                      <p className={cn(
+                        "text-sm font-semibold",
+                        duplicateWarning.severity === "danger" ? "text-rose-700 dark:text-rose-300" : "text-amber-700 dark:text-amber-300"
+                      )}>
+                        ⚠️ Morebitno podvajanje plačila
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {duplicateWarning.message}
+                      </p>
+                      <div className="mt-2 flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs"
+                          onClick={() => {
+                            setDuplicateConfirmed(true);
+                            setDuplicateWarning(null);
+                          }}
+                        >
+                          Vseeno plačaj
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 text-xs"
+                          onClick={() => setDuplicateWarning(null)}
+                        >
+                          Prekliči
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-3 gap-2">
                 <Button
