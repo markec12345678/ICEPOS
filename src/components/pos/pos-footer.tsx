@@ -34,6 +34,7 @@ import {
   Trophy,
   UserSearch,
   MessageSquare,
+  Clock,
 } from "lucide-react";
 import {
   Sheet,
@@ -80,13 +81,14 @@ export function PosFooter() {
     { id: "performance" as const, label: "Prodaja po operaterjih", desc: "Employee performance", icon: Trophy },
     { id: "customer-analytics" as const, label: "CRM analitika", desc: "Segmentacija strank", icon: UserSearch },
     { id: "feedback" as const, label: "Povratne informacije", desc: "Ocene in komentarji gostov", icon: MessageSquare },
+    { id: "waitlist" as const, label: "Čakalna vrsta", desc: "Gostje ki čakajo na mizo", icon: Clock },
     { id: "weekly" as const, label: "Tedenska statistika", desc: "Po dnevih v tednu", icon: CalendarClock },
     { id: "monthly" as const, label: "Mesečno poročilo", desc: "Statistika meseca", icon: CalendarRange },
     { id: "zreport" as const, label: "Z-report", desc: "Dnevni zaključek", icon: FileBarChart },
     { id: "settings" as const, label: "Nastavitve", desc: "Podjetje in FURS", icon: Settings },
   ];
 
-  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards", "scheduling", "menu-engineering", "benchmark", "waste", "happy-hour", "wolt", "forecast", "combos", "accounting", "deliverect", "opentable", "images", "performance", "customer-analytics", "feedback"].includes(activeView);
+  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards", "scheduling", "menu-engineering", "benchmark", "waste", "happy-hour", "wolt", "forecast", "combos", "accounting", "deliverect", "opentable", "images", "performance", "customer-analytics", "feedback", "waitlist"].includes(activeView);
 
   return (
     <footer className="sticky bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:hidden print:hidden">
@@ -364,6 +366,12 @@ export function PosSidebar() {
       label: "Povratne informacije",
       desc: "Ocene in komentarji gostov",
       icon: MessageSquare,
+    },
+    {
+      id: "waitlist" as const,
+      label: "Čakalna vrsta",
+      desc: "Gostje ki čakajo na mizo",
+      icon: Clock,
     },
   ];
 

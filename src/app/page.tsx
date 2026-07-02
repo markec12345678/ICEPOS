@@ -40,6 +40,7 @@ import { ImagesView } from "@/components/pos/images-view";
 import { EmployeePerformanceView } from "@/components/pos/employee-performance-view";
 import { CustomerAnalyticsView } from "@/components/pos/customer-analytics-view";
 import { FeedbackView } from "@/components/pos/feedback-view";
+import { WaitlistView } from "@/components/pos/waitlist-view";
 import { OutOfStockBanner } from "@/components/pos/out-of-stock-banner";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { KeyboardShortcutsHelp } from "@/components/keyboard-shortcuts-help";
@@ -179,6 +180,7 @@ export default function Home() {
             {activeView === "performance" && <EmployeePerformanceView />}
             {activeView === "customer-analytics" && <CustomerAnalyticsView />}
             {activeView === "feedback" && <FeedbackView />}
+            {activeView === "waitlist" && <WaitlistView />}
           </div>
         </main>
       </div>

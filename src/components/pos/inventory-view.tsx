@@ -55,6 +55,7 @@ import { authHeaders } from "@/components/pos/pin-login";
 import { InventoryImport } from "@/components/pos/inventory-import";
 import { BulkRestock } from "@/components/pos/bulk-restock";
 import { ReorderReport } from "@/components/pos/reorder-report";
+import { InventoryValuation } from "@/components/pos/inventory-valuation";
 
 interface InventoryItem {
   id: string;
@@ -109,6 +110,7 @@ export function InventoryView() {
   const [showImport, setShowImport] = useState(false);
   const [showBulkRestock, setShowBulkRestock] = useState(false);
   const [showReorder, setShowReorder] = useState(false);
+  const [showValuation, setShowValuation] = useState(false);
 
   // Recipes
   const { data: recipes, refetch: refetchRecipes } = useFetch<{
@@ -286,10 +288,23 @@ export function InventoryView() {
               setShowImport(!showImport);
               setShowBulkRestock(false);
               setShowReorder(false);
+              setShowValuation(false);
             }}
           >
             <PackagePlus className="mr-1.5 h-4 w-4" />
             {showImport ? "Skrij uvoz" : "Uvozi artikle"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setShowValuation(!showValuation);
+              setShowBulkRestock(false);
+              setShowReorder(false);
+              setShowImport(false);
+            }}
+          >
+            <Euro className="mr-1.5 h-4 w-4" />
+            {showValuation ? "Skrij vrednost" : "Vrednost zalog"}
           </Button>
           <Button
             onClick={() => setCreating(true)}
@@ -314,6 +329,11 @@ export function InventoryView() {
       {/* Import panel */}
       {showImport && (
         <InventoryImport onImported={refetch} />
+      )}
+
+      {/* Valuation dashboard */}
+      {showValuation && (
+        <InventoryValuation />
       )}
 
       {/* Iskalnik */}

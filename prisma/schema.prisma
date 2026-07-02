@@ -57,6 +57,7 @@ model Restaurant {
   happyHours      HappyHour[]
   comboMeals      ComboMeal[]
   feedbacks       Feedback[]
+  waitlist        WaitlistEntry[]
 }
 
 // ============================================================
@@ -428,6 +429,32 @@ model Feedback {
   response      String?  // odgovor restavracije
   respondedAt   DateTime?
   // Metadata
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Čakalna vrsta (waitlist) — gostje ki čakajo na prosto mizo
+model WaitlistEntry {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  customerName  String
+  phone         String?
+  partySize     Int      @default(2)
+  // Status: waiting | seated | left | cancelled
+  status        String   @default("waiting")
+  // Predviden čas čakanja (min)
+  estimatedWait Int?     // v minutah
+  // Opomba (alergije, posebne želje)
+  note          String?
+  // Miza dodeljena ko sede
+  tableId       String?
+  // SMS/obvestilo poslano
+  notified      Boolean  @default(false)
+  notifiedAt    DateTime?
+  // Timestamps
+  seatedAt      DateTime?
+  leftAt        DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

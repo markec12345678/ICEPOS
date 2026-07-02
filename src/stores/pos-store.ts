@@ -50,7 +50,8 @@ interface PosState {
     | "images"
     | "performance"
     | "customer-analytics"
-    | "feedback";
+    | "feedback"
+    | "waitlist";
   setActiveView: (
     v:
       | "tables"
@@ -85,6 +86,7 @@ interface PosState {
       | "performance"
       | "customer-analytics"
       | "feedback"
+      | "waitlist"
   ) => void;
 
   // Selected table

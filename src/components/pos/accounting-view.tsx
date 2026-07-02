@@ -17,6 +17,7 @@ import {
   Building,
 } from "lucide-react";
 import { formatEUR } from "@/lib/types";
+import { TaxReportView } from "@/components/pos/tax-report-view";
 
 interface AccountingSummary {
   from: string;
@@ -262,6 +263,12 @@ export function AccountingView() {
           </Button>
         </div>
       </Card>
+
+      {/* DDV poročilo */}
+      <div>
+        <h3 className="mb-3 text-lg font-bold">📊 DDV poročilo</h3>
+        <TaxReportView />
+      </div>
 
       {/* Info card */}
       <Card className="p-4 bg-muted/30">
