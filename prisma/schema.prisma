@@ -238,6 +238,8 @@ model InventoryItem {
   costPerUnit Float    @default(0)
   supplier    String?
   category    String   @default("splosno")
+  expiryDate  DateTime? // rok trajanja (opcijsko)
+  batchNumber String?  // številka serije/lote (opcijsko)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   recipes     Recipe[]

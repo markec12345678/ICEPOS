@@ -51,6 +51,7 @@ import {
   ShoppingCart,
   TrendingDown,
   Truck,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { authHeaders } from "@/components/pos/pin-login";
@@ -60,6 +61,7 @@ import { ReorderReport } from "@/components/pos/reorder-report";
 import { InventoryValuation } from "@/components/pos/inventory-valuation";
 import { InventoryConsumption } from "@/components/pos/inventory-consumption";
 import { SmartReorder } from "@/components/pos/smart-reorder";
+import { ExpiryTracker } from "@/components/pos/expiry-tracker";
 
 interface InventoryItem {
   id: string;
@@ -117,6 +119,7 @@ export function InventoryView() {
   const [showValuation, setShowValuation] = useState(false);
   const [showConsumption, setShowConsumption] = useState(false);
   const [showSmartReorder, setShowSmartReorder] = useState(false);
+  const [showExpiry, setShowExpiry] = useState(false);
 
   // Recipes
   const { data: recipes, refetch: refetchRecipes } = useFetch<{
@@ -336,11 +339,28 @@ export function InventoryView() {
               setShowBulkRestock(false);
               setShowReorder(false);
               setShowImport(false);
+              setShowExpiry(false);
             }}
             className={showSmartReorder ? "border-amber-500 text-amber-700 dark:text-amber-400" : ""}
           >
             <Truck className="mr-1.5 h-4 w-4" />
             {showSmartReorder ? "Skrij predloge" : "Pametno naroči"}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setShowExpiry(!showExpiry);
+              setShowSmartReorder(false);
+              setShowConsumption(false);
+              setShowValuation(false);
+              setShowBulkRestock(false);
+              setShowReorder(false);
+              setShowImport(false);
+            }}
+            className={showExpiry ? "border-rose-500 text-rose-700 dark:text-rose-400" : ""}
+          >
+            <Calendar className="mr-1.5 h-4 w-4" />
+            {showExpiry ? "Skji rokove" : "Roki trajanja"}
           </Button>
           <Button
             onClick={() => setCreating(true)}
@@ -380,6 +400,11 @@ export function InventoryView() {
       {/* Smart reorder dashboard */}
       {showSmartReorder && (
         <SmartReorder />
+      )}
+
+      {/* Expiry tracker */}
+      {showExpiry && (
+        <ExpiryTracker />
       )}
 
       {/* Iskalnik */}

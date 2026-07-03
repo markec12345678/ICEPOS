@@ -22,6 +22,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { formatEUR } from "@/lib/types";
+import { ProductivityScore } from "@/components/pos/productivity-score";
 
 interface EmployeePerf {
   operator: string;
@@ -256,6 +257,9 @@ export function EmployeePerformanceView() {
           <p>• Uporabi za motivacijo, bonuse in identifikacijo najboljših prodajalcev.</p>
         </div>
       </Card>
+
+      {/* Productivity score */}
+      <ProductivityScore />
     </div>
   );
 }

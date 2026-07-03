@@ -32,6 +32,7 @@ import { SalesHeatmap } from "@/components/pos/sales-heatmap";
 import { SectionStats } from "@/components/pos/section-stats";
 import { BirthdayReminders } from "@/components/pos/birthday-reminders";
 import { RevenueGoalTracker } from "@/components/pos/revenue-goal-tracker";
+import { PaymentAnalytics } from "@/components/pos/payment-analytics";
 
 export function DashboardView() {
   const { data, loading, error, refetch } = useFetch<DashboardStats>("/api/stats");
@@ -293,6 +294,9 @@ export function DashboardView() {
         )}
       </Card>
       </div>
+
+      {/* Payment analytics — analiza načinov plačila */}
+      <PaymentAnalytics />
 
       {/* Section stats — analitika po sekcijah miz */}
       <SectionStats />
