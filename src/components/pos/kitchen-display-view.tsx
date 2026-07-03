@@ -22,6 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { STATIONS, categoryToStation, getStationConfig, type KitchenStation } from "@/lib/kds-routing";
+import { StationPerformance } from "@/components/pos/station-performance";
 
 interface KitchenItem {
   menuItemId: string;
@@ -315,6 +316,10 @@ export function KitchenDisplayView() {
           );
         })}
       </div>
+
+      {/* Station performance analitika */}
+      <Separator className="my-4" />
+      <StationPerformance />
     </div>
   );
 }

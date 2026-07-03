@@ -27,6 +27,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { formatEUR } from "@/lib/types";
+import { CLVAnalysis } from "@/components/pos/clv-analysis";
 
 interface CustomerStat {
   id: string;
@@ -249,6 +250,9 @@ export function CustomerAnalyticsView() {
 
       {/* VIP Nagrade — Milestone bonus točke */}
       <VipRewardsSection customers={data.customers} onRewardGiven={load} />
+
+      {/* CLV analiza */}
+      <CLVAnalysis />
 
       {/* Vse stranke tabela */}
       <Card className="overflow-hidden">

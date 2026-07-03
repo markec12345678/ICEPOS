@@ -31,6 +31,7 @@ import { LiveServerStatus } from "@/components/pos/live-server-status";
 import { SalesHeatmap } from "@/components/pos/sales-heatmap";
 import { SectionStats } from "@/components/pos/section-stats";
 import { BirthdayReminders } from "@/components/pos/birthday-reminders";
+import { RevenueGoalTracker } from "@/components/pos/revenue-goal-tracker";
 
 export function DashboardView() {
   const { data, loading, error, refetch } = useFetch<DashboardStats>("/api/stats");
@@ -146,8 +147,8 @@ export function DashboardView() {
         )}
       </div>
 
-      {/* Daily target progress bar */}
-      <DailyTargetCard revenue={data.todayRevenue} orders={data.todayOrders} />
+      {/* Revenue goal tracker — dnevni/tedenski/mesečni cilji */}
+      <RevenueGoalTracker />
 
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Urna statistika */}
