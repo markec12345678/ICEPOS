@@ -40,6 +40,7 @@ import {
   StickyNote,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NoShowStats } from "@/components/pos/no-show-stats";
 
 interface Reservation {
   id: string;
@@ -297,6 +298,9 @@ export function ReservationsView() {
           }}
         />
       )}
+
+      {/* No-show statistika */}
+      <NoShowStats />
     </div>
   );
 }

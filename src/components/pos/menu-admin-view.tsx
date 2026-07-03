@@ -43,8 +43,10 @@ import {
   Star,
   Eye,
   EyeOff,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BulkPriceUpdate } from "@/components/pos/bulk-price-update";
 
 export function MenuAdminView() {
   const { data, loading, error, refetch } = useFetch<MenuItem[]>("/api/menu");
@@ -59,6 +61,7 @@ export function MenuAdminView() {
   const [catFilter, setCatFilter] = useState<string>("vse");
   const [editing, setEditing] = useState<MenuItem | null>(null);
   const [creating, setCreating] = useState(false);
+  const [bulkPriceOpen, setBulkPriceOpen] = useState(false);
   const [deleting, setDeleting] = useState<MenuItem | null>(null);
 
   // Izračunaj food cost per menu item
@@ -148,10 +151,16 @@ export function MenuAdminView() {
             {items.filter((m) => m.available).length} aktivnih
           </p>
         </div>
-        <Button onClick={() => setCreating(true)} className="bg-amber-600 hover:bg-amber-700">
-          <Plus className="mr-1.5 h-4 w-4" />
-          Nova postavka
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setBulkPriceOpen(true)}>
+            <TrendingUp className="mr-1.5 h-4 w-4" />
+            Množične cene
+          </Button>
+          <Button onClick={() => setCreating(true)} className="bg-amber-600 hover:bg-amber-700">
+            <Plus className="mr-1.5 h-4 w-4" />
+            Nova postavka
+          </Button>
+        </div>
       </div>
 
       {/* Filtri */}
@@ -498,6 +507,13 @@ export function MenuAdminView() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Bulk price update */}
+      <BulkPriceUpdate
+        open={bulkPriceOpen}
+        onOpenChange={setBulkPriceOpen}
+        onUpdated={refetch}
+      />
     </div>
   );
 }

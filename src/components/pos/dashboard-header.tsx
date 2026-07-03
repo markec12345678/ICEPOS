@@ -239,6 +239,18 @@ export function DashboardHeader() {
             <ChefHat className="h-3.5 w-3.5" />
             <span className="text-[10px]">Kuhinja</span>
           </Button>
+          <Button size="sm" variant="outline" onClick={() => setActiveView("reservations")} className="h-8 flex-col gap-0.5 py-1">
+            <CalendarDays className="h-3.5 w-3.5" />
+            <span className="text-[10px]">Rezervacije</span>
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setActiveView("customers")} className="h-8 flex-col gap-0.5 py-1">
+            <UserCircle className="h-3.5 w-3.5" />
+            <span className="text-[10px]">Stranke</span>
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setActiveView("inventory")} className="h-8 flex-col gap-0.5 py-1">
+            <Package className="h-3.5 w-3.5" />
+            <span className="text-[10px]">Zaloga</span>
+          </Button>
           <Button size="sm" variant="outline" onClick={() => setActiveView("zreport")} className="h-8 flex-col gap-0.5 py-1">
             <Receipt className="h-3.5 w-3.5" />
             <span className="text-[10px]">Z-report</span>
