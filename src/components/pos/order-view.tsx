@@ -937,6 +937,8 @@ export function OrderView() {
               variant="outline"
               onClick={handleSave}
               disabled={saving || cart.length === 0}
+              data-shortcut="save-order"
+              title="Shrani (Ctrl+Enter)"
             >
               <Save className="mr-1.5 h-4 w-4" />
               Shrani
@@ -945,6 +947,8 @@ export function OrderView() {
               onClick={handlePay}
               disabled={saving || cart.length === 0}
               className="bg-amber-600 text-white hover:bg-amber-700"
+              data-shortcut="pay"
+              title="Plačaj (F9 ali P)"
             >
               <Printer className="mr-1.5 h-4 w-4" />
               Plačaj
@@ -958,6 +962,8 @@ export function OrderView() {
               size="sm"
               onClick={handleSendToKitchen}
               disabled={sendingKitchen || cart.length === 0}
+              data-shortcut="send-kitchen"
+              title="Pošlji v kuhinjo (Ctrl+S)"
               className="border-sky-300 text-sky-700 hover:bg-sky-50 hover:text-sky-800 dark:border-sky-800 dark:text-sky-400 dark:hover:bg-sky-950/30"
             >
               <ChefHat className="mr-1.5 h-4 w-4" />

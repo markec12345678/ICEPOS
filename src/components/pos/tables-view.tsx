@@ -240,6 +240,8 @@ export function TablesView() {
           }}
           className="bg-amber-600 hover:bg-amber-700"
           size="sm"
+          data-shortcut="new-order"
+          title="Nov račun (N)"
         >
           <Plus className="mr-1.5 h-4 w-4" />
           Nov račun
@@ -316,6 +318,7 @@ export function TablesView() {
                       onClick={() => selectTable(t.id)}
                       role="button"
                       tabIndex={0}
+                      data-table-card
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
