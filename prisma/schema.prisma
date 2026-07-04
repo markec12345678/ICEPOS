@@ -147,6 +147,7 @@ model Order {
   operatorTaxNo String   @default("SI12345678")
   shiftId       String?
   tip           Float    @default(0) // napitnina (EUR)
+  stripePaymentIntentId String? // Stripe PaymentIntent ID
   // Flags
   flags         String?  // JSON array: ["vip", "birthday", "rush", "allergy"]
   // Storno
