@@ -88,6 +88,9 @@ model MenuItem {
   orderItems    OrderItem[]
   modifiers     Modifier[]
   recipes       Recipe[]
+  @@index([restaurantId])
+  @@index([restaurantId, category])
+  @@index([restaurantId, active])
 }
 
 model Modifier {
@@ -116,6 +119,8 @@ model Table {
   reservations Reservation[]
 
   @@unique([restaurantId, number])
+  @@index([restaurantId])
+  @@index([restaurantId, section])
 }
 
 model Order {
@@ -152,6 +157,10 @@ model Order {
   stornoEor     String?
   customerId    String?
   customer      Customer? @relation(fields: [customerId], references: [id])
+  @@index([restaurantId])
+  @@index([restaurantId, status])
+  @@index([restaurantId, paidAt])
+  @@index([tableId])
 }
 
 model OrderItem {
@@ -165,6 +174,8 @@ model OrderItem {
   vatRate    Float // snapshot DDV stopnje
   note       String?
   modifiers  String? // JSON array izbranih modifierjev
+  @@index([orderId])
+  @@index([menuItemId])
 }
 
 model Reservation {
@@ -183,6 +194,8 @@ model Reservation {
   note       String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  @@index([restaurantId])
+  @@index([restaurantId, date])
 }
 
 // ============================================================
@@ -204,6 +217,8 @@ model Shift {
   totalRevenue Float  @default(0)
   note       String?
   createdAt  DateTime @default(now())
+  @@index([restaurantId])
+  @@index([restaurantId, status])
 }
 
 model Operator {
@@ -221,6 +236,8 @@ model Operator {
   timesheets Timesheet[]
 
   @@unique([restaurantId, pin])
+  @@index([restaurantId])
+  @@index([restaurantId, active])
 }
 
 // ============================================================
@@ -244,6 +261,7 @@ model InventoryItem {
   updatedAt   DateTime @updatedAt
   recipes     Recipe[]
   wasteLogs   WasteLog[]
+  @@index([restaurantId])
 }
 
 model Recipe {
@@ -278,6 +296,8 @@ model Customer {
   orders      Order[]
 
   @@unique([restaurantId, phone])
+  @@index([restaurantId])
+  @@index([restaurantId, phone])
 }
 
 // ============================================================
@@ -299,6 +319,7 @@ model GiftCard {
   updatedAt   DateTime @updatedAt
 
   @@unique([restaurantId, code])
+  @@index([restaurantId])
 }
 
 // ============================================================
@@ -318,6 +339,7 @@ model Schedule {
   updatedAt    DateTime @updatedAt
 
   @@unique([operatorId, date])
+  @@index([operatorId])
 }
 
 model Timesheet {
@@ -331,6 +353,7 @@ model Timesheet {
   note         String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  @@index([operatorId])
 }
 
 // ============================================================
@@ -352,6 +375,7 @@ model WasteLog {
   note            String?
   operator        String?  // ime operaterja
   createdAt       DateTime @default(now())
+  @@index([restaurantId])
 }
 
 // ============================================================
@@ -375,6 +399,7 @@ model HappyHour {
   active        Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  @@index([restaurantId])
 }
 
 // ============================================================
@@ -394,6 +419,7 @@ model ComboMeal {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   slots         ComboSlot[]
+  @@index([restaurantId])
 }
 
 // Slot v combo-ju (npr. "Izberi 1 juho", "Izberi 1 glavno jed", "Izberi 1 pijačo")
@@ -434,6 +460,7 @@ model Feedback {
   // Metadata
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  @@index([restaurantId])
 }
 
 // Čakalna vrsta (waitlist) — gostje ki čakajo na prosto mizo
@@ -460,4 +487,5 @@ model WaitlistEntry {
   leftAt        DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  @@index([restaurantId])
 }
