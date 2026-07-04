@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 // GET /api/restaurants — vrne vse aktivne restavracije (za selector)
+// Vrne SAMO minimalne podatke — brez občutljivih (taxNumber, email, phone, itd.)
 export async function GET() {
   try {
     const restaurants = await db.restaurant.findMany({
@@ -14,14 +15,7 @@ export async function GET() {
         name: true,
         slug: true,
         subdomain: true,
-        address: true,
         city: true,
-        phone: true,
-        email: true,
-        taxNumber: true,
-        businessUnit: true,
-        cashRegister: true,
-        fursEnv: true,
       },
     });
     return NextResponse.json(restaurants);
@@ -31,9 +25,20 @@ export async function GET() {
   }
 }
 
-// POST /api/restaurants — ustvari novo restavracijo (super-admin)
+// POST /api/restaurants — ustvari novo restavracijo (super-admin only)
+// Zahteva x-super-admin-key header, ki se primerja z SUPER_ADMIN_KEY env var.
 export async function POST(req: NextRequest) {
   try {
+    // === Super-admin avtentikacija ===
+    const superAdminKey = req.headers.get("x-super-admin-key");
+    const expectedKey = process.env.SUPER_ADMIN_KEY;
+    if (!expectedKey || superAdminKey !== expectedKey) {
+      return NextResponse.json(
+        { error: "Dostop zavrnjen — zahteva super-admin ključ" },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const {
       name,
