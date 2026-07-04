@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       where: { restaurantId: tenant.id, active: true },
     });
 
-    let operator = null;
+    let operator: Awaited<ReturnType<typeof db.operator.findMany>>[number] | null = null;
     for (const op of operators) {
       if (verifyPin(pin, op.pin)) {
         operator = op;

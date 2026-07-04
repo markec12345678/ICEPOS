@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 
     const shiftId = req.nextUrl.searchParams.get("shiftId");
 
-    let shift = null;
+    let shift: Awaited<ReturnType<typeof db.shift.findFirst>> | null = null;
     if (shiftId) {
       shift = await db.shift.findFirst({
         where: { id: shiftId, restaurantId: tenant.id },

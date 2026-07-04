@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
         await db.$transaction(async (tx) => {
           const order = await tx.order.findFirst({
             where: { id: orderId, restaurantId: tenantId },
+            include: { items: true },
           });
           if (!order) throw new Error("Order not found");
 

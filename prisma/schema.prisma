@@ -12,6 +12,53 @@ datasource db {
 }
 
 // ============================================================
+// ENUMS — tipno-varne statusne vrednosti
+// ============================================================
+
+enum OrderStatus {
+  open
+  paid
+  cancelled
+  storno
+  new
+  void
+}
+
+enum PaymentMethod {
+  cash
+  card
+  giftcard
+  sumup
+  stripe
+  wallet
+}
+
+enum OperatorRole {
+  cashier
+  admin
+}
+
+enum ReservationStatus {
+  pending
+  confirmed
+  seated
+  cancelled
+  no_show
+}
+
+enum ShiftStatus {
+  open
+  closed
+}
+
+enum HappyHourDiscountType {
+  percent
+  fixed
+}
+
+
+
+// ============================================================
 // RESTAURANT (TENANT) — centralni model za multi-tenant
 // ============================================================
 
@@ -90,7 +137,6 @@ model MenuItem {
   recipes       Recipe[]
   @@index([restaurantId])
   @@index([restaurantId, category])
-  @@index([restaurantId, active])
 }
 
 model Modifier {
@@ -129,13 +175,13 @@ model Order {
   restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   tableId       String
   table         Table     @relation(fields: [tableId], references: [id])
-  status        String    @default("open") // "open" | "paid" | "cancelled" | "storno"
+  status        OrderStatus @default(open)
   items         OrderItem[]
   total         Float     @default(0)
   vatTotal      Float     @default(0)
   createdAt     DateTime  @default(now())
   paidAt        DateTime?
-  paymentMethod String? // "cash" | "card" | "giftcard"
+  paymentMethod PaymentMethod?
   receiptNo     String? // SRS številka računa
   zoi           String? // Zaščitna oznaka izdajatelja (ZOI) — 32 hex
   eor           String? // Enkratna identifikacija računa (EOR) — UUID
@@ -148,6 +194,7 @@ model Order {
   shiftId       String?
   tip           Float    @default(0) // napitnina (EUR)
   stripePaymentIntentId String? // Stripe PaymentIntent ID
+  fursSubmitted   Boolean  @default(false) // ali je račun uspešno fiskaliziran pri FURS
   // Flags
   flags         String?  // JSON array: ["vip", "birthday", "rush", "allergy"]
   // Storno
@@ -191,7 +238,7 @@ model Reservation {
   date       String // YYYY-MM-DD
   time       String // HH:mm
   duration   Int      @default(120)
-  status     String   @default("confirmed")
+  status     ReservationStatus @default(confirmed)
   note       String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
@@ -213,7 +260,7 @@ model Shift {
   endTime    DateTime?
   startCash  Float    @default(0)
   endCash    Float?
-  status     String   @default("open")
+  status     ShiftStatus @default(open)
   ordersCount Int     @default(0)
   totalRevenue Float  @default(0)
   note       String?
@@ -229,7 +276,7 @@ model Operator {
   name       String
   pin        String
   taxNumber  String   @default("SI12345678")
-  role       String   @default("cashier") // "cashier" | "admin"
+  role       OperatorRole @default(cashier)
   hourlyRate Float    @default(12)
   active     Boolean  @default(true)
   createdAt  DateTime @default(now())
@@ -238,7 +285,6 @@ model Operator {
 
   @@unique([restaurantId, pin])
   @@index([restaurantId])
-  @@index([restaurantId, active])
 }
 
 // ============================================================
@@ -289,6 +335,7 @@ model Customer {
   points      Int      @default(0)
   totalSpent  Float    @default(0)
   visitCount  Int      @default(0)
+  lastVisitAt DateTime?
   allergens   String?
   note        String?
   birthday    DateTime?
@@ -391,7 +438,7 @@ model HappyHour {
   daysOfWeek    String   // JSON array: [1,2,3,4,5] = pon-pet
   startTime     String   // "16:00"
   endTime       String   // "18:00"
-  discountType  String   // "percent" | "fixed"
+  discountType  HappyHourDiscountType
   discountValue Float    // 30 = 30% off, ali 2 = 2€ off
   // Filter na kategorije (JSON array ali "all")
   categories    String   @default("all") // "all" ali JSON ["alkoholne","brezalkoholne"]

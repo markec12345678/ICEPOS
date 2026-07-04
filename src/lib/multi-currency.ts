@@ -1,3 +1,5 @@
+export type DisplayCurrency = "EUR" | "USD";
+
 /**
  * Helper za prikaz cene v več valutah (za turiste).
  *

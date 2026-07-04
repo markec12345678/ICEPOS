@@ -165,9 +165,7 @@ export async function POST(
         zoi,
         config: {
           taxNumber: issuerTaxNumber,
-          businessPremiseID: issuer.businessPremiseID,
-          electronicDeviceID: issuer.electronicDeviceID,
-          fursEnv: tenant.fursEnv,
+          env: tenant.fursEnv === "production" ? "prod" : "test",
         },
       });
 
