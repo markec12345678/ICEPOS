@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getOperatorFromRequest } from "@/lib/auth";
+import { getOperatorFromRequest, hashPin, verifyPin } from "@/lib/auth";
 import { getTenantFromRequest } from "@/lib/tenant";
-import { hashPin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
