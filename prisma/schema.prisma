@@ -81,6 +81,12 @@ model Restaurant {
   fursCertPath    String?  // pot do eDavki certifikata
   fursCertPassword String?
 
+  // Webhook tenant identification (Task S3)
+  woltVenueId           String?
+  deliverectLocationId  String?
+  opentableRestaurantId String?
+  resyVenueId           String?
+
   // Nastavitve
   currency        String   @default("EUR")
   timezone        String   @default("Europe/Ljubljana")

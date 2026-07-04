@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
         customerName,
         date,
         time,
-        String(partySize),
+        parseInt(partySize, 10) as any,
         reservation.table.name
       );
       payload.to = customerPhone;

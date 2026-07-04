@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     // Poišči restavracijo
     // Poišči tenant po locationId (Deliverect webhook payload)
     const locationId = (payload as any).locationId || (payload as any).channelLinkId;
-    let restaurant = null;
+    let restaurant: Awaited<ReturnType<typeof db.restaurant.findFirst>> | null = null;
     if (locationId) {
       restaurant = await db.restaurant.findFirst({
         where: { deliverectLocationId: locationId, active: true },

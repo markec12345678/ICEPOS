@@ -379,12 +379,12 @@ export function InventoryView() {
 
       {/* Bulk restock panel */}
       {showBulkRestock && (
-        <BulkRestock onImported={refetch} />
+        <BulkRestock onUpdated={refetch} />
       )}
 
       {/* Import panel */}
       {showImport && (
-        <InventoryImport onImported={refetch} />
+        <InventoryImport onUpdated={refetch} />
       )}
 
       {/* Valuation dashboard */}

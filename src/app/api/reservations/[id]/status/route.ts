@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ReservationStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 // PATCH /api/reservations/[id]/status — posodobi status rezervacije
-// Body: { status: "confirmed" | "seated" | "cancelled" | "no_show" }
+// Body: { status: ReservationStatus.confirmed | "seated" | "cancelled" | "no_show" }
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

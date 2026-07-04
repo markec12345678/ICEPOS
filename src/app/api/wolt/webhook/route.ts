@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 
     // Poišči restavracijo po venue_id (produkcija) ali prvo aktivno (fallback)
     const venueId = payload.venue_id || payload.merchant_id;
-    let restaurant = null;
+    let restaurant: Awaited<ReturnType<typeof db.restaurant.findFirst>> | null = null;
     if (venueId) {
       restaurant = await db.restaurant.findFirst({
         where: { woltVenueId: venueId, active: true },
