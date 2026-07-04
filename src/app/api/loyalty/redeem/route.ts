@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
+import { verifyLoyaltyToken } from "@/lib/jwt";
+
+// Extract + verify loyalty token from header or query
+function extractLoyaltyToken(req: NextRequest): string | null {
+  // 1. x-loyalty-token header (preferred)
+  const headerToken = req.headers.get("x-loyalty-token");
+  if (headerToken) return headerToken;
+  // 2. ?token= query param (backward compat)
+  const queryToken = req.nextUrl.searchParams.get("token");
+  if (queryToken) return queryToken;
+  return null;
+}
+
+
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +42,7 @@ export async function GET(req: NextRequest) {
     let customerPoints = 0;
     if (token) {
       const customer = await db.customer.findFirst({
-        where: { id: token, restaurantId: tenant.id },
+        where: { id: payload.customerId, restaurantId: payload.restaurantId },
         select: { points: true },
       });
       if (customer) customerPoints = customer.points;
@@ -68,7 +82,7 @@ export async function POST(req: NextRequest) {
     }
 
     const customer = await db.customer.findFirst({
-      where: { id: token, restaurantId: tenant.id },
+      where: { id: payload.customerId, restaurantId: payload.restaurantId },
     });
 
     if (!customer) {

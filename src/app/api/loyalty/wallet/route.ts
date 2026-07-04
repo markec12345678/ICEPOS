@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
+import { verifyLoyaltyToken } from "@/lib/jwt";
+
+// Extract + verify loyalty token from header or query
+function extractLoyaltyToken(req: NextRequest): string | null {
+  // 1. x-loyalty-token header (preferred)
+  const headerToken = req.headers.get("x-loyalty-token");
+  if (headerToken) return headerToken;
+  // 2. ?token= query param (backward compat)
+  const queryToken = req.nextUrl.searchParams.get("token");
+  if (queryToken) return queryToken;
+  return null;
+}
+
+
 
 export const dynamic = "force-dynamic";
 
@@ -12,13 +26,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
     }
 
-    const token = req.nextUrl.searchParams.get("token");
+    const token = extractLoyaltyToken(req);
     if (!token) {
       return NextResponse.json({ error: "Manjka token" }, { status: 401 });
     }
 
+    const payload = verifyLoyaltyToken(token);
+    if (!payload) {
+      return NextResponse.json({ error: "Neveljaven ali potekel token" }, { status: 401 });
+    }
+
     const customer = await db.customer.findFirst({
-      where: { id: token, restaurantId: tenant.id },
+      where: { id: payload.customerId, restaurantId: payload.restaurantId },
       select: { id: true, name: true, note: true },
     });
 
