@@ -214,3 +214,120 @@
     size: 80mm auto;
   }
 }
+
+/* ============================================================
+   MOBILE / TABLET OPTIMIZACIJA
+   ============================================================ */
+
+/* Touch targeti: minimalno 44px na touch napravah */
+@media (pointer: coarse) {
+  button,
+  [role="button"],
+  a[role="button"],
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Povečaj font size na tablicah za boljšo berljivost */
+  /* Small text override — povečaj na najmanj 11px na tablicah */
+  .text-\[8px\],
+  .text-\[9px\] {
+    font-size: 11px !important;
+  }
+  .text-\[10px\] {
+    font-size: 12px !important;
+  }
+}
+
+/* Tablet specifične popravke (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  /* Povečaj font size na tablicah */
+  .text-\[8px\],
+  .text-\[9px\] {
+    font-size: 10px !important;
+  }
+
+  /* Večji padding na karticah */
+  .pos-card-tablet {
+    padding: 1rem !important;
+  }
+
+  /* Večji razmak med elementi */
+  .pos-gap-tablet {
+    gap: 0.75rem !important;
+  }
+}
+
+/* Mobile specifične popravke (< 640px) */
+@media (max-width: 639px) {
+  /* Prepreči zoom pri fokusiranju inputov (iOS) */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Input number brez spinnerjev na mobilu */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* Večji touch targeti na gumbih v navigaciji */
+  nav button {
+    min-height: 48px;
+  }
+
+  /* Scrollbar styling za boljši UX na mobilu */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--muted-foreground);
+    border-radius: 3px;
+    opacity: 0.5;
+  }
+}
+
+/* Large touch target utility class */
+.touch-lg {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+.touch-md {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Prevent text selection on buttons (boljši touch UX) */
+button,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* Smooth scrolling za boljši touch UX */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Safe area insets za iOS (notch) */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}

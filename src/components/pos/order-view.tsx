@@ -785,17 +785,17 @@ export function OrderView() {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => updateLineQty(c.lineId, -1)}
-                          className="flex h-7 w-7 items-center justify-center rounded-md border border-border transition-colors hover:bg-muted hover:text-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="flex h-9 w-9 items-center justify-center rounded-md border border-border transition-colors hover:bg-muted hover:text-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           aria-label="Zmanjšaj"
                         >
-                          <Minus className="h-3.5 w-3.5" />
+                          <Minus className="h-4 w-4" />
                         </button>
                         <span className="w-8 text-center text-sm font-semibold">
                           {c.quantity}
                         </span>
                         <button
                           onClick={() => updateLineQty(c.lineId, 1)}
-                          className="flex h-7 w-7 items-center justify-center rounded-md border border-border transition-colors hover:bg-amber-50 hover:border-amber-300 hover:text-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-amber-950/30"
+                          className="flex h-9 w-9 items-center justify-center rounded-md border border-border transition-colors hover:bg-amber-50 hover:border-amber-300 hover:text-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-amber-950/30"
                           aria-label="Povečaj"
                         >
                           <Plus className="h-3.5 w-3.5" />
@@ -905,13 +905,13 @@ export function OrderView() {
               value={discountPercent || ""}
               onChange={(e) => setDiscountPercent(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
               placeholder="0"
-              className="h-8 w-16 text-center"
+              className="h-10 w-16 text-center"
             />
             <span className="text-xs text-muted-foreground">%</span>
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 text-xs"
+              className="h-9 text-xs"
               onClick={() => setDiscountPercent(0)}
               disabled={discountPercent === 0}
             >
@@ -923,7 +923,7 @@ export function OrderView() {
                   key={p}
                   variant={discountPercent === p ? "default" : "outline"}
                   size="sm"
-                  className="h-8 px-2 text-xs"
+                  className="h-9 px-2.5 text-xs"
                   onClick={() => setDiscountPercent(p)}
                 >
                   {p}%

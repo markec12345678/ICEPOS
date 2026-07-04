@@ -91,7 +91,7 @@ export function PosFooter() {
   const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards", "scheduling", "menu-engineering", "benchmark", "waste", "happy-hour", "wolt", "forecast", "combos", "accounting", "deliverect", "opentable", "images", "performance", "customer-analytics", "feedback", "waitlist"].includes(activeView);
 
   return (
-    <footer className="sticky bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:hidden print:hidden">
+    <footer className="sticky bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:hidden print:hidden safe-bottom">
       <nav className="grid grid-cols-5">
         {mainNav.map((item) => {
           const Icon = item.icon;
@@ -101,7 +101,7 @@ export function PosFooter() {
               key={item.id}
               onClick={() => setActiveView(item.id)}
               className={cn(
-                "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-all active:scale-95",
+                "flex flex-col items-center gap-1 py-3 text-xs font-medium transition-all active:scale-95 min-h-[56px]",
                 active
                   ? "text-amber-600 dark:text-amber-400"
                   : "text-muted-foreground hover:text-foreground"
@@ -127,7 +127,7 @@ export function PosFooter() {
           <SheetTrigger asChild>
             <button
               className={cn(
-                "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-all active:scale-95",
+                "flex flex-col items-center gap-1 py-3 text-xs font-medium transition-all active:scale-95 min-h-[56px]",
                 isMoreActive
                   ? "text-amber-600 dark:text-amber-400"
                   : "text-muted-foreground hover:text-foreground"

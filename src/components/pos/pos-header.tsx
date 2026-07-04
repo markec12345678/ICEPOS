@@ -190,7 +190,7 @@ export function PosHeader() {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 gap-1 px-2"
+              className="h-9 gap-1 px-2"
               onClick={logout}
             >
               <UserCircle className="h-4 w-4" />

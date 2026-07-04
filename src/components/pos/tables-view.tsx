@@ -238,7 +238,7 @@ export function TablesView() {
               toast.error("Ni prostih miz");
             }
           }}
-          className="bg-amber-600 hover:bg-amber-700"
+          className="bg-amber-600 hover:bg-amber-700 touch-md"
           size="sm"
           data-shortcut="new-order"
           title="Nov račun (N)"
@@ -250,7 +250,7 @@ export function TablesView() {
 
       {/* Vizualni tloris po sekcijah */}
       {loading ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {Array.from({ length: 10 }).map((_, i) => (
             <Skeleton key={i} className="h-36 rounded-xl" />
           ))}
@@ -298,7 +298,7 @@ export function TablesView() {
               </div>
 
               {/* Mize v sekciji */}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                 {secTables.map((t) => {
                   const openOrder = t.orders.find((o) => o.status === "open");
                   const occupied = !!openOrder;
@@ -326,7 +326,7 @@ export function TablesView() {
                         }
                       }}
                       className={cn(
-                        "group relative cursor-pointer overflow-hidden p-4 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.98]",
+                        "group relative cursor-pointer overflow-hidden p-4 md:p-5 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.98] min-h-[120px]",
                         occupied
                           ? "border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50 dark:border-amber-800 dark:from-amber-950/40 dark:to-orange-950/30"
                           : hasReservationSoon
