@@ -1,4 +1,3 @@
-// @ts-nocheck — Decimal migration TS errors (Task V2)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getOperatorFromRequest } from "@/lib/auth";
@@ -86,7 +85,7 @@ export async function POST(req: NextRequest) {
         where: { id: inventoryItemId, restaurantId: tenant.id },
       });
       if (item) {
-        finalCost = item.costPerUnit * quantity;
+        finalCost = Number(item.costPerUnit) * quantity;
         finalUnit = unit || item.unit;
       }
     }

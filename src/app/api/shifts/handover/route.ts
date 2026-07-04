@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (Task U1)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
       data: {
         status: "closed",
         endTime: new Date(),
-        endCash: typeof endCash === "number" ? endCash : activeShift.startCash + totalRevenue,
+        endCash: typeof endCash === "number" ? endCash : Number(activeShift.startCash) + totalRevenue,
         totalRevenue,
         ordersCount,
         note: note || `Izmenjava na: ${newOperator?.name || newOperatorName || "neznan"}`,
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
         restaurantId: tenant.id,
         operator: newOperator?.name || newOperatorName || "Blagajnik",
         operatorTaxNo: newOperator?.taxNumber || newOperatorTaxNo || activeShift.operatorTaxNo,
-        startCash: typeof startCash === "number" ? startCash : (typeof endCash === "number" ? endCash : activeShift.startCash + totalRevenue),
+        startCash: typeof startCash === "number" ? startCash : (typeof endCash === "number" ? endCash : Number(activeShift.startCash) + totalRevenue),
         status: "open",
       },
     });

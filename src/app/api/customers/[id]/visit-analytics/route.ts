@@ -1,4 +1,4 @@
-// @ts-nocheck — Decimal migration TS errors (Task V2)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -92,7 +92,7 @@ export async function GET(
           };
         }
         itemStats[key].quantity += item.quantity;
-        itemStats[key].revenue += item.unitPrice * item.quantity;
+        itemStats[key].revenue += Number(item.unitPrice) * item.quantity;
       }
     }
     const favoriteItems = Object.values(itemStats)

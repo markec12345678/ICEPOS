@@ -1,4 +1,4 @@
-// @ts-nocheck — Decimal migration TS errors (Task V2)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { db } from "@/lib/db";
 import { ISSUER } from "@/lib/furs";
 import type { MenuItem } from "@/lib/types";

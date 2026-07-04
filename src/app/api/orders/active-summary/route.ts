@@ -1,4 +1,3 @@
-// @ts-nocheck — Decimal migration TS errors (Task V2)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -33,7 +32,7 @@ export async function GET(req: NextRequest) {
     const summary = orders.map((o) => {
       const elapsed = Math.floor((now.getTime() - o.createdAt.getTime()) / 60000);
       const itemCount = o.items.reduce((s, i) => s + i.quantity, 0);
-      const total = o.items.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
+      const total = o.items.reduce((s, i) => s + Number(i.unitPrice) * i.quantity, 0);
 
       // Urgency
       let urgency: "normal" | "warning" | "urgent" = "normal";

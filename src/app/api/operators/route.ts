@@ -1,4 +1,3 @@
-// @ts-nocheck — pre-existing TS errors (Task U1)
 import { NextRequest, NextResponse } from "next/server";
 import { OperatorRole } from "@prisma/client";
 import { db } from "@/lib/db";
@@ -87,7 +86,7 @@ export async function POST(req: NextRequest) {
         name: name.trim(),
         pin: hashPin(pin), // hash PIN pred shranjevanjem
         taxNumber: taxNumber || tenant.taxNumber,
-        role: role || "cashier",
+        role: (role as OperatorRole) || OperatorRole.cashier,
         hourlyRate: typeof hourlyRate === "number" ? hourlyRate : 12,
         restaurantId: tenant.id,
       },

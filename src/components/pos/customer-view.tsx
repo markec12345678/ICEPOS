@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (Task U1)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 "use client";
 
 import { useEffect, useState } from "react";

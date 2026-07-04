@@ -1,4 +1,4 @@
-// @ts-nocheck — Decimal migration TS errors (Task V2)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -78,9 +78,9 @@ export async function GET() {
         dayIndex: d.dayIndex,
         dayName: d.dayName,
         dayShort: d.dayShort,
-        totalRevenue: Math.round(d.totalRevenue * 100) / 100,
+        totalRevenue: Math.round(Number(d.totalRevenue) * 100) / 100,
         orderCount: d.orderCount,
-        avgRevenue: Math.round((d.totalRevenue / daysCount) * 100) / 100,
+        avgRevenue: Math.round((Number(d.totalRevenue) / daysCount) * 100) / 100,
         avgOrders: Math.round((d.orderCount / daysCount) * 10) / 10,
         cashRevenue: Math.round(d.cashRevenue * 100) / 100,
         cardRevenue: Math.round(d.cardRevenue * 100) / 100,

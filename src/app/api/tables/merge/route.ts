@@ -1,4 +1,3 @@
-// @ts-nocheck — Decimal migration TS errors (Task V2)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -66,8 +65,8 @@ export async function POST(req: NextRequest) {
 
       // Posodobi skupni znesek target naročila
       const allItems = [...targetOrder.items, ...sourceOrder.items];
-      const newTotal = allItems.reduce((s, i) => s + i.unitPrice * i.quantity, 0);
-      const newVatTotal = allItems.reduce((s, i) => s + i.unitPrice * i.quantity * i.vatRate, 0);
+      const newTotal = allItems.reduce((s, i) => s + Number(i.unitPrice) * i.quantity, 0);
+      const newVatTotal = allItems.reduce((s, i) => s + Number(i.unitPrice) * i.quantity * i.vatRate, 0);
 
       await db.order.update({
         where: { id: targetOrder.id },

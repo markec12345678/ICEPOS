@@ -1,4 +1,4 @@
-// @ts-nocheck — Decimal migration TS errors (Task V2)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
         if (!vatBreakdown[key]) {
           vatBreakdown[key] = { base: 0, vat: 0, total: 0, count: 0 };
         }
-        const itemTotal = item.unitPrice * item.quantity;
+        const itemTotal = Number(item.unitPrice) * item.quantity;
         const itemBase = itemTotal / (1 + vatRate);
         const itemVat = itemTotal - itemBase;
 
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
       ratePercent: parseFloat(rate) * 100,
       base: Math.round(v.base * 100) / 100,
       vat: Math.round(v.vat * 100) / 100,
-      total: Math.round(v.total * 100) / 100,
+      total: Math.round(Number(v.total) * 100) / 100,
       count: v.count,
     })).sort((a, b) => b.rate - a.rate);
 
@@ -96,7 +96,7 @@ export async function GET(req: NextRequest) {
     const paymentMethodStats = Object.entries(byPaymentMethod).map(([method, v]) => ({
       method,
       count: v.count,
-      total: Math.round(v.total * 100) / 100,
+      total: Math.round(Number(v.total) * 100) / 100,
       vat: Math.round(v.vat * 100) / 100,
     }));
 

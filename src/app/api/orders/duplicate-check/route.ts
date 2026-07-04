@@ -1,4 +1,3 @@
-// @ts-nocheck — Decimal migration TS errors (Task V2)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -47,7 +46,7 @@ export async function POST(req: NextRequest) {
 
     // 1. Enak znesek v zadnjih 10 minutah
     const sameAmount = recentOrders.find(
-      (o) => Math.abs(o.total - total) < 0.01
+      (o) => Math.abs(Number(o.total) - total) < 0.01
     );
     if (sameAmount) {
       warnings.push({

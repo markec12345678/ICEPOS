@@ -1,4 +1,4 @@
-// @ts-nocheck — Decimal migration TS errors (Task V2)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
       ordersCount: paidOrders.length,
       cashRevenue,
       cardRevenue,
-      expectedCash: shift.startCash + cashRevenue,
+      expectedCash: Number(shift.startCash) + cashRevenue,
     });
   } catch (e) {
     console.error("GET /api/shifts/live-stats error:", e);

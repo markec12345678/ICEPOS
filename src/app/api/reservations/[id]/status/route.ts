@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (Task U1)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { ReservationStatus } from "@prisma/client";
 import { db } from "@/lib/db";

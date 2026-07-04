@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (Task U1)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
           for (const it of o.items) {
             const recipes = it.menuItem.recipes || [];
             for (const recipe of recipes) {
-              foodCost += recipe.inventoryItem.costPerUnit * recipe.quantity * it.quantity;
+              foodCost += recipe.Number(inventoryItem.costPerUnit) * recipe.quantity * it.quantity;
             }
           }
         }
@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
           for (const it of o.items) {
             const key = it.menuItemId;
             const existing = itemMap.get(key);
-            const lineRev = it.unitPrice * it.quantity;
+            const lineRev = Number(it.unitPrice) * it.quantity;
             if (existing) {
               existing.count += it.quantity;
               existing.revenue += lineRev;

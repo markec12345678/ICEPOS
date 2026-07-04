@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (Task U1)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { PrismaClient, OperatorRole, OrderStatus, PaymentMethod, ReservationStatus, ShiftStatus } from "@prisma/client";
 
 const db = new PrismaClient();
@@ -301,8 +301,8 @@ async function seedRestaurantData(
         { orderId: order.id, menuItemId: gibanicaItem.id, quantity: 1, unitPrice: gibanicaItem.price, vatRate: gibanicaItem.vatRate },
       ],
     });
-    const total = 2 * zlikrofiItem.price + 2 * refoškItem.price + 1 * gibanicaItem.price;
-    const vatTotal = 2 * zlikrofiItem.price * zlikrofiItem.vatRate + 2 * refoškItem.price * refoškItem.vatRate + 1 * gibanicaItem.price * gibanicaItem.vatRate;
+    const total = 2 * Number(zlikrofiItem.price) + 2 * Number(refoškItem.price) + 1 * gibanicaItem.price;
+    const vatTotal = 2 * Number(zlikrofiItem.price) * zlikrofiItem.vatRate + 2 * Number(refoškItem.price) * refoškItem.vatRate + 1 * Number(gibanicaItem.price) * gibanicaItem.vatRate;
     await db.order.update({ where: { id: order.id }, data: { total, vatTotal } });
   }
 

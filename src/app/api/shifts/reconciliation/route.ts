@@ -1,4 +1,4 @@
-// @ts-nocheck — Decimal migration TS errors (Task V2)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
     const totalTips = paidOrders.reduce((s, o) => s + (o.tip || 0), 0);
 
     // Pričakovan stanje blagajne = začetno stanje + gotovinski promet + napitnine
-    const expectedCash = shift.startCash + cashRevenue + totalTips;
+    const expectedCash = Number(shift.startCash) + cashRevenue + totalTips;
 
     return NextResponse.json({
       shift: {

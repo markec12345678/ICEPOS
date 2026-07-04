@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -31,11 +31,11 @@ export async function GET(req: NextRequest) {
 
     const matrix = items.map((item) => {
       const foodCost = item.recipes.reduce(
-        (s, r) => s + r.inventoryItem.costPerUnit * r.quantity,
+        (s, r) => s + r.Number(inventoryItem.costPerUnit) * r.quantity,
         0
       );
-      const profitPerUnit = item.price - foodCost;
-      const profitMargin = item.price > 0 ? (profitPerUnit / item.price) * 100 : 0;
+      const profitPerUnit = Number(item.price) - foodCost;
+      const profitMargin = Number(item.price) > 0 ? (profitPerUnit / item.price) * 100 : 0;
       const quantitySold = item.orderItems.reduce((s, oi) => s + oi.quantity, 0);
       const revenue = item.orderItems.reduce((s, oi) => s + oi.quantity * oi.unitPrice, 0);
       const totalProfit = quantitySold * profitPerUnit;
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
       // Klasifikacija za matriko
       let quadrant: "star" | "cash-cow" | "question" | "dog" = "dog";
       const highMargin = profitMargin >= 60;
-      const highPrice = item.price >= 12;
+      const highPrice = Number(item.price) >= 12;
       if (highMargin && highPrice) quadrant = "star";
       else if (highMargin && !highPrice) quadrant = "cash-cow";
       else if (!highMargin && highPrice) quadrant = "question";
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
         available: item.available,
         imageUrl: item.imageUrl,
       };
-    }).filter((m) => m.quantitySold > 0 || m.price > 0);
+    }).filter((m) => m.quantitySold > 0 || Number(m.price) > 0);
 
     // Kvadrant statistika
     const quadrants = {

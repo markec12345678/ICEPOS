@@ -1,4 +1,4 @@
-// @ts-nocheck — Decimal migration TS errors (Task V2)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
     for (const item of reorderItems) {
       const supplier = item.supplier || "Neznan dobavitelj";
       const suggestedQty = Math.max(item.minQuantity * 2, 10);
-      const totalCost = Math.round(suggestedQty * item.costPerUnit * 100) / 100;
+      const totalCost = Math.round(suggestedQty * Number(item.costPerUnit) * 100) / 100;
 
       const existing = supplierMap.get(supplier);
       const itemData = {

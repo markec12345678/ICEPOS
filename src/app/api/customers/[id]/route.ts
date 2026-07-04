@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getTenantFromRequest } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 

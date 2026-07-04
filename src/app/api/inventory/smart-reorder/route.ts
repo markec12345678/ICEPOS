@@ -1,4 +1,3 @@
-// @ts-nocheck — Decimal migration TS errors (Task V2)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -133,7 +132,7 @@ export async function GET(req: NextRequest) {
           daysUntilStockout,
           reorderPoint: Math.round(reorderPoint * 100) / 100,
           suggestedQty,
-          suggestedValue: Math.round(suggestedQty * item.costPerUnit * 100) / 100,
+          suggestedValue: Math.round(suggestedQty * Number(item.costPerUnit) * 100) / 100,
           priority,
           needsReorder,
           leadTimeDays,

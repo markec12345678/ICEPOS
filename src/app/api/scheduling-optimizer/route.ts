@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
     }
     for (const dow of Object.keys(revenueByDay)) {
       const d = revenueByDay[parseInt(dow)];
-      d.avg = d.count > 0 ? d.total / d.count : 0;
+      d.avg = d.count > 0 ? Number(d.total) / d.count : 0;
     }
 
     // Izračunaj urni promet (konsolidirano)

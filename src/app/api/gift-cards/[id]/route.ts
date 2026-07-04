@@ -15,7 +15,7 @@ export async function GET(
       where: { code: id.toUpperCase() },
     });
     if (!card) {
-      card = await db.giftCard.findUnique({ where: { id } });
+      card = await db.giftCard.findFirst({ where: { id, restaurantId: tenant.id } });
     }
     if (!card) {
       return NextResponse.json({ error: "Gift card ni najden" }, { status: 404 });

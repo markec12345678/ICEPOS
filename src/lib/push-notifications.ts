@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (Task U1)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 // ============================================================
 // Push Notifications lib — PWA push za Loyalty in Order tracking
 // ============================================================

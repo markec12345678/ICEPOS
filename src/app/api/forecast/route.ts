@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (Task U1)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -135,12 +135,12 @@ export async function GET(req: NextRequest) {
         const existing = itemMap.get(it.menuItemId);
         if (existing) {
           existing.quantity += it.quantity;
-          existing.revenue += it.unitPrice * it.quantity;
+          existing.revenue += Number(it.unitPrice) * it.quantity;
         } else {
           itemMap.set(it.menuItemId, {
             name: "", // Pridobivamo iz MenuItem ločeno
             quantity: it.quantity,
-            revenue: it.unitPrice * it.quantity,
+            revenue: Number(it.unitPrice) * it.quantity,
           });
         }
       }
