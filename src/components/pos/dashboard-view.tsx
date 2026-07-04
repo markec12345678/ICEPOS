@@ -33,6 +33,7 @@ import { SectionStats } from "@/components/pos/section-stats";
 import { BirthdayReminders } from "@/components/pos/birthday-reminders";
 import { RevenueGoalTracker } from "@/components/pos/revenue-goal-tracker";
 import { PaymentAnalytics } from "@/components/pos/payment-analytics";
+import { ActiveOrdersSummary } from "@/components/pos/active-orders-summary";
 
 export function DashboardView() {
   const { data, loading, error, refetch } = useFetch<DashboardStats>("/api/stats");
@@ -231,6 +232,9 @@ export function DashboardView() {
           )}
         </Card>
       </div>
+
+      {/* Active orders summary — pregled vseh odprtih naročil */}
+      <ActiveOrdersSummary />
 
       {/* Activity feed + Live server status — side by side na desktop */}
       <div className="grid gap-4 lg:grid-cols-2">

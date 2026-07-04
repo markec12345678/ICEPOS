@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { formatEUR } from "@/lib/types";
 import { LaborCostTracker } from "@/components/pos/labor-cost-tracker";
+import { TipDistribution } from "@/components/pos/tip-distribution";
 
 // ============================================================
 // Tipi
@@ -1124,6 +1125,9 @@ function TipPoolView() {
           </Card>
         </>
       )}
+
+      {/* Dodatna analitika: Tip Distribution */}
+      <TipDistribution />
     </div>
   );
 }

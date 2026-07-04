@@ -50,6 +50,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VisitAnalytics } from "@/components/pos/visit-analytics";
+import { CustomerAllergenProfile } from "@/components/pos/customer-allergen-profile";
 import { authHeaders } from "@/components/pos/pin-login";
 
 interface CustomerOrder {
@@ -648,6 +649,9 @@ function CustomerDetailDialog({
                 )}
               </div>
             </Card>
+
+            {/* Allergen profile */}
+            <CustomerAllergenProfile customerId={id} />
 
             {/* Quick re-order: ponovi zadnje naročilo */}
             <QuickReorderSection customerId={id} customerName={data.name} />
