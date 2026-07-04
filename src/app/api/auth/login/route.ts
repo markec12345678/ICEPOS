@@ -2,13 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
 import { verifyPin, hashPin, isLegacyPlaintextPin } from "@/lib/auth";
+import { checkRateLimit, resetRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
-
-// === Rate limiting (in-memory; za produkcijo zamenjaj z Redis) ===
-const loginAttempts = new Map<string, { count: number; firstAttemptAt: number }>();
-const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minut
-const RATE_LIMIT_MAX = 5; // 5 neuspešnih poskusov
 
 // POST /api/auth/login — preveri PIN in vrne operaterja + restavracijo
 export async function POST(req: NextRequest) {
@@ -23,23 +19,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // === Rate limiting per IP ===
+    // === Rate limiting per IP (Redis-backed z in-memory fallback) ===
     const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
     const rateLimitKey = `login:${ip}`;
-    const attempts = loginAttempts.get(rateLimitKey);
+    const rateLimit = await checkRateLimit(rateLimitKey, {
+      windowMs: 15 * 60 * 1000,  // 15 min
+      maxAttempts: 5,
+    });
 
-    if (attempts) {
-      const elapsed = Date.now() - attempts.firstAttemptAt;
-      if (elapsed > RATE_LIMIT_WINDOW_MS) {
-        // Reset po poteku okna
-        loginAttempts.delete(rateLimitKey);
-      } else if (attempts.count >= RATE_LIMIT_MAX) {
-        const retryAfterSec = Math.ceil((RATE_LIMIT_WINDOW_MS - elapsed) / 1000);
-        return NextResponse.json(
-          { error: "Preveč neuspešnih poskusov. Poskusi znova čez " + Math.ceil(retryAfterSec / 60) + " min." },
-          { status: 429, headers: { "Retry-After": String(retryAfterSec) } }
-        );
-      }
+    if (!rateLimit.allowed) {
+      const retryAfterSec = Math.ceil(rateLimit.retryAfterMs / 1000);
+      return NextResponse.json(
+        { error: "Preveč neuspešnih poskusov. Poskusi znova čez " + Math.ceil(retryAfterSec / 60) + " min." },
+        { status: 429, headers: { "Retry-After": String(retryAfterSec) } }
+      );
     }
 
     // Določi tenant
@@ -54,8 +47,7 @@ export async function POST(req: NextRequest) {
 
     if (!tenant || !tenant.active) {
       // Zabeleži neuspešen poskus
-      recordFailedAttempt(rateLimitKey);
-      return NextResponse.json(
+        return NextResponse.json(
         { error: "Restavracija ni najdena. Izberi restavracijo." },
         { status: 404 }
       );
@@ -75,8 +67,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!operator) {
-      recordFailedAttempt(rateLimitKey);
-      return NextResponse.json(
+        return NextResponse.json(
         { error: "Napačen PIN za to restavracijo" },
         { status: 401 }
       );
@@ -96,7 +87,7 @@ export async function POST(req: NextRequest) {
     }
 
     // === Uspešna prijava — resetiraj rate limit ===
-    loginAttempts.delete(rateLimitKey);
+    await resetRateLimit(rateLimitKey);
 
     return NextResponse.json({
       id: operator.id,
@@ -116,11 +107,3 @@ export async function POST(req: NextRequest) {
   }
 }
 
-function recordFailedAttempt(key: string) {
-  const existing = loginAttempts.get(key);
-  if (existing) {
-    existing.count++;
-  } else {
-    loginAttempts.set(key, { count: 1, firstAttemptAt: Date.now() });
-  }
-}
