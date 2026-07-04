@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPaymentIntent, getStripeConfig } from "@/lib/stripe";
 import { getTenantFromRequest } from "@/lib/tenant";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,20 @@ export const dynamic = "force-dynamic";
 // Body: { amount: number (EUR), orderId?: string, methods: ["card", "apple_pay", "google_pay"] }
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting — 20 PaymentIntent na IP na 10 min
+    const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
+    const rateLimitKey = `stripe-intent:${ip}`;
+    const rateLimit = await checkRateLimit(rateLimitKey, {
+      windowMs: 10 * 60 * 1000,
+      maxAttempts: 20,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Preveč plačilnih poskusov. Poskusi znova čez 10 minut." },
+        { status: 429, headers: { "Retry-After": String(Math.ceil(rateLimit.retryAfterMs / 1000)) } }
+      );
+    }
+
     const config = getStripeConfig();
     if (!config) {
       return NextResponse.json(

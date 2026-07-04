@@ -10,6 +10,7 @@ import {
 } from "@/lib/furs";
 import { sendInvoiceToFurs } from "@/lib/furs-api";
 import { writeAuditLog, getIpAddress } from "@/lib/audit";
+import { captureException } from "@/lib/sentry-utils";
 import { getOperatorFromRequest } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -243,7 +244,7 @@ export async function POST(
       fursXmlPreview: fursXml.slice(0, 800) + "...(skrajšano)",
     });
   } catch (e) {
-    console.error("POST /api/orders/[id]/pay error:", e);
+    captureException(e, { route: "pay" });
     return NextResponse.json({ error: "Napaka pri zaključevanju računa" }, { status: 500 });
   }
 }

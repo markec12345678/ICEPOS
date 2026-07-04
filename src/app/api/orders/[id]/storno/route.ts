@@ -10,6 +10,7 @@ import {
 } from "@/lib/furs";
 import { sendInvoiceToFurs } from "@/lib/furs-api";
 import { writeAuditLog, getIpAddress } from "@/lib/audit";
+import { captureException } from "@/lib/sentry-utils";
 import { getOperatorFromRequest } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -217,7 +218,7 @@ export async function POST(
       },
     });
   } catch (e) {
-    console.error("POST /api/orders/[id]/storno error:", e);
+    captureException(e, { route: "storno" });
     return NextResponse.json(
       { error: "Napaka pri storniranju računa" },
       { status: 500 }

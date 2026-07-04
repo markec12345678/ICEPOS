@@ -4,12 +4,28 @@ import { getOperatorFromRequest } from "@/lib/auth";
 import { getTenantFromRequest } from "@/lib/tenant";
 import { registerDeviceToFurs } from "@/lib/furs-api";
 import { writeAuditLog, getIpAddress } from "@/lib/audit";
+import { captureException } from "@/lib/sentry-utils";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 // POST /api/furs/ini — registriraj napravo pri FURS (INI postopek)
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting — 3 poskusi na IP na uro (INI je občutljiva operacija)
+    const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
+    const rateLimitKey = `furs-ini:${ip}`;
+    const rateLimit = await checkRateLimit(rateLimitKey, {
+      windowMs: 60 * 60 * 1000,
+      maxAttempts: 3,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Preveč INI poskusov. Poskusi znova čez uro." },
+        { status: 429, headers: { "Retry-After": String(Math.ceil(rateLimit.retryAfterMs / 1000)) } }
+      );
+    }
+
     const tenant = await getTenantFromRequest(req);
     if (!tenant) {
       return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
@@ -71,7 +87,7 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({ error: result.message }, { status: 400 });
   } catch (e) {
-    console.error("POST /api/furs/ini error:", e);
+    captureException(e, { route: "furs-ini" });
     return NextResponse.json({ error: "Napaka pri INI registraciji" }, { status: 500 });
   }
 }

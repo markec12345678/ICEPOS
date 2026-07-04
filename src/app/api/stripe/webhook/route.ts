@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { captureException } from "@/lib/sentry-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -104,7 +105,7 @@ export async function POST(req: NextRequest) {
           }
         });
       } catch (err) {
-        console.error("[stripe-webhook] Failed to mark order paid:", err);
+        captureException(err, { route: "stripe-webhook", orderId });
         return NextResponse.json({ error: "Internal error" }, { status: 500 });
       }
       break;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
 import { signLoyaltyToken } from "@/lib/jwt";
+import { checkRateLimit, resetRateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 

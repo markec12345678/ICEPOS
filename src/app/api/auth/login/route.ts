@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
 import { verifyPin, hashPin, isLegacyPlaintextPin } from "@/lib/auth";
 import { checkRateLimit, resetRateLimit } from "@/lib/rate-limit";
+import { captureException } from "@/lib/sentry-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -102,7 +103,7 @@ export async function POST(req: NextRequest) {
       loginAt: new Date().toISOString(),
     });
   } catch (e) {
-    console.error("POST /api/auth/login error:", e);
+    captureException(e, { route: "auth-login" });
     return NextResponse.json({ error: "Napaka pri prijavi" }, { status: 500 });
   }
 }
