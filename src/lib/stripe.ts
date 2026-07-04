@@ -28,6 +28,7 @@ export interface PaymentIntentRequest {
   currency: string; // "eur"
   description?: string;
   orderId?: string; // internal reference
+  tenantId?: string; // tenant ID za webhook routing
   // Apple Pay / Google Pay zahtevajo capture_method: "automatic"
   captureMethod: "automatic" | "manual";
   // Payment methods
@@ -84,7 +85,10 @@ export async function createPaymentIntent(
     params.append("description", req.description.slice(0, 500));
   }
   if (req.orderId) {
-    params.append("metadata[order_id]", req.orderId);
+    params.append("metadata[orderId]", req.orderId);
+  }
+  if (req.tenantId) {
+    params.append("metadata[tenantId]", req.tenantId);
   }
   params.append("metadata[source]", "gostilna-pos");
 

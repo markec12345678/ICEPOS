@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPaymentIntent, getStripeConfig } from "@/lib/stripe";
+import { getTenantFromRequest } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,14 @@ export async function POST(req: NextRequest) {
           mode: "poc",
         },
         { status: 503 }
+      );
+    }
+
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json(
+        { error: "Restavracija ni najdena" },
+        { status: 400 }
       );
     }
 
@@ -38,6 +47,7 @@ export async function POST(req: NextRequest) {
         currency: "eur",
         description: orderId ? `POS naročilo #${orderId.slice(-6)}` : "POS plačilo",
         orderId,
+        tenantId: tenant.id,
         captureMethod: "automatic",
         paymentMethodTypes: methods || ["card", "apple_pay", "google_pay"],
       },

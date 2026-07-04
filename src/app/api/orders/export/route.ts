@@ -2,17 +2,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OrderStatus } from "@prisma/client";
 import { db } from "@/lib/db";
+import { getTenantFromRequest } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 // Izvoz računov v CSV za računovodstvo
 export async function GET(req: NextRequest) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Tenant ni najden" }, { status: 400 });
+    }
+
     const from = req.nextUrl.searchParams.get("from");
     const to = req.nextUrl.searchParams.get("to");
 
-    const where: { status?: any; paidAt?: { gte?: Date; lte?: Date } } = {
+    const where: { status?: any; paidAt?: { gte?: Date; lte?: Date }; restaurantId: string } = {
       status: { in: [OrderStatus.paid, OrderStatus.storno] },
+      restaurantId: tenant.id,
     };
     if (from || to) {
       where.paidAt = {};

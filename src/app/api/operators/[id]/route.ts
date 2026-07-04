@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getOperatorFromRequest } from "@/lib/auth";
+import { getTenantFromRequest } from "@/lib/tenant";
+import { hashPin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -18,21 +20,36 @@ export async function PATCH(
       );
     }
 
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Tenant ni najden" }, { status: 400 });
+    }
+
+    // Tenant-scoped lookup — preprečuje cross-tenant IDOR
+    const existing_op = await db.operator.findFirst({
+      where: { id, restaurantId: tenant.id },
+    });
+    if (!existing_op) {
+      return NextResponse.json({ error: "Operater ni najden" }, { status: 404 });
+    }
+
     const body = await req.json();
     const data: Record<string, unknown> = {};
     if (typeof body.name === "string") data.name = body.name;
-    if (typeof body.pin === "string" && body.pin.length === 4) {
-      // Preveri unikatnost PIN-a
-      const existing = await db.operator.findFirst({
-        where: { pin: body.pin, NOT: { id } },
+    if (typeof body.pin === "string" && body.pin.length >= 4 && body.pin.length <= 8) {
+      // Preveri unikatnost PIN-a (per-tenant)
+      const all_ops = await db.operator.findMany({
+        where: { restaurantId: tenant.id, NOT: { id } },
       });
-      if (existing) {
-        return NextResponse.json(
-          { error: "PIN je že v uporabi" },
-          { status: 409 }
-        );
+      for (const op of all_ops) {
+        if (verifyPin(body.pin, op.pin)) {
+          return NextResponse.json(
+            { error: "PIN je že v uporabi" },
+            { status: 409 }
+          );
+        }
       }
-      data.pin = body.pin;
+      data.pin = hashPin(body.pin); // hash PIN pred shranjevanjem
     }
     if (typeof body.taxNumber === "string") data.taxNumber = body.taxNumber;
     if (typeof body.role === "string") data.role = body.role;

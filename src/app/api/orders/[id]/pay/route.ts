@@ -5,6 +5,7 @@ import {
   calculateZOI,
   generateEOR,
   buildInvoiceXml,
+  type InvoiceIssuer,
   buildInvoiceNumber,
 } from "@/lib/furs";
 import { sendInvoiceToFurs } from "@/lib/furs-api";
@@ -91,6 +92,17 @@ export async function POST(
       electronicDeviceID: tenant.cashRegister,
     });
 
+    // Tenant-based InvoiceIssuer (preprečuje hardcoded DEMO_ISSUER)
+    const issuerTaxNumber = tenant.taxNumber.replace(/^SI/i, "");
+    const issuer: InvoiceIssuer = {
+      taxNumber: issuerTaxNumber,
+      businessPremiseID: tenant.businessUnit,
+      electronicDeviceID: tenant.cashRegister,
+      name: tenant.name,
+      address: tenant.address || undefined,
+      city: tenant.city || undefined,
+    };
+
     // XML račun
     const fursXml = buildInvoiceXml({
       invoiceNumber: invoiceSeq,
@@ -104,7 +116,7 @@ export async function POST(
       })),
       paymentMethod: paymentMethod === "giftcard" ? "card" : paymentMethod,
       operator: order.operator,
-    });
+    }, issuer);
 
     // Pošlji na FURS za pravi EOR (če je certifikat naložen, sicer POC)
     const restaurant = await db.restaurant.findUnique({

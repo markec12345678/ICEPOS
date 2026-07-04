@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OperatorRole } from "@prisma/client";
 import { db } from "@/lib/db";
-import { getOperatorFromRequest } from "@/lib/auth";
+import { getOperatorFromRequest, hashPin, verifyPin } from "@/lib/auth";
 import { getTenantFromRequest } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
@@ -19,12 +19,11 @@ export async function GET(req: NextRequest) {
       where: { restaurantId: tenant.id },
       orderBy: { name: "asc" },
     });
-    // Ne vrni PIN-a v odgovoru (varnost)
+    // Ne vrni PIN-a v odgovoru (varnost) — PIN je hashed, neuporaben za UI
     return NextResponse.json(
       operators.map((o) => ({
         id: o.id,
         name: o.name,
-        pin: o.pin, // potreben za clock in/out gumb v scheduling view
         taxNumber: o.taxNumber,
         role: o.role,
         hourlyRate: o.hourlyRate,
@@ -63,28 +62,30 @@ export async function POST(req: NextRequest) {
       hourlyRate?: number;
     };
 
-    if (!name || !pin || pin.length !== 4) {
+    if (!name || !pin || pin.length < 4 || pin.length > 8) {
       return NextResponse.json(
-        { error: "Manjkajoči podatki (name, 4-mesten pin)" },
+        { error: "Manjkajoči podatki (name, 4-8 mesten pin)" },
         { status: 400 }
       );
     }
 
-    // Preveri unikatnost PIN-a znotraj te restavracije
-    const existing = await db.operator.findFirst({
-      where: { pin, restaurantId: tenant.id },
+    // Preveri unikatnost PIN-a znotraj te restavracije (verifyPin za hashed PIN)
+    const all_ops = await db.operator.findMany({
+      where: { restaurantId: tenant.id },
     });
-    if (existing) {
-      return NextResponse.json(
-        { error: "PIN je že v uporabi v tej restavraciji" },
-        { status: 409 }
-      );
+    for (const op of all_ops) {
+      if (verifyPin(pin, op.pin)) {
+        return NextResponse.json(
+          { error: "PIN je že v uporabi v tej restavraciji" },
+          { status: 409 }
+        );
+      }
     }
 
     const operator = await db.operator.create({
       data: {
         name: name.trim(),
-        pin,
+        pin: hashPin(pin), // hash PIN pred shranjevanjem
         taxNumber: taxNumber || tenant.taxNumber,
         role: role || "cashier",
         hourlyRate: typeof hourlyRate === "number" ? hourlyRate : 12,
