@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { io } from "socket.io-client";
 import { usePosStore } from "@/stores/pos-store";
 import { useTenantStore } from "@/stores/tenant-store";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { playFeedbackSound } from "@/hooks/use-sound-feedback";
+import { useRealtimeSync } from "@/hooks/use-realtime-sync";
 import { PosHeader } from "@/components/pos/pos-header";
 import { PosSidebar, PosFooter } from "@/components/pos/pos-footer";
 import { TablesView } from "@/components/pos/tables-view";
@@ -86,36 +86,24 @@ export default function Home() {
   }, []);
 
   // Globalni WebSocket listener za kuhinjske recall-e (deluje na vseh pogledih)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const isDev = window.location.port === "3000";
-    const socketUrl = isDev
-      ? `${window.location.protocol}//${window.location.hostname}:81`
-      : "";
+  // Robustna povezava z exponential backoff + auto-recovery
+  useRealtimeSync({
+    port: 3003,
+    notifyRecovery: false, // Ne prikazuj recovery toast na main page (samo v KDS)
+    handlers: {
+      "order:recall": (data: unknown) => {
+        const recallData = data as { tableName: string; item?: string };
+        // Glasni toast z zvokom (če je dovoljen)
+        toast.success(`🔔 Klic iz kuhinje: ${recallData.tableName}`, {
+          description: recallData.item || "Jedi so pripravljene za prevzem",
+          duration: 8000,
+        });
 
-    const s = io(`${socketUrl}/?XTransformPort=3003`, {
-      transports: ["websocket"],
-      forceNew: true,
-      reconnection: true,
-      reconnectionAttempts: 5,
-      timeout: 10000,
-    });
-
-    s.on("order:recall", (data: { tableName: string; item?: string }) => {
-      // Glasni toast z zvokom (če je dovoljen)
-      toast.success(`🔔 Klic iz kuhinje: ${data.tableName}`, {
-        description: data.item || "Jedi so pripravljene za prevzem",
-        duration: 8000,
-      });
-
-      // Predvajaj kitchen zvok (upošteva sound enabled flag)
-      playFeedbackSound("kitchen");
-    });
-
-    return () => {
-      s.disconnect();
-    };
-  }, []);
+        // Predvajaj kitchen zvok (upošteva sound enabled flag)
+        playFeedbackSound("kitchen");
+      },
+    },
+  });
 
   return (
     <div className="flex min-h-screen flex-col bg-background">

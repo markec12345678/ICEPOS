@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
-import { io, Socket } from "socket.io-client";
+import { useEffect, useState, useCallback } from "react";
 import { formatTime } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,11 +17,14 @@ import {
   AlertCircle,
   Wifi,
   WifiOff,
+  RefreshCw,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { STATIONS, categoryToStation, getStationConfig, type KitchenStation } from "@/lib/kds-routing";
 import { StationPerformance } from "@/components/pos/station-performance";
+import { useRealtimeSync, type ConnectionState } from "@/hooks/use-realtime-sync";
 
 interface KitchenItem {
   menuItemId: string;
@@ -53,7 +55,6 @@ interface KitchenStats {
 }
 
 export function KitchenDisplayView() {
-  const [connected, setConnected] = useState(false);
   const [orders, setOrders] = useState<KitchenOrder[]>([]);
   const [activeStation, setActiveStation] = useState<KitchenStation>("all");
   const [stats, setStats] = useState<KitchenStats>({
@@ -63,7 +64,6 @@ export function KitchenDisplayView() {
     total: 0,
   });
   const [, setTick] = useState(0);
-  const socketRef = useRef<Socket | null>(null);
 
   // Real-time tick vsako sekundo — za posodobitev timerjev v OrderCard
   useEffect(() => {
@@ -71,72 +71,52 @@ export function KitchenDisplayView() {
     return () => clearInterval(id);
   }, []);
 
-  useEffect(() => {
-    // V development: Next.js na :3000, Caddy na :81 — poveži se prek Caddy
-    // V produkciji: aplikacija za Caddy, relativna pot zadostuje
-    const isDev =
-      typeof window !== "undefined" && window.location.port === "3000";
-    const socketUrl = isDev
-      ? `${window.location.protocol}//${window.location.hostname}:81`
-      : "";
-
-    const s = io(`${socketUrl}/?XTransformPort=3003`, {
-      transports: ["websocket", "polling"],
-      forceNew: true,
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 2000,
-      timeout: 10000,
-    });
-    socketRef.current = s;
-
-    s.on("connect", () => setConnected(true));
-    s.on("disconnect", () => setConnected(false));
-
-    s.on("kitchen:sync", (syncOrders: KitchenOrder[]) => {
-      setOrders(syncOrders.sort((a, b) => a.createdAt.localeCompare(b.createdAt)));
-    });
-
-    s.on("order:new", (order: KitchenOrder) => {
-      setOrders((prev) => [...prev, order]);
-      toast.info(`🔔 Novo naročilo: Miza ${order.tableName}`, {
-        description: `${order.items.length} postavk`,
-      });
-    });
-
-    s.on("order:status", (data: { orderId: string; status: string; updatedAt: string }) => {
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.id === data.orderId
-            ? { ...o, status: data.status as KitchenOrder["status"], updatedAt: data.updatedAt }
-            : o
-        )
-      );
-    });
-
-    s.on("kitchen:stats", (st: KitchenStats) => setStats(st));
-
-    s.on("order:recall", (data: { tableName: string; item?: string }) => {
-      toast.success(`🔔 Klic iz kuhinje: Miza ${data.tableName}`, {
-        description: data.item || "Jedi so pripravljene za prevzem",
-      });
-    });
-
-    return () => {
-      s.disconnect();
-      socketRef.current = null;
-    };
-  }, []);
+  // Robustna WebSocket povezava z exponential backoff + HTTP fallback
+  const { state, connected, reconnect, emit, reconnectAttempts } = useRealtimeSync({
+    port: 3003,
+    fallbackUrl: "/api/kitchen/orders?XTransformPort=3003",
+    fallbackInterval: 10000,
+    handlers: {
+      "kitchen:sync": (data: unknown) => {
+        const syncOrders = data as KitchenOrder[];
+        setOrders(syncOrders.sort((a, b) => a.createdAt.localeCompare(b.createdAt)));
+      },
+      "order:new": (data: unknown) => {
+        const order = data as KitchenOrder;
+        setOrders((prev) => [...prev, order]);
+        toast.info(`🔔 Novo naročilo: Miza ${order.tableName}`, {
+          description: `${order.items.length} postavk`,
+        });
+      },
+      "order:status": (data: unknown) => {
+        const statusData = data as { orderId: string; status: string; updatedAt: string };
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.id === statusData.orderId
+              ? { ...o, status: statusData.status as KitchenOrder["status"], updatedAt: statusData.updatedAt }
+              : o
+          )
+        );
+      },
+      "kitchen:stats": (data: unknown) => setStats(data as KitchenStats),
+      "order:recall": (data: unknown) => {
+        const recallData = data as { tableName: string; item?: string };
+        toast.success(`🔔 Klic iz kuhinje: Miza ${recallData.tableName}`, {
+          description: recallData.item || "Jedi so pripravljene za prevzem",
+        });
+      },
+    },
+  });
 
   const updateStatus = useCallback(
     (orderId: string, status: KitchenOrder["status"]) => {
-      socketRef.current?.emit("order:status", { orderId, status });
+      emit("order:status", { orderId, status });
 
       // Ko je "served" (kuhinja pozove mizo), pošlji recall obvestilo vsem
       if (status === "served") {
         const order = orders.find((o) => o.id === orderId);
         if (order) {
-          socketRef.current?.emit("order:recall", {
+          emit("order:recall", {
             orderId,
             tableName: order.tableName,
             item: `Miza ${order.tableName} — jedi pripravljene za prevzem`,
@@ -144,7 +124,7 @@ export function KitchenDisplayView() {
         }
       }
     },
-    [orders]
+    [orders, emit]
   );
 
   // Samodejno odstrani "served" po 5 sekundah
@@ -200,6 +180,10 @@ export function KitchenDisplayView() {
               "gap-1.5",
               connected
                 ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-400"
+                : state === "fallback"
+                ? "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-400"
+                : state === "reconnecting"
+                ? "border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950/50 dark:text-sky-400"
                 : "border-rose-300 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-400"
             )}
           >
@@ -208,6 +192,16 @@ export function KitchenDisplayView() {
                 <Wifi className="h-3.5 w-3.5" />
                 Povezano
               </>
+            ) : state === "fallback" ? (
+              <>
+                <AlertCircle className="h-3.5 w-3.5" />
+                Fallback (polling)
+              </>
+            ) : state === "reconnecting" ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Ponovno povezujem ({reconnectAttempts}×)
+              </>
             ) : (
               <>
                 <WifiOff className="h-3.5 w-3.5" />
@@ -215,6 +209,18 @@ export function KitchenDisplayView() {
               </>
             )}
           </Badge>
+          {!connected && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 gap-1 text-xs"
+              onClick={reconnect}
+              title="Ročno ponovno poveži"
+            >
+              <RefreshCw className="h-3 w-3" />
+              Ponovno
+            </Button>
+          )}
         </div>
       </div>
 
@@ -269,13 +275,40 @@ export function KitchenDisplayView() {
         </div>
       </div>
 
-      {!connected && (
-        <Card className="border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900 dark:bg-amber-950/20">
+      {state === "disconnected" && (
+        <Card className="border-rose-200 bg-rose-50/50 p-4 dark:border-rose-900 dark:bg-rose-950/20">
           <div className="flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            <p className="text-sm text-amber-900 dark:text-amber-200">
-              Kuhinjski servis ni povezan. Pošlji testno naročilo iz blagajne
-              (gumb "Kuhinja") ali počakaj na ponovno povezavo.
+            <WifiOff className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-rose-900 dark:text-rose-200">
+                Kuhinjski servis ni povezan
+              </p>
+              <p className="text-xs text-rose-700 dark:text-rose-400">
+                {state === "disconnected"
+                  ? `Poskus ponovne povezave čez nekaj sekund... (${reconnectAttempts} poskusov)`
+                  : "Pošlji testno naročilo iz blagajne ali klikni Ponovno."}
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-rose-300 text-rose-700 hover:bg-rose-100 dark:border-rose-800 dark:text-rose-400"
+              onClick={reconnect}
+            >
+              <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+              Ponovno poveži
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {state === "fallback" && (
+        <Card className="border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900 dark:bg-amber-950/20">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <p className="text-xs text-amber-900 dark:text-amber-200">
+              <strong>HTTP polling aktiven</strong> — WebSocket ni na voljo. Naročila se osvežujejo vsakih 10s.
+              <button onClick={reconnect} className="ml-2 underline hover:no-underline">Poskusi WS znova</button>
             </p>
           </div>
         </Card>
