@@ -35,6 +35,7 @@ import {
   Download,
   Mail,
   Send,
+  Filter,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FursQrCode } from "@/components/pos/furs-qr-code";
@@ -48,6 +49,13 @@ export function ReceiptsView() {
     "/api/orders?status=paid"
   );
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState<"all" | "today" | "yesterday" | "week" | "month">("all");
+  const [paymentFilter, setPaymentFilter] = useState<"all" | "cash" | "card" | "giftcard">("all");
+  const [minAmount, setMinAmount] = useState("");
+  const [maxAmount, setMaxAmount] = useState("");
+  const [showStornoOnly, setShowStornoOnly] = useState(false);
+  const [showTipsOnly, setShowTipsOnly] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [selected, setSelected] = useState<Receipt | null>(null);
   const [stornoTarget, setStornoTarget] = useState<Receipt | null>(null);
   const [stornoReason, setStornoReason] = useState("");
@@ -57,14 +65,47 @@ export function ReceiptsView() {
   const [emailBusy, setEmailBusy] = useState(false);
 
   const receipts = data || [];
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterdayStart = new Date(todayStart.getTime() - 86400000);
+  const weekStart = new Date(todayStart.getTime() - 7 * 86400000);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
   const filtered = receipts.filter((r) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return (
-      r.invoiceNumber?.toLowerCase().includes(q) ||
-      r.table?.name.toLowerCase().includes(q) ||
-      r.operator.toLowerCase().includes(q)
-    );
+    // Text search
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      if (!(
+        r.invoiceNumber?.toLowerCase().includes(q) ||
+        r.table?.name.toLowerCase().includes(q) ||
+        r.operator.toLowerCase().includes(q)
+      )) return false;
+    }
+
+    // Date filter
+    if (dateFilter !== "all" && r.paidAt) {
+      const paidDate = new Date(r.paidAt);
+      if (dateFilter === "today" && paidDate < todayStart) return false;
+      if (dateFilter === "yesterday" && (paidDate < yesterdayStart || paidDate >= todayStart)) return false;
+      if (dateFilter === "week" && paidDate < weekStart) return false;
+      if (dateFilter === "month" && paidDate < monthStart) return false;
+    }
+
+    // Payment method filter
+    if (paymentFilter !== "all" && r.paymentMethod !== paymentFilter) return false;
+
+    // Amount range filter
+    const min = parseFloat(minAmount) || 0;
+    const max = parseFloat(maxAmount) || Infinity;
+    if (r.total < min || r.total > max) return false;
+
+    // Storno only
+    if (showStornoOnly && !r.stornoOf) return false;
+
+    // Tips only
+    if (showTipsOnly && (!r.tip || r.tip <= 0)) return false;
+
+    return true;
   });
 
   const validReceipts = receipts.filter((r) => r.status === "paid" && !r.stornoOf);
@@ -201,16 +242,131 @@ export function ReceiptsView() {
         </Card>
       </div>
 
-      {/* Iskalnik */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Išči po številki računa, mizi ali blagajniku..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9"
-        />
+      {/* Iskalnik + filter toggle */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Išči po številki računa, mizi ali blagajniku..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setShowFilters(!showFilters)}
+          className={cn("shrink-0", showFilters && "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400")}
+          title="Napredni filtri"
+        >
+          <Filter className="h-4 w-4" />
+        </Button>
       </div>
+
+      {/* Napredni filtri */}
+      {showFilters && (
+        <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Date filter */}
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground">Datum:</span>
+              {(["all", "today", "yesterday", "week", "month"] as const).map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setDateFilter(d)}
+                  className={cn(
+                    "rounded-md px-2 py-0.5 text-xs transition-colors",
+                    dateFilter === d ? "bg-primary text-primary-foreground" : "bg-muted/50 hover:bg-muted"
+                  )}
+                >
+                  {d === "all" ? "Vsi" : d === "today" ? "Danes" : d === "yesterday" ? "Včeraj" : d === "week" ? "Teden" : "Mesec"}
+                </button>
+              ))}
+            </div>
+
+            {/* Payment filter */}
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground">Plačilo:</span>
+              {(["all", "cash", "card", "giftcard"] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPaymentFilter(p)}
+                  className={cn(
+                    "rounded-md px-2 py-0.5 text-xs transition-colors",
+                    paymentFilter === p ? "bg-primary text-primary-foreground" : "bg-muted/50 hover:bg-muted"
+                  )}
+                >
+                  {p === "all" ? "Vsi" : p === "cash" ? "Gotovina" : p === "card" ? "Kartica" : "Darilna"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Amount range */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-muted-foreground">Znesek:</span>
+            <Input
+              type="number"
+              placeholder="min"
+              value={minAmount}
+              onChange={(e) => setMinAmount(e.target.value)}
+              className="h-7 w-20 text-xs"
+            />
+            <span className="text-xs text-muted-foreground">–</span>
+            <Input
+              type="number"
+              placeholder="max"
+              value={maxAmount}
+              onChange={(e) => setMaxAmount(e.target.value)}
+              className="h-7 w-20 text-xs"
+            />
+            <span className="text-xs text-muted-foreground">€</span>
+
+            {/* Toggles */}
+            <label className="flex items-center gap-1 text-xs">
+              <input
+                type="checkbox"
+                checked={showStornoOnly}
+                onChange={(e) => setShowStornoOnly(e.target.checked)}
+                className="h-3 w-3"
+              />
+              Samo storno
+            </label>
+            <label className="flex items-center gap-1 text-xs">
+              <input
+                type="checkbox"
+                checked={showTipsOnly}
+                onChange={(e) => setShowTipsOnly(e.target.checked)}
+                className="h-3 w-3"
+              />
+              Z napitnino
+            </label>
+
+            {/* Clear */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => {
+                setDateFilter("all");
+                setPaymentFilter("all");
+                setMinAmount("");
+                setMaxAmount("");
+                setShowStornoOnly(false);
+                setShowTipsOnly(false);
+              }}
+            >
+              Počisti
+            </Button>
+          </div>
+
+          {/* Result count */}
+          <p className="text-xs text-muted-foreground">
+            Prikazano: <strong>{filtered.length}</strong> od {receipts.length} računov
+          </p>
+        </div>
+      )}
 
       {/* Seznam računov */}
       {loading ? (

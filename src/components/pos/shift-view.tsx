@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CashReconciliation } from "@/components/pos/cash-reconciliation";
+import { ShiftComparison } from "@/components/pos/shift-comparison";
 
 interface Shift {
   id: string;
@@ -238,6 +239,9 @@ export function ShiftView() {
           </div>
         )}
       </Card>
+
+      {/* Shift comparison — primerjava smen */}
+      <ShiftComparison />
 
       {/* Start dialog */}
       {startOpen && (
