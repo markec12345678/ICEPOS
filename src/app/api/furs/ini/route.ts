@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getOperatorFromRequest } from "@/lib/auth";
 import { getTenantFromRequest } from "@/lib/tenant";
 import { registerDeviceToFurs } from "@/lib/furs-api";
+import { writeAuditLog, getIpAddress } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,19 @@ export async function POST(req: NextRequest) {
     });
 
     if (result.success) {
+      // Audit log — FURS INI registracija
+      await writeAuditLog({
+        restaurantId: tenant.id,
+        operatorName: authOp?.name,
+        ipAddress: getIpAddress(req),
+        action: "furs_ini",
+        entityType: "restaurant",
+        entityId: tenant.id,
+        description: `INI registracija naprave ${tenant.businessUnit}-${tenant.cashRegister}`,
+        newValue: { businessUnit: tenant.businessUnit, cashRegister: tenant.cashRegister },
+        success: true,
+      });
+      
       return NextResponse.json({ ok: true, message: result.message });
     }
     return NextResponse.json({ error: result.message }, { status: 400 });

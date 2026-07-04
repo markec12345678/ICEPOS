@@ -8,7 +8,9 @@ import { db } from "./db";
 //   1. x-restaurant-id header (najbolj zanesljivo)
 //   2. x-restaurant-slug header (slug restavracije)
 //   3. query param ?restaurant=slug
-//   4. fallback: prva aktivna restavracija (za demo)
+// BREZ fallback-a — vrne null če tenant ni eksplicitno naveden.
+// (Prejšnji fallback na "prvo aktivno restavracijo" je bil varnostna
+//  luknja — brez header-ja je zahtevek tiho operational na napačni tenant-i.)
 // ============================================================
 
 export interface TenantRestaurant {
@@ -21,6 +23,10 @@ export interface TenantRestaurant {
   cashRegister: string;
   fursEnv: string;
   loyaltyRate: number;
+  address?: string | null;
+  city?: string | null;
+  phone?: string | null;
+  email?: string | null;
 }
 
 export async function getTenantFromRequest(
@@ -48,13 +54,7 @@ export async function getTenantFromRequest(
       if (r && r.active) return toTenant(r);
     }
 
-    // 4. Fallback: prva aktivna restavracija (za demo/admin)
-    const first = await db.restaurant.findFirst({
-      where: { active: true },
-      orderBy: { createdAt: "asc" },
-    });
-    if (first) return toTenant(first);
-
+    // BREZ fallback-a — tenant mora biti eksplicitno naveden.
     return null;
   } catch (e) {
     console.error("getTenantFromRequest error:", e);
@@ -72,6 +72,10 @@ function toTenant(r: {
   cashRegister: string;
   fursEnv: string;
   loyaltyRate: number;
+  address?: string | null;
+  city?: string | null;
+  phone?: string | null;
+  email?: string | null;
 }): TenantRestaurant {
   return {
     id: r.id,
@@ -83,6 +87,10 @@ function toTenant(r: {
     cashRegister: r.cashRegister,
     fursEnv: r.fursEnv,
     loyaltyRate: r.loyaltyRate,
+    address: r.address,
+    city: r.city,
+    phone: r.phone,
+    email: r.email,
   };
 }
 

@@ -1,32 +1,28 @@
+export type DisplayCurrency = "EUR" | "USD";
+
 /**
  * Helper za prikaz cene v več valutah (za turiste).
- * Osnovna valuta je EUR, dodamo pa še HRK in USD za prikaz.
  *
  * Fiksni tečaji (približni, za prikazne namene):
- * - EUR -> HRK: 7.53450 (fiksni tečaj Hrvaške)
  * - EUR -> USD: 1.08
  *
  * OPOMBA: To je samo za Prikazne namene. Računi se vedno izdajo v EUR
  * (FURS zahteva EUR kot osnovno valuto).
  */
 
-export type DisplayCurrency = "EUR" | "HRK" | "USD";
 
 export const CURRENCY_RATES: Record<DisplayCurrency, number> = {
   EUR: 1,
-  HRK: 7.5345,
   USD: 1.08,
 };
 
 export const CURRENCY_SYMBOLS: Record<DisplayCurrency, string> = {
   EUR: "€",
-  HRK: "kn",
   USD: "$",
 };
 
 export const CURRENCY_LABELS: Record<DisplayCurrency, string> = {
   EUR: "EUR (€)",
-  HRK: "HRK (kn)",
   USD: "USD ($)",
 };
 
@@ -55,7 +51,6 @@ export function formatMultiCurrency(
     }).format(converted);
   }
 
-  // HRK
   return `${converted.toFixed(2)} ${symbol}`;
 }
 

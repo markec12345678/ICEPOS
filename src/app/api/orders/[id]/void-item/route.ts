@@ -70,9 +70,9 @@ async function recalculateOrderTotal(orderId: string) {
   const items = await db.orderItem.findMany({
     where: { orderId },
   });
-  const total = items.reduce((s, it) => s + it.unitPrice * it.quantity, 0);
+  const total = items.reduce((s, it) => s + Number(it.unitPrice) * it.quantity, 0);
   const vatTotal = items.reduce(
-    (s, it) => s + it.unitPrice * it.quantity * it.vatRate,
+    (s, it) => s + Number(it.unitPrice) * it.quantity * it.vatRate,
     0
   );
   await db.order.update({

@@ -14,7 +14,7 @@ import { usePosStore } from "@/stores/pos-store";
 import { CURRENCY_LABELS, type DisplayCurrency } from "@/lib/multi-currency";
 import { toast } from "sonner";
 
-const CURRENCIES: DisplayCurrency[] = ["EUR", "HRK", "USD"];
+const CURRENCIES: DisplayCurrency[] = ["EUR", "USD", "USD"];
 
 export function CurrencyToggle() {
   const displayCurrency = usePosStore((s) => s.displayCurrency);

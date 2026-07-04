@@ -54,7 +54,7 @@ export const useTenantStore = create<TenantState>()(
       },
 
       // Vrne header-je za fetch klic-e
-      headers: () => {
+      headers: (): Record<string, string> => {
         const current = get().current;
         if (!current) return {};
         return {

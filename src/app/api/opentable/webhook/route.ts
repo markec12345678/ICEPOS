@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ReservationStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import {
   getOpenTableConfig,
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
             time: reservationTime,
             duration: otRes.duration,
             note: otRes.specialRequests || `OpenTable #${otRes.id}`,
-            status: mapOpenTableStatus(otRes.status),
+                        status: mapOpenTableStatus(otRes.status) as any,
             tableId: assignedTableId || existing.tableId,
           },
         });
@@ -116,7 +117,7 @@ export async function POST(req: NextRequest) {
             time: reservationTime,
             duration: otRes.duration,
             note: otRes.specialRequests || `OpenTable #${otRes.id}`,
-            status: mapOpenTableStatus(otRes.status),
+                        status: mapOpenTableStatus(otRes.status) as any,
           },
         });
       }
@@ -130,7 +131,7 @@ export async function POST(req: NextRequest) {
       if (existing) {
         await db.reservation.update({
           where: { id: existing.id },
-          data: { status: "cancelled" },
+          data: { status: ReservationStatus.cancelled },
         });
       }
     }

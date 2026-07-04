@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
+import { signLoyaltyToken } from "@/lib/jwt";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
     // Izračunaj reward level
     const points = customer.points;
     let level = "Bronca";
-    let nextLevel = "Srebro";
+    let nextLevel: string | null = "Srebro";
     let pointsToNext = 100 - points;
     if (points >= 500) {
       level = "Zlato";
@@ -84,7 +85,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      token: customer.id, // simple token = customerId
+      token: signLoyaltyToken(customer.id, tenant.id), // JWT (HS256, 30-day TTL)
       customer: {
         id: customer.id,
         name: customer.name,
