@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
       pickupTime: string;
       type: "dinein" | "takeaway";
     };
+    const token = bodyToken || req.headers.get("x-loyalty-token");
 
     if (!token || !items || !Array.isArray(items) || items.length === 0 || !pickupTime) {
       return NextResponse.json(
@@ -43,9 +44,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const jwtPayload = verifyLoyaltyToken(token);
+    if (!jwtPayload) {
+      return NextResponse.json({ error: "Neveljaven ali potekel token" }, { status: 401 });
+    }
+
     // Poišči stranko
     const customer = await db.customer.findFirst({
-      where: { id: token, restaurantId: tenant.id },
+      where: { id: jwtPayload.customerId, restaurantId: jwtPayload.restaurantId },
     });
 
     if (!customer) {

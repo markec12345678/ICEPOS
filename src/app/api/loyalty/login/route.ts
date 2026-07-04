@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     // Izračunaj reward level
     const points = customer.points;
     let level = "Bronca";
-    let nextLevel = "Srebro";
+    let nextLevel: string | null = "Srebro";
     let pointsToNext = 100 - points;
     if (points >= 500) {
       level = "Zlato";

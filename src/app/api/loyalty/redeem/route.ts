@@ -38,14 +38,17 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
     }
 
-    const token = req.nextUrl.searchParams.get("token");
+    const token = extractLoyaltyToken(req);
     let customerPoints = 0;
     if (token) {
-      const customer = await db.customer.findFirst({
-        where: { id: payload.customerId, restaurantId: payload.restaurantId },
-        select: { points: true },
-      });
-      if (customer) customerPoints = customer.points;
+      const payload = verifyLoyaltyToken(token);
+      if (payload) {
+        const customer = await db.customer.findFirst({
+          where: { id: payload.customerId, restaurantId: payload.restaurantId },
+          select: { points: true },
+        });
+        if (customer) customerPoints = customer.points;
+      }
     }
 
     return NextResponse.json({
@@ -74,6 +77,11 @@ export async function POST(req: NextRequest) {
 
     if (!token || !rewardId) {
       return NextResponse.json({ error: "Manjkajoči podatki" }, { status: 400 });
+    }
+
+    const payload = verifyLoyaltyToken(token);
+    if (!payload) {
+      return NextResponse.json({ error: "Neveljaven ali potekel token" }, { status: 401 });
     }
 
     const reward = REWARDS.find((r) => r.id === rewardId);
