@@ -17,6 +17,7 @@ import { formatSecondaryCurrency } from "@/lib/multi-currency";
 import { ALLERGEN_INFO, ALLERGEN_KEYS, parseAllergens } from "@/lib/allergens";
 import { CustomerLookup } from "@/components/pos/customer-lookup";
 import { OrderFlagsManager } from "@/components/pos/order-flags";
+import { useCartPersistence } from "@/hooks/use-cart-persistence";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -154,6 +155,16 @@ export function OrderView() {
       loadedOrderId.current = null;
     }
   }, [selectedTableId, openOrder, loadCartFromOrder]);
+
+  // Offline cart persistence — osnutek košarice preživi reload
+  useCartPersistence(cart, selectedTableId, (restoredCart) => {
+    if (restoredCart.length > 0 && cart.length === 0 && !openOrder) {
+      toast.info("Osnutek košarice obnovljen", {
+        description: `${restoredCart.length} postavk najdenih iz prejšnje seje`,
+        duration: 3000,
+      });
+    }
+  });
 
   const [saving, setSaving] = useState(false);
   const [sendingKitchen, setSendingKitchen] = useState(false);

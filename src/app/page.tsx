@@ -42,6 +42,7 @@ import { CustomerAnalyticsView } from "@/components/pos/customer-analytics-view"
 import { FeedbackView } from "@/components/pos/feedback-view";
 import { WaitlistView } from "@/components/pos/waitlist-view";
 import { OutOfStockBanner } from "@/components/pos/out-of-stock-banner";
+import { OfflineResilienceBanner } from "@/components/pos/offline-resilience-banner";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { KeyboardShortcutsHelp } from "@/components/keyboard-shortcuts-help";
 import { GlobalSearch } from "@/components/global-search";
@@ -119,6 +120,9 @@ export default function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <PosHeader />
+
+      {/* Offline resilience banner — connection quality + fiscal queue */}
+      <OfflineResilienceBanner />
 
       {/* Out-of-stock alert banner */}
       <OutOfStockBanner />
