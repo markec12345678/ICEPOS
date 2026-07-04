@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { formatEUR } from "@/lib/types";
 import { CLVAnalysis } from "@/components/pos/clv-analysis";
+import { RetentionCohort } from "@/components/pos/retention-cohort";
 
 interface CustomerStat {
   id: string;
@@ -253,6 +254,9 @@ export function CustomerAnalyticsView() {
 
       {/* CLV analiza */}
       <CLVAnalysis />
+
+      {/* Retention cohort analiza */}
+      <RetentionCohort />
 
       {/* Vse stranke tabela */}
       <Card className="overflow-hidden">

@@ -34,6 +34,8 @@ import { BirthdayReminders } from "@/components/pos/birthday-reminders";
 import { RevenueGoalTracker } from "@/components/pos/revenue-goal-tracker";
 import { PaymentAnalytics } from "@/components/pos/payment-analytics";
 import { ActiveOrdersSummary } from "@/components/pos/active-orders-summary";
+import { OrderFlowPipeline } from "@/components/pos/order-flow-pipeline";
+import { WeeklyComparison } from "@/components/pos/weekly-comparison";
 
 export function DashboardView() {
   const { data, loading, error, refetch } = useFetch<DashboardStats>("/api/stats");
@@ -235,6 +237,12 @@ export function DashboardView() {
 
       {/* Active orders summary — pregled vseh odprtih naročil */}
       <ActiveOrdersSummary />
+
+      {/* Order flow pipeline — vizualni tok naročil */}
+      <OrderFlowPipeline />
+
+      {/* Weekly comparison — ta teden vs prejšnji */}
+      <WeeklyComparison />
 
       {/* Activity feed + Live server status — side by side na desktop */}
       <div className="grid gap-4 lg:grid-cols-2">
