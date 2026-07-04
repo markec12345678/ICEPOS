@@ -1,0 +1,123 @@
+# ============================================================
+# Gostilna POS - Production Docker Compose
+# ============================================================
+# Zagon:  docker compose -f docker-compose.prod.yml up -d --build
+#
+# Vsebuje:
+#   - PostgreSQL 16 (primary database)
+#   - Redis 7 (rate limiting + cache)
+#   - Next.js POS app
+#   - Kitchen service (socket.io)
+#   - Caddy reverse proxy (TLS termination)
+# ============================================================
+
+services:
+  # --- PostgreSQL 16 ---
+  postgres:
+    image: postgres:16-alpine
+    container_name: gostilna-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-icepos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-spremeni-me-v-produkciji}
+      POSTGRES_DB: ${POSTGRES_DB:-icepos}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pos-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-icepos}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - icepos-net
+
+  # --- Redis 7 (rate limiting + cache) ---
+  redis:
+    image: redis:7-alpine
+    container_name: gostilna-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - pos-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - icepos-net
+
+  # --- Kitchen Service (socket.io) ---
+  kitchen:
+    build:
+      context: ./mini-services/kitchen-service
+      dockerfile: Dockerfile
+    container_name: gostilna-kitchen
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - POS_API_URL=http://pos:3000
+    depends_on:
+      pos:
+        condition: service_started
+    networks:
+      - icepos-net
+
+  # --- Next.js POS App ---
+  pos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gostilna-pos
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-icepos}:${POSTGRES_PASSWORD:-spremeni-me-v-produkciji}@postgres:5432/${POSTGRES_DB:-icepos}?schema=public
+      - REDIS_URL=redis://redis:6379
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-https://pos.tvoja-domena.si}
+      - SUPER_ADMIN_KEY=${SUPER_ADMIN_KEY}
+      - FURS_TAX_NUMBER=${FURS_TAX_NUMBER}
+      - FURS_BUSINESS_UNIT=${FURS_BUSINESS_UNIT}
+      - FURS_CASH_REGISTER=${FURS_CASH_REGISTER}
+      - FURS_ENV=${FURS_ENV:-test}
+      - FURS_CERT_PATH=${FURS_CERT_PATH:-/etc/icepos/certs}
+      - FURS_CERT_PASSWORD=${FURS_CERT_PASSWORD}
+      - FURS_PRIVATE_KEY=${FURS_PRIVATE_KEY}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - KITCHEN_SERVICE_PORT=3003
+      - SENTRY_DSN=${SENTRY_DSN:-}
+    volumes:
+      - pos-logs:/app/logs
+      - ${FURS_CERT_PATH:-/etc/icepos/certs}:/etc/icepos/certs:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/furs/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - icepos-net
+
+volumes:
+  pos-pg:
+  pos-redis:
+  pos-logs:
+
+networks:
+  icepos-net:
+    driver: bridge
