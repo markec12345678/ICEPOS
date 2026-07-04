@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MenuCostAnalysis } from "@/components/pos/menu-cost-analysis";
 import { MenuPopularity } from "@/components/pos/menu-popularity";
+import { ProfitabilityMatrix } from "@/components/pos/profitability-matrix";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -333,6 +334,12 @@ export function MenuEngineeringView() {
       <div>
         <h3 className="mb-3 text-sm font-semibold">🏆 Ranking popularnosti</h3>
         <MenuPopularity />
+      </div>
+
+      {/* Profitability matrix — vizualna matrika */}
+      <div>
+        <h3 className="mb-3 text-sm font-semibold">📊 Matrika profitabilnosti</h3>
+        <ProfitabilityMatrix />
       </div>
 
       {/* Menu Cost Analysis — detalna analiza stroškov */}

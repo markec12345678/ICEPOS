@@ -36,6 +36,7 @@ import { PaymentAnalytics } from "@/components/pos/payment-analytics";
 import { ActiveOrdersSummary } from "@/components/pos/active-orders-summary";
 import { OrderFlowPipeline } from "@/components/pos/order-flow-pipeline";
 import { WeeklyComparison } from "@/components/pos/weekly-comparison";
+import { RevenueForecast } from "@/components/pos/revenue-forecast";
 
 export function DashboardView() {
   const { data, loading, error, refetch } = useFetch<DashboardStats>("/api/stats");
@@ -243,6 +244,9 @@ export function DashboardView() {
 
       {/* Weekly comparison — ta teden vs prejšnji */}
       <WeeklyComparison />
+
+      {/* Revenue forecast — AI napoved prometa */}
+      <RevenueForecast />
 
       {/* Activity feed + Live server status — side by side na desktop */}
       <div className="grid gap-4 lg:grid-cols-2">

@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { formatEUR } from "@/lib/types";
 import { ProductivityScore } from "@/components/pos/productivity-score";
+import { OperatorLeaderboard } from "@/components/pos/operator-leaderboard";
 
 interface EmployeePerf {
   operator: string;
@@ -260,6 +261,9 @@ export function EmployeePerformanceView() {
 
       {/* Productivity score */}
       <ProductivityScore />
+
+      {/* Operator leaderboard z achievementi */}
+      <OperatorLeaderboard />
     </div>
   );
 }
