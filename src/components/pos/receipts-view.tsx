@@ -43,6 +43,7 @@ import { FursQrCode } from "@/components/pos/furs-qr-code";
 import { usePosStore } from "@/stores/pos-store";
 import { playFeedbackSound } from "@/hooks/use-sound-feedback";
 import { toUserFriendlyError } from "@/lib/errors";
+import { usePrint } from "@/hooks/use-print";
 
 type Receipt = Order & {
   items: { id: string; menuItem: { id: string; name: string; price: number; vatRate: number }; quantity: number; unitPrice: number; vatRate: number; note?: string | null }[];
@@ -173,12 +174,13 @@ export function ReceiptsView() {
 
   function handlePrint(r: Receipt) {
     setSelected(r);
-    // Počakaj da se dialog.rendera, nato sproži print
-    setTimeout(() => window.print(), 400);
+    // Uporabi robustni print z retry in queue
+    setTimeout(() => doPrint(), 500);
   }
 
   // Quick re-order iz računa — doda vse postavke v košarico
   const { addCartItem, setActiveView, selectTable } = usePosStore();
+  const { print: doPrint } = usePrint();
 
   async function handleReorder(r: Receipt) {
     try {

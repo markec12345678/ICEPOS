@@ -38,6 +38,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toUserFriendlyError } from "@/lib/errors";
+import { usePrint } from "@/hooks/use-print";
+import { PrintConfirmDialog } from "@/components/pos/print-confirm-dialog";
 import { FursQrCode } from "@/components/pos/furs-qr-code";
 import { SplitBillDialog } from "@/components/pos/split-bill-dialog";
 import { ItemSplitDialog } from "@/components/pos/item-split-dialog";
@@ -738,6 +740,14 @@ function ReceiptView({
   paid: PaidResult;
   onClose: () => void;
 }) {
+  const { status: printStatus, attempts: printAttempts, printing: isPrinting, print: doPrint } = usePrint();
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
+
+  function handlePrintClick() {
+    setShowPrintDialog(true);
+    doPrint();
+  }
+
   return (
     <div className="print:block">
       <div className="flex items-center justify-between border-b border-border bg-emerald-50 px-5 py-4 print:hidden animate-fade-in dark:bg-emerald-950/30">
@@ -908,11 +918,16 @@ function ReceiptView({
       <div className="flex gap-2 border-t border-border px-5 py-4 print:hidden">
         <Button
           variant="outline"
-          className="flex-1"
-          onClick={() => window.print()}
+          className="flex-1 gap-1.5"
+          onClick={handlePrintClick}
+          disabled={isPrinting}
         >
-          <Printer className="mr-2 h-4 w-4" />
-          Natisni
+          {isPrinting ? (
+            <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+          ) : (
+            <Printer className="mr-1.5 h-4 w-4" />
+          )}
+          {isPrinting ? "Tiskam..." : "Natisni"}
         </Button>
         <Button
           className="flex-1 bg-emerald-600 hover:bg-emerald-700"
@@ -922,6 +937,16 @@ function ReceiptView({
           Zaključi
         </Button>
       </div>
+
+      {/* Print confirmation dialog z retry */}
+      <PrintConfirmDialog
+        open={showPrintDialog}
+        onOpenChange={setShowPrintDialog}
+        status={printStatus}
+        attempts={printAttempts}
+        onRetry={() => doPrint()}
+        invoiceNumber={paid.invoiceNumber || paid.receiptNo}
+      />
     </div>
   );
 }
