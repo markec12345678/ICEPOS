@@ -98,5 +98,62 @@ export const openApiSpec = {
     "/api/wolt/webhook": { post: { tags: ["Payments"], summary: "Wolt webhook (HMAC verified)", security: [], responses: { "200": { description: "Prejeto" } } } },
     "/api/deliverect/webhook": { post: { tags: ["Payments"], summary: "Deliverect webhook (HMAC verified)", security: [], responses: { "200": { description: "Prejeto" } } } },
     "/api/opentable/webhook": { post: { tags: ["Payments"], summary: "OpenTable webhook (HMAC verified)", security: [], responses: { "200": { description: "Prejeto" } } } },
+
+    "/api/orders/{id}/void-item": {
+      post: { tags: ["Orders"], summary: "Odstrani postavko iz naročila", security: [{ operatorPin: [], tenantId: [] }], parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }], responses: { "200": { description: "Odstranjeno" } } },
+    },
+    "/api/orders/{id}/transfer-table": {
+      post: { tags: ["Orders"], summary: "Prenesi naročilo na drugo mizo", security: [{ operatorPin: [], tenantId: [] }], responses: { "200": { description: "Preneseno" } } },
+    },
+    "/api/orders/{id}/send-to-kitchen": {
+      post: { tags: ["Orders"], summary: "Pošlji naročilo v kuhinjo (KDS)", security: [{ operatorPin: [], tenantId: [] }], responses: { "200": { description: "Poslano" } } },
+    },
+    "/api/orders/{id}/email-receipt": {
+      post: { tags: ["Orders"], summary: "Pošlji račun po emailu", security: [{ operatorPin: [], tenantId: [] }], responses: { "200": { description: "Poslano" } } },
+    },
+    "/api/menu/{id}/generate-image": {
+      post: { tags: ["Menu"], summary: "Generiraj AI sliko jedi (ZAI SDK)", security: [{ operatorPin: [], tenantId: [] }], responses: { "200": { description: "Slika generirana" } } },
+    },
+    "/api/inventory/low-stock": {
+      get: { tags: ["Inventory"], summary: "Alerti za nizko zalogo", security: [{ operatorPin: [], tenantId: [] }], responses: { "200": { description: "Alerti" } } },
+    },
+    "/api/inventory/valuation": {
+      get: { tags: ["Inventory"], summary: "Vrednost zaloge", security: [{ operatorPin: [], tenantId: [] }], responses: { "200": { description: "Vrednost" } } },
+    },
+    "/api/customers/birthdays": {
+      get: { tags: ["Customers"], summary: "Rojstni dnevi strank", security: [{ operatorPin: [], tenantId: [] }], responses: { "200": { description: "Seznam" } } },
+    },
+    "/api/reservations/no-show-stats": {
+      get: { tags: ["Reservations"], summary: "Statistika ne-prispetih rezervacij", security: [{ operatorPin: [], tenantId: [] }], responses: { "200": { description: "Statistika" } } },
+    },
+    "/api/shifts/active": {
+      get: { tags: ["Shifts"], summary: "Aktivna smena", security: [{ operatorPin: [], tenantId: [] }], responses: { "200": { description: "Smena" } } },
+    },
+    "/api/shifts/handover": {
+      post: { tags: ["Shifts"], summary: "Predaja smene", security: [{ operatorPin: [], tenantId: [] }], responses: { "200": { description: "Predano" } } },
+    },
+    "/api/gift-cards": {
+      get: { tags: ["GiftCards"], summary: "Seznam darilnih kartic", security: [{ operatorPin: [], tenantId: [] }], responses: { "200": { description: "Seznam" } } },
+      post: { tags: ["GiftCards"], summary: "Ustvari darilno kartico", security: [{ operatorPin: [], tenantId: [] }], responses: { "201": { description: "Ustvarjena" } } },
+    },
+    "/api/audit-log": {
+      get: { tags: ["Audit"], summary: "Audit log vnosi (FURS sledljivost)", security: [{ operatorPin: [], tenantId: [] }], parameters: [{ name: "action", in: "query", schema: { type: "string" } }, { name: "limit", in: "query", schema: { type: "integer" } }], responses: { "200": { description: "Audit log" } } },
+    },
+    "/api/tax-report": {
+      get: { tags: ["Reports"], summary: "DDV poročilo", security: [{ operatorPin: [], tenantId: [] }], responses: { "200": { description: "Poročilo" } } },
+    },
+    "/api/daily-report": {
+      get: { tags: ["Reports"], summary: "Dnevno poročilo", security: [{ operatorPin: [], tenantId: [] }], responses: { "200": { description: "Poročilo" } } },
+    },
+    "/api/sumup/create": {
+      post: { tags: ["Payments"], summary: "Sumup terminal plačilo", security: [{ operatorPin: [], tenantId: [] }], responses: { "200": { description: "Terminal checkout" } } },
+    },
+    "/api/loyalty/wallet": {
+      get: { tags: ["Loyalty"], summary: "Stanje predplačilne kartice", security: [{ loyaltyToken: [] }], responses: { "200": { description: "Stanje" } } },
+    },
+    "/api/loyalty/redeem": {
+      post: { tags: ["Loyalty"], summary: "Unovči točke za nagrado", security: [{ loyaltyToken: [] }], responses: { "200": { description: "Unovčeno" } } },
+    },
+
   },
 };

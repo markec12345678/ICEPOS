@@ -25,7 +25,7 @@ COPY --from=deps /app/prisma ./prisma
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV DATABASE_URL="file:/app/db/custom.db"
+ENV DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
 
 # Build Next.js
 RUN bun run build
@@ -36,7 +36,6 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV DATABASE_URL="file:/app/db/custom.db"
 ENV PORT=3000
 
 # Za potrebe runtime (prisma client)
@@ -49,7 +48,6 @@ COPY --from=builder /app/next.config.ts ./next.config.ts
 
 # Mapa za SQLite bazo (volume mount point)
 RUN mkdir -p /app/db
-VOLUME ["/app/db"]
 
 EXPOSE 3000
 

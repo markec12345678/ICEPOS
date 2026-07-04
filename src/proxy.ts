@@ -86,6 +86,24 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // === CSRF protection: za state-changing metode preveri Origin header ===
+  const method = req.method.toUpperCase();
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    const origin = req.headers.get("origin");
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    // V dev mode (no APP_URL), dovoli vse
+    if (appUrl && origin && !origin.startsWith(appUrl)) {
+      // Webhook rute so izvzete — njihov origin je Stripe/Wolt/Deliverect/OpenTable
+      const isWebhook = pathname.includes("/webhook");
+      if (!isWebhook) {
+        return NextResponse.json(
+          { error: "Cross-origin request zavrnjen (CSRF zaščita)" },
+          { status: 403 }
+        );
+      }
+    }
+  }
+
   // Javne rute
   if (PUBLIC_API_ROUTES.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
     return NextResponse.next();

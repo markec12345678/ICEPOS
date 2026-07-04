@@ -18,6 +18,7 @@ import https from "https";
 import fs from "fs";
 import { SignedXml } from "xml-crypto";
 import forge from "node-forge";
+import { decrypt } from "@/lib/crypto-utils";
 
 export interface FursConfig {
   env: "test" | "prod";
@@ -284,12 +285,14 @@ async function loadCertificates(config: FursConfig): Promise<LoadedCerts | null>
 
   // Če imamo pot do .p12
   if (config.certPath && config.certPassword) {
+    // Decrypt cert password (če je encryptan pri shranjevanju)
+    const certPassword = decrypt(config.certPassword) || config.certPassword;
     try {
       if (!fs.existsSync(config.certPath)) {
         console.error(`[FURS] Certifikat ne obstaja: ${config.certPath}`);
         return null;
       }
-      const p12 = loadP12Certificates(config.certPath, config.certPassword);
+      const p12 = loadP12Certificates(config.certPath, certPassword);
       if (!p12.privateKeyPem || !p12.certificatePem) {
         console.error("[FURS] Pridobivanje ključa/certifikata iz .p12 ni uspelo");
         return null;
