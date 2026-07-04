@@ -17,6 +17,7 @@ import { verifyPin } from "@/lib/auth";
 
 const PUBLIC_API_ROUTES = [
   "/api/auth/login",
+  "/api/loyalty/login", // issue token — no token required
   "/api/restaurants", // GET samo — vrne minimalne podatke (glej route.ts)
   "/api/wolt/webhook",
   "/api/deliverect/webhook",
