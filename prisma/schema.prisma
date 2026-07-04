@@ -111,6 +111,7 @@ model Restaurant {
   comboMeals      ComboMeal[]
   feedbacks       Feedback[]
   waitlist        WaitlistEntry[]
+  auditLogs       AuditLog[]
 }
 
 // ============================================================
@@ -542,4 +543,43 @@ model WaitlistEntry {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   @@index([restaurantId])
+}
+
+
+// ============================================================
+// AUDIT LOG — sledljivost sprememb (FURS skladnost)
+// ============================================================
+// Beleži vse kritične spremembe: FURS fiskalizacija, storno, PIN spremembe,
+// tenant konfiguracija, itd. Zahtevano za FURS revizije.
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  // Kdo je naredil spremembo
+  operatorId   String?  // Operator.id (nullable za sistemske akcije)
+  operatorName String?  // Ime operaterja (snapshot)
+  ipAddress    String?  // IP naslov zahtevka
+  
+  // Kaj je bilo spremenjeno
+  action       String   // "furs_fiscalize", "storno", "pin_change", "tenant_config", "payment", "inventory_adjust"
+  entityType   String   // "order", "operator", "restaurant", "gift_card", "inventory_item"
+  entityId     String?  // ID entitete
+  
+  // Podrobnosti
+  description  String   // Človeku berljiv opis
+  oldValue     String?  // JSON snapshot prejšnjega stanja
+  newValue     String?  // JSON snapshot novega stanja
+  metadata     String?  // Dodatni podatki (JSON)
+  
+  // Status
+  success      Boolean  @default(true)
+  errorMessage String?  // Če success=false, opis napake
+  
+  createdAt    DateTime @default(now())
+  
+  @@index([restaurantId, createdAt])
+  @@index([restaurantId, action])
+  @@index([entityType, entityId])
 }
