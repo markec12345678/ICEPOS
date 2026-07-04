@@ -21,6 +21,7 @@ import {
 import { formatEUR, formatDateTime } from "@/lib/types";
 import { authHeaders } from "@/components/pos/pin-login";
 import { getChannelInfo } from "@/lib/deliverect";
+import { LoadingSpinner, ErrorState, KpiSkeleton, TableSkeleton, ListSkeleton } from "@/components/pos/loading-states";
 
 interface DeliverectOrder {
   id: string;
@@ -122,7 +123,7 @@ export function DeliverectView() {
   if (loading || !status) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="text-muted-foreground">Nalagam Deliverect...</div>
+        <LoadingSpinner />
       </div>
     );
   }

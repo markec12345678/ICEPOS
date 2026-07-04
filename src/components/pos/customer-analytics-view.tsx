@@ -30,6 +30,7 @@ import { formatEUR } from "@/lib/types";
 import { CLVAnalysis } from "@/components/pos/clv-analysis";
 import { RetentionCohort } from "@/components/pos/retention-cohort";
 import { FrequencyPrediction } from "@/components/pos/frequency-prediction";
+import { KpiSkeleton, ListSkeleton, LoadingSpinner, ErrorState } from "@/components/pos/loading-states";
 
 interface CustomerStat {
   id: string;
@@ -105,7 +106,7 @@ export function CustomerAnalyticsView() {
   if (loading || !data) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <LoadingSpinner />
       </div>
     );
   }

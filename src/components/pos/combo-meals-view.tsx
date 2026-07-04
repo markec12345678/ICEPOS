@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { authHeaders } from "@/components/pos/pin-login";
 import { formatEUR, CATEGORIES, type MenuItem } from "@/lib/types";
+import { LoadingSpinner, ErrorState, KpiSkeleton, TableSkeleton, ListSkeleton } from "@/components/pos/loading-states";
 
 interface ComboSlot {
   id: string;
@@ -123,7 +124,7 @@ export function ComboMealsView() {
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="text-muted-foreground">Nalagam combo menije...</div>
+        <LoadingSpinner />
       </div>
     );
   }

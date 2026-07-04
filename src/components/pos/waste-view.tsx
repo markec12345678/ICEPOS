@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { formatEUR, formatDateTime } from "@/lib/types";
 import { authHeaders } from "@/components/pos/pin-login";
+import { LoadingSpinner, ErrorState, KpiSkeleton, TableSkeleton, ListSkeleton } from "@/components/pos/loading-states";
 
 // ============================================================
 // Tipi
@@ -125,7 +126,7 @@ export function WasteView() {
   if (loading || !stats) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="text-muted-foreground">Nalagam odpadke...</div>
+        <LoadingSpinner />
       </div>
     );
   }

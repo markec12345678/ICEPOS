@@ -22,6 +22,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { formatEUR } from "@/lib/types";
+import { LoadingSpinner, ErrorState, KpiSkeleton, TableSkeleton, ListSkeleton } from "@/components/pos/loading-states";
 
 interface RestaurantBenchmark {
   id: string;
@@ -88,7 +89,7 @@ export function BenchmarkView() {
   if (loading || !data) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="text-muted-foreground">Nalagam benchmark...</div>
+        <LoadingSpinner />
       </div>
     );
   }

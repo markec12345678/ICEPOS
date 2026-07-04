@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { KpiSkeleton, ListSkeleton, LoadingSpinner, ErrorState } from "@/components/pos/loading-states";
 
 interface Feedback {
   id: string;
@@ -141,7 +142,7 @@ export function FeedbackView() {
   if (loading || !data) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <LoadingSpinner />
       </div>
     );
   }

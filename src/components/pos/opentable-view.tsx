@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { formatDateTime } from "@/lib/types";
 import { authHeaders } from "@/components/pos/pin-login";
+import { LoadingSpinner, ErrorState, KpiSkeleton, TableSkeleton, ListSkeleton } from "@/components/pos/loading-states";
 
 interface Reservation {
   id: string;
@@ -136,7 +137,7 @@ export function OpenTableView() {
   if (loading || !status) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="text-muted-foreground">Nalagam...</div>
+        <LoadingSpinner />
       </div>
     );
   }

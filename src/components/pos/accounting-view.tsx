@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { formatEUR } from "@/lib/types";
 import { TaxReportView } from "@/components/pos/tax-report-view";
+import { LoadingSpinner, ErrorState, KpiSkeleton, TableSkeleton, ListSkeleton } from "@/components/pos/loading-states";
 
 interface AccountingSummary {
   from: string;
@@ -71,7 +72,7 @@ export function AccountingView() {
   if (loading || !summary) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="text-muted-foreground">Nalagam računovodske podatke...</div>
+        <LoadingSpinner />
       </div>
     );
   }

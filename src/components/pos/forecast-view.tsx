@@ -22,6 +22,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { formatEUR } from "@/lib/types";
+import { KpiSkeleton, ListSkeleton, LoadingSpinner, ErrorState } from "@/components/pos/loading-states";
 
 interface ForecastDay {
   date: string;

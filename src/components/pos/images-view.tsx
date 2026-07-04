@@ -4,6 +4,7 @@ import { useFetch } from "@/hooks/use-fetch";
 import { ImageManager } from "@/components/pos/image-manager";
 import type { MenuItem } from "@/lib/types";
 import { Image as ImageIcon } from "lucide-react";
+import { LoadingSpinner, ErrorState, KpiSkeleton, TableSkeleton, ListSkeleton } from "@/components/pos/loading-states";
 
 export function ImagesView() {
   const { data: menuItems, refetch } = useFetch<MenuItem[]>("/api/menu");
@@ -11,7 +12,7 @@ export function ImagesView() {
   if (!menuItems) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="text-muted-foreground">Nalagam meni...</div>
+        <LoadingSpinner />
       </div>
     );
   }
