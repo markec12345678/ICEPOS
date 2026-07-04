@@ -99,8 +99,7 @@ export async function POST(req: NextRequest) {
             time: reservationTime,
             duration: otRes.duration,
             note: otRes.specialRequests || `OpenTable #${otRes.id}`,
-            // @ts-expect-error — mapOpenTableStatus returns string, Prisma expects ReservationStatus
-            status: mapOpenTableStatus(otRes.status) as any,
+                        status: mapOpenTableStatus(otRes.status) as any,
             tableId: assignedTableId || existing.tableId,
           },
         });
@@ -118,8 +117,7 @@ export async function POST(req: NextRequest) {
             time: reservationTime,
             duration: otRes.duration,
             note: otRes.specialRequests || `OpenTable #${otRes.id}`,
-            // @ts-expect-error — mapOpenTableStatus returns string, Prisma expects ReservationStatus
-            status: mapOpenTableStatus(otRes.status) as any,
+                        status: mapOpenTableStatus(otRes.status) as any,
           },
         });
       }

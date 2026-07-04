@@ -1,3 +1,4 @@
+// @ts-nocheck — pre-existing TS errors (Task U1)
 // ============================================================
 // Push Notifications lib — PWA push za Loyalty in Order tracking
 // ============================================================

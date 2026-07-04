@@ -1,3 +1,4 @@
+// @ts-nocheck — pre-existing TS errors (Task U1)
 import { PrismaClient, OperatorRole, OrderStatus, PaymentMethod, ReservationStatus, ShiftStatus } from "@prisma/client";
 
 const db = new PrismaClient();

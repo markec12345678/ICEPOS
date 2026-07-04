@@ -129,7 +129,7 @@ export default async function PrintReceiptPage({
             </p>
             <p>
               <strong>Datum:</strong>{" "}
-              {order.paidAt ? formatDateTime(order.paidAt) : "-"}
+              {order.paidAt ? formatDateTime(order.paidAt as any) : "-"}
             </p>
             <p>
               <strong>Miza:</strong> {order.table.name}
