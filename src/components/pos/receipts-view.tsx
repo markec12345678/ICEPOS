@@ -65,6 +65,7 @@ export function ReceiptsView() {
   const [stornoTarget, setStornoTarget] = useState<Receipt | null>(null);
   const [stornoReason, setStornoReason] = useState("");
   const [stornoBusy, setStornoBusy] = useState(false);
+  const [stornoConfirmed, setStornoConfirmed] = useState(false);
   const [emailTarget, setEmailTarget] = useState<Receipt | null>(null);
   const [emailAddress, setEmailAddress] = useState("");
   const [emailBusy, setEmailBusy] = useState(false);
@@ -139,6 +140,7 @@ export function ReceiptsView() {
       toast.success("Račun uspešno storniran in poslan v SRS");
       setStornoTarget(null);
       setStornoReason("");
+      setStornoConfirmed(false);
       refetch();
     } catch (e) {
       toast.error((e as Error).message || "Napaka pri stornu");
@@ -883,6 +885,25 @@ export function ReceiptsView() {
               FURS zahteva navedbo razloga. Storno račun bo dobil novo
               zaporedno številko in reference na original.
             </p>
+            {/* Dodatno opozorilo */}
+            <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-2.5 dark:border-rose-800 dark:bg-rose-950/20">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" />
+              <div className="text-xs text-rose-700 dark:text-rose-400">
+                <p className="font-semibold">⚠️ Pomembno:</p>
+                <p>Storno je <strong>nepovratno</strong>. Račun se ne more "odstornirati".</p>
+                <p className="mt-0.5">Če je bilo pomotoma, ustvari nov račun z istimi postavkami (gumb 🔄 ob računu).</p>
+              </div>
+            </div>
+            {/* Checkbox za dodatno potrditev */}
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={stornoConfirmed}
+                onChange={(e) => setStornoConfirmed(e.target.checked)}
+                className="h-4 w-4 rounded border-border"
+              />
+              <span>Razumem, da je dejanje nepovratno</span>
+            </label>
           </div>
           <div className="flex gap-2">
             <Button
@@ -891,6 +912,7 @@ export function ReceiptsView() {
               onClick={() => {
                 setStornoTarget(null);
                 setStornoReason("");
+                setStornoConfirmed(false);
               }}
               disabled={stornoBusy}
             >
@@ -899,7 +921,7 @@ export function ReceiptsView() {
             <Button
               className="flex-1 bg-rose-600 hover:bg-rose-700"
               onClick={handleStorno}
-              disabled={stornoBusy || !stornoReason.trim()}
+              disabled={stornoBusy || !stornoReason.trim() || !stornoConfirmed}
             >
               {stornoBusy ? "Storniram..." : "Potrdi storno"}
             </Button>

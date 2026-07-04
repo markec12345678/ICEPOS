@@ -18,6 +18,7 @@ import { ALLERGEN_INFO, ALLERGEN_KEYS, parseAllergens } from "@/lib/allergens";
 import { CustomerLookup } from "@/components/pos/customer-lookup";
 import { OrderFlagsManager } from "@/components/pos/order-flags";
 import { useCartPersistence } from "@/hooks/use-cart-persistence";
+import { useUndo } from "@/hooks/use-undo";
 import { useDebounce } from "@/hooks/use-debounce";
 import { getMenuSearchIndex } from "@/lib/search-index";
 import { toUserFriendlyError } from "@/lib/errors";
@@ -179,6 +180,9 @@ export function OrderView() {
   const [excludedAllergens, setExcludedAllergens] = useState<string[]>([]);
   const [allergenFilterOpen, setAllergenFilterOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<{ id: string; name: string; points: number; totalSpent: number; visitCount: number } | null>(null);
+
+  // Undo za kritične akcije
+  const { showUndoToast } = useUndo();
 
   // Cena postavke z modifierji (za prikaz v vozičku)
   function lineUnitPrice(c: (CartItem & { lineId: string })): number {
@@ -1017,8 +1021,18 @@ export function OrderView() {
           {cart.length > 0 && (
             <button
               onClick={() => {
+                const savedCart = [...cart];
                 clearCart();
-                toast.info("Voziček počiščen");
+                showUndoToast(
+                  "Košarica počiščena",
+                  `${savedCart.length} postavk odstranjenih`,
+                  () => {
+                    savedCart.forEach((item) => {
+                      addCartItem(item.menuItem, item.quantity, item.modifiers || [], item.note || undefined);
+                    });
+                  },
+                  "Obnovi"
+                );
               }}
               className="mt-2 w-full rounded py-1 text-center text-xs text-muted-foreground transition-colors hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
