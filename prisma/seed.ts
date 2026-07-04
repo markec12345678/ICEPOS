@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, OperatorRole, OrderStatus, PaymentMethod, ReservationStatus, ShiftStatus } from "@prisma/client";
 
 const db = new PrismaClient();
 
@@ -164,9 +164,9 @@ async function seedRestaurantData(
   // Operaterji (različni PIN-i za drugo restavracijo)
   const pinOffset = index * 1000;
   const operators = [
-    { name: index === 0 ? "Ana" : "Mija", pin: String(1234 + pinOffset), taxNumber: restaurant.taxNumber, role: "cashier", hourlyRate: 12 },
-    { name: index === 0 ? "Marko" : "Tomaž", pin: String(5678 + pinOffset), taxNumber: restaurant.taxNumber, role: "cashier", hourlyRate: 13 },
-    { name: index === 0 ? "Admin" : "Direktor", pin: String(9999 + pinOffset), taxNumber: restaurant.taxNumber, role: "admin", hourlyRate: 20 },
+    { name: index === 0 ? "Ana" : "Mija", pin: String(1234 + pinOffset), taxNumber: restaurant.taxNumber, role: OperatorRole.cashier, hourlyRate: 12 },
+    { name: index === 0 ? "Marko" : "Tomaž", pin: String(5678 + pinOffset), taxNumber: restaurant.taxNumber, role: OperatorRole.cashier, hourlyRate: 13 },
+    { name: index === 0 ? "Admin" : "Direktor", pin: String(9999 + pinOffset), taxNumber: restaurant.taxNumber, role: OperatorRole.admin, hourlyRate: 20 },
   ];
   for (const op of operators) {
     await db.operator.create({ data: { ...op, restaurantId } });
@@ -251,7 +251,7 @@ async function seedRestaurantData(
   ].filter((r) => r.tableId) as { tableId: string; customerName: string; customerPhone: string | null; partySize: number; date: string; time: string; duration: number; note: string | null }[];
 
   for (const r of reservations) {
-    await db.reservation.create({ data: { ...r, status: "confirmed", restaurantId } });
+    await db.reservation.create({ data: { ...r, status: ReservationStatus.confirmed, restaurantId } });
   }
   console.log(`✅ ${reservations.length} rezervacij`);
 
@@ -269,7 +269,7 @@ async function seedRestaurantData(
       endTime: end,
       startCash: 150,
       endCash: 420,
-      status: "closed",
+      status: ShiftStatus.closed,
       ordersCount: 8,
       totalRevenue: 234.5,
       note: "Mirna smena",
@@ -286,7 +286,7 @@ async function seedRestaurantData(
     const order = await db.order.create({
       data: {
         tableId: table2.id,
-        status: "open",
+        status: OrderStatus.open,
         operator: index === 0 ? "Ana" : "Mija",
         restaurantId,
         businessUnit: restaurant.businessUnit,
@@ -379,7 +379,7 @@ async function seedPaidReceipts(
     const order = await db.order.create({
       data: {
         tableId: r.table.id,
-        status: "paid",
+        status: OrderStatus.paid,
         total,
         vatTotal,
         paidAt,

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { OperatorRole } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getOperatorFromRequest } from "@/lib/auth";
 import { getTenantFromRequest } from "@/lib/tenant";

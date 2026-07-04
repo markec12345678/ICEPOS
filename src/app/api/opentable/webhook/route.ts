@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ReservationStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import {
   getOpenTableConfig,
@@ -130,7 +131,7 @@ export async function POST(req: NextRequest) {
       if (existing) {
         await db.reservation.update({
           where: { id: existing.id },
-          data: { status: "cancelled" },
+          data: { status: ReservationStatus.cancelled },
         });
       }
     }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ReservationStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
 import { buildReservationConfirmation, sendNotification } from "@/lib/notifications";
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest) {
     const date = req.nextUrl.searchParams.get("date");
     const status = req.nextUrl.searchParams.get("status");
 
-    const where: { restaurantId: string; date?: string; status?: string } = { restaurantId: tenant.id };
+    const where: { restaurantId: string; date?: string; status?: any } = { restaurantId: tenant.id };
     if (date) where.date = date;
     if (status) where.status = status;
 
@@ -106,7 +107,7 @@ export async function POST(req: NextRequest) {
         customerName,
         date,
         time,
-        parseInt(partySize, 10),
+        String(partySize),
         reservation.table.name
       );
       payload.to = customerPhone;
