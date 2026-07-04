@@ -29,6 +29,7 @@ import {
 import { formatEUR } from "@/lib/types";
 import { CLVAnalysis } from "@/components/pos/clv-analysis";
 import { RetentionCohort } from "@/components/pos/retention-cohort";
+import { FrequencyPrediction } from "@/components/pos/frequency-prediction";
 
 interface CustomerStat {
   id: string;
@@ -257,6 +258,9 @@ export function CustomerAnalyticsView() {
 
       {/* Retention cohort analiza */}
       <RetentionCohort />
+
+      {/* Frequency prediction — napoved vračanja strank */}
+      <FrequencyPrediction />
 
       {/* Vse stranke tabela */}
       <Card className="overflow-hidden">

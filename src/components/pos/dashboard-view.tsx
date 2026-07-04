@@ -37,6 +37,7 @@ import { ActiveOrdersSummary } from "@/components/pos/active-orders-summary";
 import { OrderFlowPipeline } from "@/components/pos/order-flow-pipeline";
 import { WeeklyComparison } from "@/components/pos/weekly-comparison";
 import { RevenueForecast } from "@/components/pos/revenue-forecast";
+import { HourlyTargets } from "@/components/pos/hourly-targets";
 
 export function DashboardView() {
   const { data, loading, error, refetch } = useFetch<DashboardStats>("/api/stats");
@@ -154,6 +155,9 @@ export function DashboardView() {
 
       {/* Revenue goal tracker — dnevni/tedenski/mesečni cilji */}
       <RevenueGoalTracker />
+
+      {/* Hourly targets — urni cilji prometa z real-time progress */}
+      <HourlyTargets />
 
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Urna statistika */}

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { MenuCostAnalysis } from "@/components/pos/menu-cost-analysis";
 import { MenuPopularity } from "@/components/pos/menu-popularity";
 import { ProfitabilityMatrix } from "@/components/pos/profitability-matrix";
+import { PerformanceAlerts } from "@/components/pos/performance-alerts";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -145,6 +146,9 @@ export function MenuEngineeringView() {
           </SelectContent>
         </Select>
       </div>
+
+      {/* Performance alerts — opozorila o padcu/nagrasti prodaje */}
+      <PerformanceAlerts />
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
