@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getTenantFromRequest } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -11,8 +12,12 @@ export async function GET(
   try {
     const { id } = await params;
     // id je lahko ali pravi ID ali koda (npr. GC-XXXX)
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Tenant ni najden" }, { status: 400 });
+    }
     let card = await db.giftCard.findFirst({
-      where: { code: id.toUpperCase() },
+      where: { code: id.toUpperCase(), restaurantId: tenant.id },
     });
     if (!card) {
       card = await db.giftCard.findFirst({ where: { id, restaurantId: tenant.id } });

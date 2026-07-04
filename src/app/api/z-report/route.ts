@@ -1,4 +1,3 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -28,10 +27,10 @@ export async function GET(req: NextRequest) {
     const validReceipts = paidOrders.filter((o) => o.status === "paid");
     const stornoReceipts = paidOrders.filter((o) => o.status === "storno");
 
-    const grossTotal = validReceipts.reduce((s, o) => s + o.total, 0);
-    const totalTips = validReceipts.reduce((s, o) => s + (o.tip || 0), 0);
+    const grossTotal = validReceipts.reduce((s, o) => s + Number(o.total), 0);
+    const totalTips = validReceipts.reduce((s, o) => s + Number(o.tip || 0), 0);
     const stornoTotal = stornoReceipts.reduce(
-      (s, o) => s + Math.abs(o.total),
+      (s, o) => s + Math.abs(Number(o.total)),
       0
     );
     const netTotal = grossTotal - stornoTotal;
@@ -87,9 +86,9 @@ export async function GET(req: NextRequest) {
       const existing = paymentMap.get(method);
       if (existing) {
         existing.count += 1;
-        Number(existing.total) += o.total;
+        existing.total += Number(o.total);
       } else {
-        paymentMap.set(method, { count: 1, total: o.total });
+        paymentMap.set(method, { count: 1, total: Number(o.total) });
       }
     }
     const paymentBreakdown = Array.from(paymentMap.entries()).map(
