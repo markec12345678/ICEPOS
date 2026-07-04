@@ -130,52 +130,57 @@ export async function POST(
       eor = generateEOR();
     }
 
-    // Posodobi naročilo
-    const paid = await db.order.update({
-      where: { id },
-      data: {
-        status: "paid",
-        paymentMethod: paymentMethod === "giftcard" ? "card" : paymentMethod,
-        paidAt: issueDate,
-        receiptNo: invoiceNumberStr,
-        invoiceNumber: invoiceNumberStr,
-        zoi,
-        eor,
-        fursXml,
-        customerId: customerId || null,
-        tip,
-      },
-      include: {
-        table: true,
-        items: { include: { menuItem: true } },
-      },
-    });
+    // === ATOMIC $transaction: order update + inventory + gift card + loyalty ===
+    // Vse pisanje je atomično. Če inventory deduction vrže napako (negativna zaloga),
+    // se celotna transakcija rollback-a — order NE bo označen kot paid.
+    // FURS mrežni klic je IZVEN transakcije (network I/O ne sme držati DB tx odprte).
+    const paid = await db.$transaction(async (tx) => {
+      const updated = await tx.order.update({
+        where: { id },
+        data: {
+          status: "paid",
+          paymentMethod: paymentMethod === "giftcard" ? "card" : paymentMethod,
+          paidAt: issueDate,
+          receiptNo: invoiceNumberStr,
+          invoiceNumber: invoiceNumberStr,
+          zoi,
+          eor,
+          fursXml,
+          customerId: customerId || null,
+          tip,
+        },
+        include: {
+          table: true,
+          items: { include: { menuItem: true } },
+        },
+      });
 
-    // === POST-PLAČILO: Inventory dedukcija (ne-blokirajoče) ===
-    try {
+      // Inventory deduction — THROW na negativno zalogo → rollback
       for (const it of order.items) {
-        const recipes = await db.recipe.findMany({
+        const recipes = await tx.recipe.findMany({
           where: { menuItemId: it.menuItemId },
         });
         for (const recipe of recipes) {
           const deductQty = recipe.quantity * it.quantity;
-          await db.inventoryItem.update({
+          const inv = await tx.inventoryItem.update({
             where: { id: recipe.inventoryItemId },
             data: { quantity: { decrement: deductQty } },
           });
+          if (inv.quantity < 0) {
+            throw new Error(`Zaloga "${inv.name}" bi šla v negativno (${inv.quantity})`);
+          }
         }
       }
-    } catch (invErr) {
-      console.error("[pay] Inventory deduction failed (non-blocking):", invErr);
-    }
 
-    // === POST-PLAČILO: Gift card redeem ===
-    if (giftCardId) {
-      try {
-        const gc = await db.giftCard.findUnique({ where: { id: giftCardId } });
+      // Gift card redeem — THROW na premajhno stanje → rollback
+      if (giftCardId) {
+        const gc = await tx.giftCard.findUnique({ where: { id: giftCardId } });
         if (gc) {
+          if (gc.balance < order.total) {
+            throw new Error("Darilna kartica nima dovolj sredstev");
+          }
           const newBalance = gc.balance - order.total;
-          await db.giftCard.update({
+          await tx.giftCard.update({
             where: { id: giftCardId },
             data: {
               balance: newBalance,
@@ -183,30 +188,23 @@ export async function POST(
             },
           });
         }
-      } catch (gcErr) {
-        console.error("[pay] Gift card redeem failed (non-blocking):", gcErr);
       }
-    }
 
-    // === POST-PLAČILO: Loyalty točke ===
-    if (customerId) {
-      try {
-        const customer = await db.customer.findUnique({ where: { id: customerId } });
-        if (customer) {
-          const pointsToAdd = Math.floor(order.total / 10);
-          await db.customer.update({
-            where: { id: customerId },
-            data: {
-              points: { increment: pointsToAdd },
-              totalSpent: { increment: order.total },
-              visitCount: { increment: 1 },
-            },
-          });
-        }
-      } catch (custErr) {
-        console.error("[pay] Loyalty points failed (non-blocking):", custErr);
+      // Loyalty točke
+      if (customerId) {
+        const pointsToAdd = Math.floor(order.total / 10);
+        await tx.customer.update({
+          where: { id: customerId },
+          data: {
+            points: { increment: pointsToAdd },
+            totalSpent: { increment: order.total },
+            visitCount: { increment: 1 },
+          },
+        });
       }
-    }
+
+      return updated;
+    });
 
     return NextResponse.json({
       ...paid,
