@@ -107,6 +107,14 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      {/* Skip link za tipkovnične uporabnike */}
+      <a href="#main-content" className="skip-link">
+        Preskoči na vsebino
+      </a>
+
+      {/* ARIA live region za screen reader obvestila */}
+      <div aria-live="polite" aria-atomic="true" id="aria-live-region" />
+
       <PosHeader />
 
       {/* Offline resilience banner — connection quality + fiscal queue */}
@@ -138,7 +146,7 @@ export default function Home() {
       <div className="flex flex-1 overflow-hidden">
         <PosSidebar />
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 print:overflow-visible print:p-0">
+        <main id="main-content" className="flex-1 overflow-y-auto p-4 md:p-6 print:overflow-visible print:p-0">
           <div className="mx-auto max-w-7xl">
             {activeView === "tables" && <TablesView />}
             {activeView === "order" && <OrderView />}

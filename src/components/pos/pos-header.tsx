@@ -87,6 +87,7 @@ export function PosHeader() {
             className="hidden h-9 w-9 shrink-0 md:flex"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             title={sidebarCollapsed ? "Razširi stransko vrstico" : "Skrči stransko vrstico"}
+            aria-label={sidebarCollapsed ? "Razširi stransko vrstico" : "Skrči stransko vrstico"}
           >
             {sidebarCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
           </Button>
@@ -174,6 +175,7 @@ export function PosHeader() {
               window.dispatchEvent(event);
             }}
             title="Tipkovne bližnjice (?)"
+            aria-label="Prikaži tipkovne bližnjice"
           >
             <Keyboard className="h-4 w-4" />
           </Button>
