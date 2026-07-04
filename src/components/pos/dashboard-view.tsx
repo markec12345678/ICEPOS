@@ -38,6 +38,7 @@ import { OrderFlowPipeline } from "@/components/pos/order-flow-pipeline";
 import { WeeklyComparison } from "@/components/pos/weekly-comparison";
 import { RevenueForecast } from "@/components/pos/revenue-forecast";
 import { HourlyTargets } from "@/components/pos/hourly-targets";
+import { TableUtilizationGauge } from "@/components/pos/table-utilization-gauge";
 
 export function DashboardView() {
   const { data, loading, error, refetch } = useFetch<DashboardStats>("/api/stats");
@@ -158,6 +159,9 @@ export function DashboardView() {
 
       {/* Hourly targets — urni cilji prometa z real-time progress */}
       <HourlyTargets />
+
+      {/* Table utilization gauge — real-time zasedenost miz */}
+      <TableUtilizationGauge />
 
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Urna statistika */}

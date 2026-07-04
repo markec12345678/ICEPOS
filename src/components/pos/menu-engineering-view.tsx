@@ -7,6 +7,7 @@ import { MenuCostAnalysis } from "@/components/pos/menu-cost-analysis";
 import { MenuPopularity } from "@/components/pos/menu-popularity";
 import { ProfitabilityMatrix } from "@/components/pos/profitability-matrix";
 import { PerformanceAlerts } from "@/components/pos/performance-alerts";
+import { PairingSuggestions } from "@/components/pos/pairing-suggestions";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -344,6 +345,12 @@ export function MenuEngineeringView() {
       <div>
         <h3 className="mb-3 text-sm font-semibold">📊 Matrika profitabilnosti</h3>
         <ProfitabilityMatrix />
+      </div>
+
+      {/* Pairing suggestions — AI predlogi parjenja */}
+      <div>
+        <h3 className="mb-3 text-sm font-semibold">🔗 AI predlogi parjenja</h3>
+        <PairingSuggestions />
       </div>
 
       {/* Menu Cost Analysis — detalna analiza stroškov */}

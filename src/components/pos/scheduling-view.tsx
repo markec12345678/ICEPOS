@@ -33,10 +33,12 @@ import {
   Timer,
   Coins,
   Activity,
+  Brain,
 } from "lucide-react";
 import { formatEUR } from "@/lib/types";
 import { LaborCostTracker } from "@/components/pos/labor-cost-tracker";
 import { TipDistribution } from "@/components/pos/tip-distribution";
+import { SchedulingOptimizer } from "@/components/pos/scheduling-optimizer";
 
 // ============================================================
 // Tipi
@@ -106,7 +108,7 @@ const ROLES = [
 // ============================================================
 
 export function SchedulingView() {
-  const [tab, setTab] = useState<"week" | "clock" | "labor" | "tips" | "live">("week");
+  const [tab, setTab] = useState<"week" | "clock" | "labor" | "tips" | "live" | "optimizer">("week");
   const [weekStart, setWeekStart] = useState(getWeekStart(new Date()));
 
   return (
@@ -136,6 +138,10 @@ export function SchedulingView() {
           <Activity className="mr-1.5 h-4 w-4" />
           Live Tracker
         </TabButton>
+        <TabButton active={tab === "optimizer"} onClick={() => setTab("optimizer")}>
+          <Brain className="mr-1.5 h-4 w-4" />
+          AI Optimizer
+        </TabButton>
         <TabButton active={tab === "tips"} onClick={() => setTab("tips")}>
           <Coins className="mr-1.5 h-4 w-4" />
           Tip Pool
@@ -149,6 +155,8 @@ export function SchedulingView() {
       {tab === "labor" && <LaborCostView />}
 
       {tab === "live" && <LaborCostTracker />}
+
+      {tab === "optimizer" && <SchedulingOptimizer />}
       {tab === "tips" && <TipPoolView />}
     </div>
   );
