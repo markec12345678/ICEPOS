@@ -8,7 +8,9 @@ import { createHmac, timingSafeEqual } from "crypto";
 // JWT vsebuje customerId + restaurantId + iat + exp, podpisan z
 // NEXTAUTH_SECRET. 30-dnevni TTL.
 
-const JWT_SECRET = process.env.NEXTAUTH_SECRET || "dev-secret-change-me";
+function getJwtSecret(): string {
+  return process.env.NEXTAUTH_SECRET || "dev-secret-change-me";
+}
 const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 
 export interface LoyaltyTokenPayload {
@@ -39,7 +41,7 @@ export function signLoyaltyToken(customerId: string, restaurantId: string): stri
     exp: now + TOKEN_TTL_SECONDS,
   }));
   const data = `${header}.${payload}`;
-  const signature = createHmac("sha256", JWT_SECRET).update(data).digest("base64url");
+  const signature = createHmac("sha256", getJwtSecret()).update(data).digest("base64url");
   return `${data}.${signature}`;
 }
 
@@ -49,7 +51,7 @@ export function verifyLoyaltyToken(token: string): LoyaltyTokenPayload | null {
     if (parts.length !== 3) return null;
     const [header, payload, signature] = parts;
     const data = `${header}.${payload}`;
-    const expectedSig = createHmac("sha256", JWT_SECRET).update(data).digest("base64url");
+    const expectedSig = createHmac("sha256", getJwtSecret()).update(data).digest("base64url");
 
     // Constant-time comparison
     const sigBuf = Buffer.from(signature);
