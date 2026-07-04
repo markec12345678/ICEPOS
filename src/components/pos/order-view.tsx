@@ -18,6 +18,8 @@ import { ALLERGEN_INFO, ALLERGEN_KEYS, parseAllergens } from "@/lib/allergens";
 import { CustomerLookup } from "@/components/pos/customer-lookup";
 import { OrderFlagsManager } from "@/components/pos/order-flags";
 import { useCartPersistence } from "@/hooks/use-cart-persistence";
+import { useDebounce } from "@/hooks/use-debounce";
+import { getMenuSearchIndex } from "@/lib/search-index";
 import { toUserFriendlyError } from "@/lib/errors";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +50,7 @@ import {
   Clock3,
   ShieldAlert,
   X,
+  Loader2,
 } from "lucide-react";
 import {
   Dialog,
@@ -183,24 +186,44 @@ export function OrderView() {
     return c.menuItem.price + modDelta;
   }
 
+  // Debounced search — 300ms za boljšo performance pri 500+ artiklih
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
+  // Search index — zgradi inverted index za O(1) iskanje
+  const searchIndex = useMemo(() => getMenuSearchIndex(), []);
+  useEffect(() => {
+    if (menu && menu.length > 0) {
+      searchIndex.build(menu.filter((m) => m.available));
+    }
+  }, [menu, searchIndex]);
+
   const filteredMenu = useMemo(() => {
     if (!menu) return [];
-    let items = menu.filter((m) => m.available);
-    // Filter priljubljene/dnevno
-    if (specialFilter === "favorite") {
-      items = items.filter((m) => m.isFavorite);
-    } else if (specialFilter === "daily") {
-      items = items.filter((m) => m.isDailySpecial);
-    } else if (activeCategory !== "vse") {
-      items = items.filter((m) => m.category === activeCategory);
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      items = items.filter(
-        (m) =>
-          m.name.toLowerCase().includes(q) ||
-          (m.desc || "").toLowerCase().includes(q)
-      );
+    // Uporabi search index za hitro iskanje (O(1) per besedo namesto O(n) linear)
+    let items: MenuItem[];
+
+    if (debouncedSearch.trim() && searchIndex.isBuilt) {
+      // Hitro iskanje preko index-a z result limiting (max 100)
+      const categoryFilter = specialFilter === "favorite" || specialFilter === "daily"
+        ? undefined
+        : activeCategory !== "vse" ? activeCategory : undefined;
+      items = searchIndex.search(debouncedSearch, categoryFilter, 100);
+      // Dodatno filtriraj za priljubljene/dnevno
+      if (specialFilter === "favorite") {
+        items = items.filter((m) => m.isFavorite);
+      } else if (specialFilter === "daily") {
+        items = items.filter((m) => m.isDailySpecial);
+      }
+    } else {
+      // Brez iskanja — klasični filter
+      items = menu.filter((m) => m.available);
+      if (specialFilter === "favorite") {
+        items = items.filter((m) => m.isFavorite);
+      } else if (specialFilter === "daily") {
+        items = items.filter((m) => m.isDailySpecial);
+      } else if (activeCategory !== "vse") {
+        items = items.filter((m) => m.category === activeCategory);
+      }
     }
     // Allergen filter — izključi jedi, ki vsebujejo izbrane alergene
     if (excludedAllergens.length > 0) {
@@ -210,7 +233,7 @@ export function OrderView() {
       });
     }
     return items;
-  }, [menu, activeCategory, searchQuery, specialFilter, excludedAllergens]);
+  }, [menu, activeCategory, debouncedSearch, specialFilter, excludedAllergens, searchIndex]);
 
   const cartTotals = useMemo(() => {
     const subtotal = cart.reduce(
@@ -454,6 +477,17 @@ export function OrderView() {
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
             />
+            {/* Result count + loading indicator */}
+            {searchQuery.trim() && (
+              <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
+                {searchQuery !== debouncedSearch && (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                )}
+                <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  {filteredMenu.length}
+                </span>
+              </div>
+            )}
           </div>
           <Popover open={allergenFilterOpen} onOpenChange={setAllergenFilterOpen}>
             <PopoverTrigger asChild>
