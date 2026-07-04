@@ -16,6 +16,8 @@
 import crypto from "crypto";
 import https from "https";
 import fs from "fs";
+import { SignedXml } from "xml-crypto";
+import forge from "node-forge";
 
 export interface FursConfig {
   env: "test" | "prod";
@@ -136,7 +138,11 @@ export async function sendInvoiceToFurs(
 // INI postopek — predhodna prijava elektronske naprave pri FURS
 // ============================================================
 
-export async function registerDeviceToFurs(config: FursConfig): Promise<{
+export async function registerDeviceToFurs(
+  config: FursConfig,
+  businessPremiseID?: string,
+  electronicDeviceID?: string
+): Promise<{
   success: boolean;
   message: string;
 }> {
@@ -153,8 +159,8 @@ export async function registerDeviceToFurs(config: FursConfig): Promise<{
     const endpoint = FURS_ENDPOINTS[config.env];
     const iniXml = buildIniXml({
       taxNumber: config.taxNumber,
-      businessPremiseID: "",
-      electronicDeviceID: "",
+      businessPremiseID: businessPremiseID || "",
+      electronicDeviceID: electronicDeviceID || "",
       validityDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
     });
     const soapEnvelope = buildSoapEnvelope(iniXml);
@@ -224,6 +230,47 @@ interface LoadedCerts {
   ca?: string;
 }
 
+// Razčleni .p12 (PKCS#12) z node-forge — Node.js crypto nima createPkcs12.
+// Vrne PEM zasebni ključ, list certifikat in (opcionalno) CA verigo.
+function loadP12Certificates(certPath: string, password: string): {
+  privateKeyPem: string;
+  certificatePem: string;
+  ca: string;
+} {
+  const p12Buffer = fs.readFileSync(certPath);
+  // node-forge fromDer pričakuje "binary"/"latin1" niz (byte-per-char)
+  const p12Asn1 = forge.asn1.fromDer(p12Buffer.toString("latin1"));
+  const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password);
+
+  let privateKeyPem = "";
+  let certificatePem = "";
+  let caPem = "";
+
+  for (const safeContents of p12.safeContents) {
+    for (const bag of safeContents.safeBags) {
+      if (
+        bag.type === forge.pki.oids.keyBag ||
+        bag.type === forge.pki.oids.pkcs8ShroudedKeyBag
+      ) {
+        if (bag.key) {
+          privateKeyPem = forge.pki.privateKeyToPem(bag.key);
+        }
+      } else if (bag.type === forge.pki.oids.certBag) {
+        if (bag.cert) {
+          const certPem = forge.pki.certificateToPem(bag.cert);
+          if (!certificatePem) {
+            certificatePem = certPem; // Prvi cert = list
+          } else {
+            caPem += certPem + "\n"; // Dodatni certi = CA veriga
+          }
+        }
+      }
+    }
+  }
+
+  return { privateKeyPem, certificatePem, ca: caPem };
+}
+
 // Naloži certifikat iz .p12 datoteke ali iz PEM stringov
 async function loadCertificates(config: FursConfig): Promise<LoadedCerts | null> {
   // Če imamo PEM string-e direktno
@@ -242,26 +289,16 @@ async function loadCertificates(config: FursConfig): Promise<LoadedCerts | null>
         console.error(`[FURS] Certifikat ne obstaja: ${config.certPath}`);
         return null;
       }
-      const p12Buffer = fs.readFileSync(config.certPath);
-      const p12 = crypto.createPkcs12(p12Buffer, config.certPassword);
-
-      // Pridobi ključ in certifikat
-      const keyObj = p12.key;
-      const certObj = p12.cert;
-
-      if (!keyObj || !certObj) {
+      const p12 = loadP12Certificates(config.certPath, config.certPassword);
+      if (!p12.privateKeyPem || !p12.certificatePem) {
         console.error("[FURS] Pridobivanje ključa/certifikata iz .p12 ni uspelo");
         return null;
       }
 
       return {
-        privateKeyPem: typeof keyObj === "string"
-          ? keyObj
-          : keyObj.export({ type: "pkcs8", format: "pem" }) as string,
-        certificatePem: typeof certObj === "string"
-          ? certObj
-          : certObj.export({ type: "spki", format: "pem" }) as string,
-        ca: config.ca,
+        privateKeyPem: p12.privateKeyPem,
+        certificatePem: p12.certificatePem,
+        ca: config.ca || p12.ca || undefined,
       };
     } catch (e) {
       console.error("[FURS] Napaka pri branju .p12:", e);
@@ -278,7 +315,6 @@ function buildSoapEnvelope(xmlContent: string): string {
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
   <soap:Header>
     <wsse:Security>
-      {{WSS_SIGNATURE}}
     </wsse:Security>
   </soap:Header>
   <soap:Body wsu:Id="body">
@@ -287,50 +323,62 @@ function buildSoapEnvelope(xmlContent: string): string {
 </soap:Envelope>`;
 }
 
-// WS-Security podpis z RSA-SHA256 (BinarySecurityToken)
+// WS-Security podpis z RSA-SHA256 in exc-c14n (xml-crypto).
+// FURS zahteva exclusive XML canonicalization PRED podpisom — podpisovanje
+// surovega XML-niza (prejšnja implementacija) je FURS zavračal (s00237).
 function signSoapWithWss(
   soap: string,
   privateKeyPem: string,
   certificatePem: string
 ): string {
   try {
-    const privateKey = crypto.createPrivateKey(privateKeyPem);
-    const certificate = certificatePem.replace(/-----[^-]+-----/g, "").replace(/\s/g, "");
+    const sig = new SignedXml({
+      privateKey: privateKeyPem,
+      publicCert: certificatePem,
+      signatureAlgorithm: "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256",
+      canonicalizationAlgorithm: "http://www.w3.org/2001/10/xml-exc-c14n#",
+      idMode: "wssecurity",
+      getKeyInfoContent: () => {
+        return `<wsse:SecurityTokenReference xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"><wsse:Reference URI="#x509" ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3"/></wsse:SecurityTokenReference>`;
+      },
+    });
 
-    // Hash SOAP body z RSA-SHA256
-    const bodyMatch = soap.match(/<soap:Body[^>]*>([\s\S]*?)<\/soap:Body>/);
-    if (!bodyMatch) return soap;
+    // Referenca na soap:Body z wsu:Id="body" + exc-c14n transform
+    sig.addReference({
+      xpath: "//*[local-name()='Body' and namespace-uri()='http://schemas.xmlsoap.org/soap/envelope/']",
+      digestAlgorithm: "http://www.w3.org/2001/04/xmlenc#sha256",
+      transforms: ["http://www.w3.org/2001/10/xml-exc-c14n#"],
+    });
 
-    const bodyContent = bodyMatch[1];
-    const signer = crypto.createSign("RSA-SHA256");
-    signer.update(bodyContent);
-    const signature = signer.sign(privateKey, "base64");
+    sig.computeSignature(soap, {
+      prefix: "ds",
+      location: {
+        reference:
+          "//*[local-name()='Security' and namespace-uri()='http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd']",
+        action: "prepend",
+      },
+      existingPrefixes: {
+        wsse: "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd",
+        wsu: "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd",
+      },
+    });
 
-    // WS-Security BinarySecurityToken + Signature blok
-    const wssBlock = `<wsse:BinarySecurityToken EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary" ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3" wsu:Id="x509">${certificate}</wsse:BinarySecurityToken>
-      <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
-        <ds:SignedInfo>
-          <ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
-          <ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
-          <ds:Reference URI="#body">
-            <ds:Transforms>
-              <ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
-            </ds:Transforms>
-            <ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
-            <ds:DigestValue>${crypto.createHash("sha256").update(bodyContent).digest("base64")}</ds:DigestValue>
-          </ds:Reference>
-        </ds:SignedInfo>
-        <ds:SignatureValue>${signature}</ds:SignatureValue>
-        <ds:KeyInfo>
-          <wsse:SecurityTokenReference>
-            <wsse:Reference URI="#x509" ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3"/>
-          </wsse:SecurityTokenReference>
-        </ds:KeyInfo>
-      </ds:Signature>`;
+    let signedSoap = sig.getSignedXml();
 
-    return soap.replace("{{WSS_SIGNATURE}}", wssBlock);
+    // xml-crypto ne doda BinarySecurityToken sam — ročno ga vstavimo
+    // pred ds:Signature znotraj wsse:Security.
+    const certB64 = certificatePem
+      .replace(/-----[^-]+-----/g, "")
+      .replace(/\s/g, "");
+    const bst =
+      `<wsse:BinarySecurityToken EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary" ValueType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0#X509v3" wsu:Id="x509" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">${certB64}</wsse:BinarySecurityToken>`;
+
+    // Vstavi BST pred <ds:Signature ...> (\b prepreči zadetek <ds:SignatureValue>)
+    signedSoap = signedSoap.replace(/(<ds:Signature\b[^>]*>)/, bst + "$1");
+
+    return signedSoap;
   } catch (e) {
-    console.error("[FURS] signSoapWithWss error:", e);
+    console.error("[FURS] signSoapWithWss (xml-crypto) error:", e);
     return soap;
   }
 }
