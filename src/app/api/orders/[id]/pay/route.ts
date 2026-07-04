@@ -61,7 +61,7 @@ export async function POST(
       if (gc.status !== "active") {
         return NextResponse.json({ error: "Kartica ni aktivna" }, { status: 400 });
       }
-      if (gc.balance < order.total) {
+      if (Number(gc.balance) < Number(order.total)) {
         return NextResponse.json(
           { error: `Premajhno stanje (${gc.balance.toFixed(2)} €) za ${order.total.toFixed(2)} €` },
           { status: 400 }
@@ -95,7 +95,7 @@ export async function POST(
       items: order.items.map((it) => ({
         name: it.menuItem.name,
         quantity: it.quantity,
-        unitPrice: it.unitPrice,
+        unitPrice: Number(it.unitPrice),
         vatRate: it.vatRate,
       })),
       paymentMethod: paymentMethod === "giftcard" ? "card" : paymentMethod,
@@ -176,10 +176,10 @@ export async function POST(
       if (giftCardId) {
         const gc = await tx.giftCard.findUnique({ where: { id: giftCardId } });
         if (gc) {
-          if (gc.balance < order.total) {
+          if (Number(gc.balance) < Number(order.total)) {
             throw new Error("Darilna kartica nima dovolj sredstev");
           }
-          const newBalance = gc.balance - order.total;
+          const newBalance = Number(gc.balance) - Number(order.total);
           await tx.giftCard.update({
             where: { id: giftCardId },
             data: {
@@ -192,7 +192,7 @@ export async function POST(
 
       // Loyalty točke
       if (customerId) {
-        const pointsToAdd = Math.floor(order.total / 10);
+        const pointsToAdd = Math.floor(Number(order.total) / 10);
         await tx.customer.update({
           where: { id: customerId },
           data: {
@@ -209,7 +209,7 @@ export async function POST(
     return NextResponse.json({
       ...paid,
       tip,
-      grandTotal: paid.total + tip,
+      grandTotal: Number(paid.total) + Number(tip),
       fursXmlPreview: fursXml.slice(0, 800) + "...(skrajšano)",
     });
   } catch (e) {

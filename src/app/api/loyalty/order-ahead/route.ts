@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
       .filter((i) => menuMap.has(i.menuItemId) && i.quantity > 0)
       .map((i) => {
         const m = menuMap.get(i.menuItemId)!;
-        const lineTotal = m.price * i.quantity;
+        const lineTotal = Number(m.price) * i.quantity;
         total += lineTotal;
         vatTotal += lineTotal * m.vatRate;
         return {
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
       total,
       items.map((i) => {
         const m = menuMap.get(i.menuItemId)!;
-        return { name: m.name, quantity: i.quantity, price: m.price };
+        return { name: m.name, quantity: i.quantity, price: Number(m.price) };
       }),
       type === "takeaway"
     );

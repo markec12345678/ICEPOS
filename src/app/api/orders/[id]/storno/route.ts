@@ -85,7 +85,7 @@ export async function POST(
         items: original.items.map((it) => ({
           name: it.menuItem.name,
           quantity: it.quantity,
-          unitPrice: it.unitPrice,
+          unitPrice: Number(it.unitPrice),
           vatRate: it.vatRate,
         })),
         paymentMethod:
@@ -149,7 +149,7 @@ export async function POST(
           orderId: newStorno.id,
           menuItemId: it.menuItemId,
           quantity: it.quantity,
-          unitPrice: it.unitPrice,
+          unitPrice: Number(it.unitPrice),
           vatRate: it.vatRate,
           note: "STORNO",
         })),

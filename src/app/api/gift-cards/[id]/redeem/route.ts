@@ -22,17 +22,17 @@ export async function POST(
     if (card.status !== "active") {
       return NextResponse.json({ error: "Gift card ni aktiven" }, { status: 400 });
     }
-    if (card.balance < amount) {
+    if (Number(card.balance) < amount) {
       return NextResponse.json({
-        error: `Premajhno stanje (${card.balance.toFixed(2)} €)`,
+        error: `Premajhno stanje (${Number(card.balance).toFixed(2)} €)`,
       }, { status: 400 });
     }
-    const newBalance = card.balance - amount;
+    const newBalance = Number(card.balance) - amount;
     const updated = await db.giftCard.update({
       where: { id },
       data: {
         balance: newBalance,
-        status: newBalance <= 0 ? "used" : "active",
+        status: Number(newBalance) <= 0 ? "used" : "active",
       },
     });
     return NextResponse.json({

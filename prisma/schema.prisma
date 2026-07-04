@@ -124,7 +124,7 @@ model MenuItem {
   name          String
   nameEn        String?
   category      String // "predjedi" | "glavne_jedi" | "brezalkoholne" | "alkoholne" | "sladice"
-  price         Float // EUR
+  price         Decimal // EUR
   vatRate       Float // 0.095 (znižana - hrana) | 0.22 (splošna - alkohol)
   available     Boolean @default(true)
   desc          String?
@@ -150,7 +150,7 @@ model Modifier {
   menuItemId String
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
   label      String // npr. "Brez čebule", "Dobra pečena", "Bez glutena"
-  priceDelta Float    @default(0) // sprememba cene (Lahko negativna za popust)
+  priceDelta Decimal @default(0) // sprememba cene
   createdAt  DateTime @default(now())
 }
 
@@ -183,8 +183,8 @@ model Order {
   table         Table     @relation(fields: [tableId], references: [id])
   status        OrderStatus @default(open)
   items         OrderItem[]
-  total         Float     @default(0)
-  vatTotal      Float     @default(0)
+  total         Decimal  @default(0)
+  vatTotal      Decimal  @default(0)
   createdAt     DateTime  @default(now())
   paidAt        DateTime?
   paymentMethod PaymentMethod?
@@ -198,7 +198,7 @@ model Order {
   operator      String   @default("Blagajnik")
   operatorTaxNo String   @default("SI12345678")
   shiftId       String?
-  tip           Float    @default(0) // napitnina (EUR)
+  tip           Decimal @default(0) // napitnina (EUR)
   stripePaymentIntentId String? // Stripe PaymentIntent ID
   fursSubmitted   Boolean  @default(false) // ali je račun uspešno fiskaliziran pri FURS
   // Flags
@@ -224,7 +224,7 @@ model OrderItem {
   menuItemId String
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
   quantity   Int      @default(1)
-  unitPrice  Float // snapshot cene ob naročilu (vključno z modifierji)
+  unitPrice  Decimal // snapshot cene
   vatRate    Float // snapshot DDV stopnje
   note       String?
   modifiers  String? // JSON array izbranih modifierjev
@@ -264,11 +264,11 @@ model Shift {
   operatorTaxNo String
   startTime  DateTime @default(now())
   endTime    DateTime?
-  startCash  Float    @default(0)
-  endCash    Float?
+  startCash  Decimal @default(0)
+  endCash    Decimal?
   status     ShiftStatus @default(open)
   ordersCount Int     @default(0)
-  totalRevenue Float  @default(0)
+  totalRevenue Decimal @default(0)
   note       String?
   createdAt  DateTime @default(now())
   @@index([restaurantId])
@@ -283,7 +283,7 @@ model Operator {
   pin        String
   taxNumber  String   @default("SI12345678")
   role       OperatorRole @default(cashier)
-  hourlyRate Float    @default(12)
+  hourlyRate Decimal @default(12)
   active     Boolean  @default(true)
   createdAt  DateTime @default(now())
   schedules  Schedule[]
@@ -305,7 +305,7 @@ model InventoryItem {
   unit        String   @default("kos")
   quantity    Float    @default(0)
   minQuantity Float    @default(0)
-  costPerUnit Float    @default(0)
+  costPerUnit Decimal @default(0)
   supplier    String?
   category    String   @default("splosno")
   expiryDate  DateTime? // rok trajanja (opcijsko)
@@ -339,7 +339,7 @@ model Customer {
   phone       String?
   email       String?
   points      Int      @default(0)
-  totalSpent  Float    @default(0)
+  totalSpent  Decimal @default(0)
   visitCount  Int      @default(0)
   lastVisitAt DateTime?
   allergens   String?
@@ -363,8 +363,8 @@ model GiftCard {
   restaurantId String
   restaurant  Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   code        String
-  balance     Float    @default(0)
-  initialAmount Float
+  balance     Decimal @default(0)
+  initialAmount Decimal
   status      String   @default("active")
   customerName String?
   note        String?
@@ -424,7 +424,7 @@ model WasteLog {
   name            String   // ime izdelka (snapshot)
   quantity        Float    // količina odpadka
   unit            String   // "kos" | "kg" | "l" | "g" | "ml"
-  cost            Float    // strošek odpadka (EUR)
+  cost            Decimal // strošek odpadka (EUR)
   reason          String   // "expired" | "burnt" | "dropped" | "returned" | "spoilage" | "other"
   note            String?
   operator        String?  // ime operaterja
@@ -466,7 +466,7 @@ model ComboMeal {
   restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   name          String   // "Lunch Meni 1", "Biftek meni", itd.
   description   String?
-  price         Float    // fiksna cena combo-ja (manjša od vsote posameznih)
+  price         Decimal // fiksna cena combo-ja
   active        Boolean  @default(true)
   // Slike/ikona (opcijsko)
   icon          String?
