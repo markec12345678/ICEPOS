@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
       { base: number; vat: number; gross: number }
     >();
     const applyItem = (
-      it: { unitPrice: number; quantity: number; vatRate: number },
+      it: { unitPrice: any; quantity: number; vatRate: number },
       sign: number
     ) => {
       const lineGross = Number(it.unitPrice) * it.quantity * sign;
