@@ -49,14 +49,19 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Wolt webhook] Event: ${payload.event}, Order: ${payload.order.id}`);
 
-    // Poišči restavracijo (po merchant_id ali venue_id)
-    const restaurant = await db.restaurant.findFirst({
-      where: {
-        active: true,
-        // V produkciji: shranimo wolt_merchant_id v Restaurant model
-        // Za zdaj: vzamemo prvo aktivno (POC)
-      },
-    });
+    // Poišči restavracijo po venue_id (produkcija) ali prvo aktivno (fallback)
+    const venueId = payload.venue_id || payload.merchant_id;
+    let restaurant = null;
+    if (venueId) {
+      restaurant = await db.restaurant.findFirst({
+        where: { woltVenueId: venueId, active: true },
+      });
+    }
+    if (!restaurant) {
+      restaurant = await db.restaurant.findFirst({
+        where: { active: true },
+      });
+    }
 
     if (!restaurant) {
       console.error("[Wolt webhook] Ni aktivne restavracije");
