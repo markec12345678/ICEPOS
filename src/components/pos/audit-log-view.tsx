@@ -38,7 +38,7 @@ export function AuditLogView() {
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
-  const { fetchWithHeaders } = useTenantFetch();
+  const fetchWithHeaders = useTenantFetch();
 
   const loadLogs = async () => {
     setLoading(true);
