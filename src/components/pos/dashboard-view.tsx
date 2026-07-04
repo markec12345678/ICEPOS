@@ -39,11 +39,13 @@ import { WeeklyComparison } from "@/components/pos/weekly-comparison";
 import { RevenueForecast } from "@/components/pos/revenue-forecast";
 import { HourlyTargets } from "@/components/pos/hourly-targets";
 import { TableUtilizationGauge } from "@/components/pos/table-utilization-gauge";
+import { DashboardCustomizer, useWidgetVisibility } from "@/components/pos/dashboard-customizer";
 
 export function DashboardView() {
   const { data, loading, error, refetch } = useFetch<DashboardStats>("/api/stats");
   const { data: lowStock, refetch: refetchLowStock } = useFetch<{ id: string; name: string; quantity: number; unit: string; minQuantity: number; category: string }[]>("/api/inventory/low-stock");
   const setActiveView = usePosStore((s) => s.setActiveView);
+  const { isVisible } = useWidgetVisibility();
 
   // Auto-refresh vsakih 30s
   useEffect(() => {
@@ -82,8 +84,11 @@ export function DashboardView() {
 
   return (
     <div className="space-y-4">
-      {/* Header: aktivna smena + rezervacije + hitre akcije */}
-      <DashboardHeader />
+      {/* Header: aktivna smena + rezervacije + hitre akcije + customizer */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <DashboardHeader />
+        <DashboardCustomizer />
+      </div>
 
       {/* Low-stock alert banner */}
       {lowStock && lowStock.length > 0 && (
@@ -155,13 +160,13 @@ export function DashboardView() {
       </div>
 
       {/* Revenue goal tracker — dnevni/tedenski/mesečni cilji */}
-      <RevenueGoalTracker />
+      {isVisible("revenueGoals") && <RevenueGoalTracker />}
 
       {/* Hourly targets — urni cilji prometa z real-time progress */}
-      <HourlyTargets />
+      {isVisible("hourlyTargets") && <HourlyTargets />}
 
       {/* Table utilization gauge — real-time zasedenost miz */}
-      <TableUtilizationGauge />
+      {isVisible("utilizationGauge") && <TableUtilizationGauge />}
 
       <div className="grid gap-4 lg:grid-cols-3">
         {/* Urna statistika */}
@@ -245,28 +250,30 @@ export function DashboardView() {
       </div>
 
       {/* Active orders summary — pregled vseh odprtih naročil */}
-      <ActiveOrdersSummary />
+      {isVisible("activeOrders") && <ActiveOrdersSummary />}
 
       {/* Order flow pipeline — vizualni tok naročil */}
-      <OrderFlowPipeline />
+      {isVisible("orderFlow") && <OrderFlowPipeline />}
 
       {/* Weekly comparison — ta teden vs prejšnji */}
-      <WeeklyComparison />
+      {isVisible("weeklyComparison") && <WeeklyComparison />}
 
       {/* Revenue forecast — AI napoved prometa */}
-      <RevenueForecast />
+      {isVisible("revenueForecast") && <RevenueForecast />}
 
       {/* Activity feed + Live server status — side by side na desktop */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ActivityFeed />
-        <LiveServerStatus />
-      </div>
+      {(isVisible("activityFeed") || isVisible("liveServers")) && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {isVisible("activityFeed") && <ActivityFeed />}
+          {isVisible("liveServers") && <LiveServerStatus />}
+        </div>
+      )}
 
       {/* Birthday reminders */}
-      <BirthdayReminders />
+      {isVisible("birthdays") && <BirthdayReminders />}
 
       {/* Table turn time analitika */}
-      <TableTurnTime />
+      {isVisible("turnTime") && <TableTurnTime />}
 
       {/* Statistika po kategorijah + Načini plačila */}
       <div className="grid gap-4 lg:grid-cols-3">
@@ -320,13 +327,13 @@ export function DashboardView() {
       </div>
 
       {/* Payment analytics — analiza načinov plačila */}
-      <PaymentAnalytics />
+      {isVisible("paymentMethods") && <PaymentAnalytics />}
 
       {/* Section stats — analitika po sekcijah miz */}
-      <SectionStats />
+      {isVisible("sectionStats") && <SectionStats />}
 
       {/* Sales heatmap — analiza prometa po dnevih in urah */}
-      <SalesHeatmap />
+      {isVisible("heatmap") && <SalesHeatmap />}
     </div>
   );
 }

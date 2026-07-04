@@ -36,9 +36,13 @@ import {
   Mail,
   Send,
   Filter,
+  ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FursQrCode } from "@/components/pos/furs-qr-code";
+import { usePosStore } from "@/stores/pos-store";
+import { playFeedbackSound } from "@/hooks/use-sound-feedback";
+import { toUserFriendlyError } from "@/lib/errors";
 
 type Receipt = Order & {
   items: { id: string; menuItem: { id: string; name: string; price: number; vatRate: number }; quantity: number; unitPrice: number; vatRate: number; note?: string | null }[];
@@ -171,6 +175,89 @@ export function ReceiptsView() {
     setSelected(r);
     // Počakaj da se dialog.rendera, nato sproži print
     setTimeout(() => window.print(), 400);
+  }
+
+  // Quick re-order iz računa — doda vse postavke v košarico
+  const { addCartItem, setActiveView, selectTable } = usePosStore();
+
+  async function handleReorder(r: Receipt) {
+    try {
+      if (!r.items || r.items.length === 0) {
+        toast.error("Račun nima postavk za ponovitev");
+        return;
+      }
+
+      let added = 0;
+      let skipped = 0;
+      for (const item of r.items) {
+        try {
+          // Pridobi podatke o jedi iz API-ja
+          const res = await fetch(`/api/menu/${item.menuItem.id}`);
+          if (!res.ok) {
+            skipped++;
+            continue;
+          }
+          const menuItem = await res.json();
+          if (!menuItem.available) {
+            skipped++;
+            continue;
+          }
+          addCartItem(
+            {
+              id: menuItem.id,
+              name: menuItem.name,
+              nameEn: menuItem.nameEn || undefined,
+              category: menuItem.category,
+              price: menuItem.price,
+              vatRate: menuItem.vatRate,
+              available: true,
+              desc: menuItem.desc,
+              descEn: menuItem.descEn,
+              allergens: menuItem.allergens,
+              calories: menuItem.calories,
+              protein: menuItem.protein,
+              carbs: menuItem.carbs,
+              fat: menuItem.fat,
+              isFavorite: menuItem.isFavorite,
+              isDailySpecial: menuItem.isDailySpecial,
+              imageUrl: menuItem.imageUrl,
+              createdAt: menuItem.createdAt,
+            },
+            item.quantity,
+            [],
+            item.note || undefined
+          );
+          added++;
+        } catch {
+          skipped++;
+        }
+      }
+
+      if (added > 0) {
+        playFeedbackSound("success");
+        toast.success(`Ponovljeno naročilo: ${added} postavk${skipped > 0 ? ` (${skipped} preskokljenih)` : ""}`, {
+          description: r.invoiceNumber || r.receiptNo,
+          duration: 4000,
+          action: {
+            label: "Pojdi na naročilo",
+            onClick: () => {
+              if (r.tableId) {
+                selectTable(r.tableId);
+              } else {
+                setActiveView("order");
+              }
+            },
+          },
+        });
+      } else {
+        toast.error("Ni bilo mogoče ponoviti naročila", {
+          description: "Nobena postavka ni več na voljo",
+        });
+      }
+    } catch (e) {
+      const friendly = toUserFriendlyError(e);
+      toast.error(friendly.title, { description: friendly.description });
+    }
   }
 
   if (error) {
@@ -474,6 +561,17 @@ export function ReceiptsView() {
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
+                      {!isStorno && !storniran && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/40"
+                          onClick={() => handleReorder(r)}
+                          title="Ponovi naročilo"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                      )}
                       <a
                         href={`/print/receipt/${r.id}`}
                         target="_blank"
