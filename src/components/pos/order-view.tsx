@@ -18,6 +18,7 @@ import { ALLERGEN_INFO, ALLERGEN_KEYS, parseAllergens } from "@/lib/allergens";
 import { CustomerLookup } from "@/components/pos/customer-lookup";
 import { OrderFlagsManager } from "@/components/pos/order-flags";
 import { useCartPersistence } from "@/hooks/use-cart-persistence";
+import { toUserFriendlyError } from "@/lib/errors";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -286,7 +287,9 @@ export function OrderView() {
       refetchTables();
       return saved;
     } catch {
-      toast.error("Napaka pri shranjevanju naročila");
+      toast.error("Napaka pri shranjevanju", {
+        description: "Preverite povezavo in poskusite znova.",
+      });
       return null;
     } finally {
       setSaving(false);
@@ -316,7 +319,10 @@ export function OrderView() {
         description: `${data.itemCount} postavk → Miza ${selectedTable?.name}`,
       });
     } catch (e) {
-      toast.error((e as Error).message || "Napaka pri pošiljanju v kuhinjo");
+      const friendly = toUserFriendlyError(e);
+      toast.error(friendly.title, {
+        description: `Pošiljanje v kuhinjo: ${friendly.description}`,
+      });
     } finally {
       setSendingKitchen(false);
     }
@@ -342,7 +348,10 @@ export function OrderView() {
       refetchTables();
       selectTable(transferTarget);
     } catch (e) {
-      toast.error((e as Error).message || "Napaka pri preselitvi");
+      const friendly = toUserFriendlyError(e);
+      toast.error(friendly.title, {
+        description: `Preselitev mize: ${friendly.description}`,
+      });
     } finally {
       setTransferring(false);
     }

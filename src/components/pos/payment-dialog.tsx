@@ -37,6 +37,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toUserFriendlyError } from "@/lib/errors";
 import { FursQrCode } from "@/components/pos/furs-qr-code";
 import { SplitBillDialog } from "@/components/pos/split-bill-dialog";
 import { ItemSplitDialog } from "@/components/pos/item-split-dialog";
@@ -213,7 +214,11 @@ export function PaymentDialog() {
       });
     } catch (e) {
       playFeedbackSound("error");
-      toast.error((e as Error).message || "Napaka pri plačilu");
+      const friendly = toUserFriendlyError(e);
+      toast.error(friendly.title, {
+        description: friendly.description,
+        duration: 6000,
+      });
     } finally {
       setProcessing(false);
     }
