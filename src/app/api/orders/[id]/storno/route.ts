@@ -9,6 +9,8 @@ import {
   type InvoiceIssuer,
 } from "@/lib/furs";
 import { sendInvoiceToFurs } from "@/lib/furs-api";
+import { writeAuditLog, getIpAddress } from "@/lib/audit";
+import { getOperatorFromRequest } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +30,8 @@ export async function POST(
     if (!tenant) {
       return NextResponse.json({ error: "Tenant ni najden" }, { status: 400 });
     }
+
+    const operator = await getOperatorFromRequest(req);
 
     // === Tenant-scoped lookup (preprečuje IDOR) ===
     const original = await db.order.findFirst({
@@ -180,6 +184,20 @@ export async function POST(
       } else {
         console.warn("[storno] FURS POC mode:", fursResult.error?.message);
       }
+      
+      // Audit log — FURS storno
+      await writeAuditLog({
+        restaurantId: tenant.id,
+        operatorName: operator?.name,
+        ipAddress: getIpAddress(req),
+        action: "furs_storno",
+        entityType: "order",
+        entityId: storno.id,
+        description: `Storno računa ${original.invoiceNumber} (razlog: ${reason})`,
+        newValue: { stornoId: storno.id, zoi, eor, fursSubmitted, originalId: original.id },
+        success: fursSubmitted,
+        errorMessage: fursSubmitted ? undefined : fursResult.error?.message,
+      });
     } catch (fursErr) {
       console.error("[storno] FURS submission failed (non-fatal):", fursErr);
     }

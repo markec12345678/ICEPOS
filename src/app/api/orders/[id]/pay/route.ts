@@ -8,6 +8,8 @@ import {
   buildInvoiceNumber,
 } from "@/lib/furs";
 import { sendInvoiceToFurs } from "@/lib/furs-api";
+import { writeAuditLog, getIpAddress } from "@/lib/audit";
+import { getOperatorFromRequest } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +25,8 @@ export async function POST(
     if (!tenant) {
       return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
     }
+
+    const operator = await getOperatorFromRequest(req);
     const body = await req.json().catch(() => ({}));
     const paymentMethod: "cash" | "card" | "giftcard" =
       body.paymentMethod === "card"
@@ -126,6 +130,20 @@ export async function POST(
       if (!fursResult.success) {
         console.warn(`[pay] FURS POC mode: ${fursResult.error?.message}`);
       }
+      
+      // Audit log — FURS fiskalizacija
+      await writeAuditLog({
+        restaurantId: tenant.id,
+        operatorName: operator?.name,
+        ipAddress: getIpAddress(req),
+        action: "furs_fiscalize",
+        entityType: "order",
+        entityId: id,
+        description: `Fiskalizacija računa ${invoiceNumberStr} (ZOI: ${zoi.slice(0, 8)}...)`,
+        newValue: { zoi, eor, fursSubmitted: fursSuccess, paymentMethod },
+        success: fursSuccess,
+        errorMessage: fursSuccess ? undefined : fursResult.error?.message,
+      });
     } else {
       eor = generateEOR();
     }
