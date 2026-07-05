@@ -5,9 +5,14 @@ import {
   calculateZOI,
   generateEOR,
   buildInvoiceXml,
+  type InvoiceIssuer,
   buildInvoiceNumber,
 } from "@/lib/furs";
 import { sendInvoiceToFurs } from "@/lib/furs-api";
+import { writeAuditLog, getIpAddress } from "@/lib/audit";
+import { captureException } from "@/lib/sentry-utils";
+import { validate, PaySchema } from "@/lib/validation";
+import { getOperatorFromRequest } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +28,8 @@ export async function POST(
     if (!tenant) {
       return NextResponse.json({ error: "Restavracija ni najdena" }, { status: 400 });
     }
+
+    const operator = await getOperatorFromRequest(req);
     const body = await req.json().catch(() => ({}));
     const paymentMethod: "cash" | "card" | "giftcard" =
       body.paymentMethod === "card"
@@ -61,7 +68,7 @@ export async function POST(
       if (gc.status !== "active") {
         return NextResponse.json({ error: "Kartica ni aktivna" }, { status: 400 });
       }
-      if (gc.balance < order.total) {
+      if (Number(gc.balance) < Number(order.total)) {
         return NextResponse.json(
           { error: `Premajhno stanje (${gc.balance.toFixed(2)} €) za ${order.total.toFixed(2)} €` },
           { status: 400 }
@@ -87,6 +94,17 @@ export async function POST(
       electronicDeviceID: tenant.cashRegister,
     });
 
+    // Tenant-based InvoiceIssuer (preprečuje hardcoded DEMO_ISSUER)
+    const issuerTaxNumber = tenant.taxNumber.replace(/^SI/i, "");
+    const issuer: InvoiceIssuer = {
+      taxNumber: issuerTaxNumber,
+      businessPremiseID: tenant.businessUnit,
+      electronicDeviceID: tenant.cashRegister,
+      name: tenant.name,
+      address: tenant.address || undefined,
+      city: tenant.city || undefined,
+    };
+
     // XML račun
     const fursXml = buildInvoiceXml({
       invoiceNumber: invoiceSeq,
@@ -95,12 +113,12 @@ export async function POST(
       items: order.items.map((it) => ({
         name: it.menuItem.name,
         quantity: it.quantity,
-        unitPrice: it.unitPrice,
+        unitPrice: Number(it.unitPrice),
         vatRate: it.vatRate,
       })),
       paymentMethod: paymentMethod === "giftcard" ? "card" : paymentMethod,
       operator: order.operator,
-    });
+    }, issuer);
 
     // Pošlji na FURS za pravi EOR (če je certifikat naložen, sicer POC)
     const restaurant = await db.restaurant.findUnique({
@@ -126,56 +144,75 @@ export async function POST(
       if (!fursResult.success) {
         console.warn(`[pay] FURS POC mode: ${fursResult.error?.message}`);
       }
+      
+      // Audit log — FURS fiskalizacija
+      await writeAuditLog({
+        restaurantId: tenant.id,
+        operatorName: operator?.name,
+        ipAddress: getIpAddress(req),
+        action: "furs_fiscalize",
+        entityType: "order",
+        entityId: id,
+        description: `Fiskalizacija računa ${invoiceNumberStr} (ZOI: ${zoi.slice(0, 8)}...)`,
+        newValue: { zoi, eor, fursSubmitted: fursSuccess, paymentMethod },
+        success: fursSuccess,
+        errorMessage: fursSuccess ? undefined : fursResult.error?.message,
+      });
     } else {
       eor = generateEOR();
     }
 
-    // Posodobi naročilo
-    const paid = await db.order.update({
-      where: { id },
-      data: {
-        status: "paid",
-        paymentMethod: paymentMethod === "giftcard" ? "card" : paymentMethod,
-        paidAt: issueDate,
-        receiptNo: invoiceNumberStr,
-        invoiceNumber: invoiceNumberStr,
-        zoi,
-        eor,
-        fursXml,
-        customerId: customerId || null,
-        tip,
-      },
-      include: {
-        table: true,
-        items: { include: { menuItem: true } },
-      },
-    });
+    // === ATOMIC $transaction: order update + inventory + gift card + loyalty ===
+    // Vse pisanje je atomično. Če inventory deduction vrže napako (negativna zaloga),
+    // se celotna transakcija rollback-a — order NE bo označen kot paid.
+    // FURS mrežni klic je IZVEN transakcije (network I/O ne sme držati DB tx odprte).
+    const paid = await db.$transaction(async (tx) => {
+      const updated = await tx.order.update({
+        where: { id },
+        data: {
+          status: "paid",
+          paymentMethod: paymentMethod === "giftcard" ? "card" : paymentMethod,
+          paidAt: issueDate,
+          receiptNo: invoiceNumberStr,
+          invoiceNumber: invoiceNumberStr,
+          zoi,
+          eor,
+          fursXml,
+          customerId: customerId || null,
+          tip,
+        },
+        include: {
+          table: true,
+          items: { include: { menuItem: true } },
+        },
+      });
 
-    // === POST-PLAČILO: Inventory dedukcija (ne-blokirajoče) ===
-    try {
+      // Inventory deduction — THROW na negativno zalogo → rollback
       for (const it of order.items) {
-        const recipes = await db.recipe.findMany({
+        const recipes = await tx.recipe.findMany({
           where: { menuItemId: it.menuItemId },
         });
         for (const recipe of recipes) {
           const deductQty = recipe.quantity * it.quantity;
-          await db.inventoryItem.update({
+          const inv = await tx.inventoryItem.update({
             where: { id: recipe.inventoryItemId },
             data: { quantity: { decrement: deductQty } },
           });
+          if (inv.quantity < 0) {
+            throw new Error(`Zaloga "${inv.name}" bi šla v negativno (${inv.quantity})`);
+          }
         }
       }
-    } catch (invErr) {
-      console.error("[pay] Inventory deduction failed (non-blocking):", invErr);
-    }
 
-    // === POST-PLAČILO: Gift card redeem ===
-    if (giftCardId) {
-      try {
-        const gc = await db.giftCard.findUnique({ where: { id: giftCardId } });
+      // Gift card redeem — THROW na premajhno stanje → rollback
+      if (giftCardId) {
+        const gc = await tx.giftCard.findUnique({ where: { id: giftCardId } });
         if (gc) {
-          const newBalance = gc.balance - order.total;
-          await db.giftCard.update({
+          if (Number(gc.balance) < Number(order.total)) {
+            throw new Error("Darilna kartica nima dovolj sredstev");
+          }
+          const newBalance = Number(gc.balance) - Number(order.total);
+          await tx.giftCard.update({
             where: { id: giftCardId },
             data: {
               balance: newBalance,
@@ -183,39 +220,32 @@ export async function POST(
             },
           });
         }
-      } catch (gcErr) {
-        console.error("[pay] Gift card redeem failed (non-blocking):", gcErr);
       }
-    }
 
-    // === POST-PLAČILO: Loyalty točke ===
-    if (customerId) {
-      try {
-        const customer = await db.customer.findUnique({ where: { id: customerId } });
-        if (customer) {
-          const pointsToAdd = Math.floor(order.total / 10);
-          await db.customer.update({
-            where: { id: customerId },
-            data: {
-              points: { increment: pointsToAdd },
-              totalSpent: { increment: order.total },
-              visitCount: { increment: 1 },
-            },
-          });
-        }
-      } catch (custErr) {
-        console.error("[pay] Loyalty points failed (non-blocking):", custErr);
+      // Loyalty točke
+      if (customerId) {
+        const pointsToAdd = Math.floor(Number(order.total) / 10);
+        await tx.customer.update({
+          where: { id: customerId },
+          data: {
+            points: { increment: pointsToAdd },
+            totalSpent: { increment: order.total },
+            visitCount: { increment: 1 },
+          },
+        });
       }
-    }
+
+      return updated;
+    });
 
     return NextResponse.json({
       ...paid,
       tip,
-      grandTotal: paid.total + tip,
+      grandTotal: Number(paid.total) + Number(tip),
       fursXmlPreview: fursXml.slice(0, 800) + "...(skrajšano)",
     });
   } catch (e) {
-    console.error("POST /api/orders/[id]/pay error:", e);
+    captureException(e, { route: "pay" });
     return NextResponse.json({ error: "Napaka pri zaključevanju računa" }, { status: 500 });
   }
 }

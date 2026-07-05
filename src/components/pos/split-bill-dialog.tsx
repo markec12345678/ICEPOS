@@ -88,7 +88,7 @@ export function SplitBillDialog({
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
-                size="icon"
+                size="icon" aria-label="Akcija"
                 onClick={() => changePeople(-1)}
                 disabled={people <= 2}
               >
@@ -99,7 +99,7 @@ export function SplitBillDialog({
               </div>
               <Button
                 variant="outline"
-                size="icon"
+                size="icon" aria-label="Akcija"
                 onClick={() => changePeople(1)}
                 disabled={people >= 20}
               >

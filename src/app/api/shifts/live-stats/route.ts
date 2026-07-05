@@ -37,14 +37,14 @@ export async function GET(req: NextRequest) {
       select: { total: true, paymentMethod: true, tip: true },
     });
 
-    const revenue = paidOrders.reduce((s, o) => s + o.total, 0);
-    const tips = paidOrders.reduce((s, o) => s + (o.tip || 0), 0);
+    const revenue = paidOrders.reduce((s, o) => s + Number(o.total), 0);
+    const tips = paidOrders.reduce((s, o) => s + (Number(o.tip) || 0), 0);
     const cashRevenue = paidOrders
       .filter((o) => o.paymentMethod === "cash")
-      .reduce((s, o) => s + o.total, 0);
+      .reduce((s, o) => s + Number(o.total), 0);
     const cardRevenue = paidOrders
       .filter((o) => o.paymentMethod === "card")
-      .reduce((s, o) => s + o.total, 0);
+      .reduce((s, o) => s + Number(o.total), 0);
 
     return NextResponse.json({
       shift: {
@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
       ordersCount: paidOrders.length,
       cashRevenue,
       cardRevenue,
-      expectedCash: shift.startCash + cashRevenue,
+      expectedCash: Number(shift.startCash) + cashRevenue,
     });
   } catch (e) {
     console.error("GET /api/shifts/live-stats error:", e);

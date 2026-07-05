@@ -48,8 +48,8 @@ export async function GET(req: NextRequest) {
     }
 
     // Izračun vrednosti izgub (expired)
-    const expiredValue = expired.reduce((s, i) => s + i.quantity * i.costPerUnit, 0);
-    const expiringSoonValue = expiringSoon.reduce((s, i) => s + i.quantity * i.costPerUnit, 0);
+    const expiredValue = expired.reduce((s, i) => s + i.quantity * Number(i.costPerUnit), 0);
+    const expiringSoonValue = expiringSoon.reduce((s, i) => s + i.quantity * Number(i.costPerUnit), 0);
 
     return NextResponse.json({
       summary: {
@@ -67,11 +67,11 @@ export async function GET(req: NextRequest) {
         unit: i.unit,
         quantity: i.quantity,
         costPerUnit: i.costPerUnit,
-        expiryDate: i.expiryDate.toISOString(),
+        expiryDate: i.expiryDate!.toISOString(),
         batchNumber: i.batchNumber,
         category: i.category,
-        daysOverdue: Math.floor((now.getTime() - i.expiryDate.getTime()) / 86400000),
-        value: Math.round(i.quantity * i.costPerUnit * 100) / 100,
+        daysOverdue: Math.floor((now.getTime() - i.expiryDate!.getTime()) / 86400000),
+        value: Math.round(i.quantity * Number(i.costPerUnit) * 100) / 100,
       })),
       expiringSoon: expiringSoon.map((i) => ({
         id: i.id,
@@ -79,11 +79,11 @@ export async function GET(req: NextRequest) {
         unit: i.unit,
         quantity: i.quantity,
         costPerUnit: i.costPerUnit,
-        expiryDate: i.expiryDate.toISOString(),
+        expiryDate: i.expiryDate!.toISOString(),
         batchNumber: i.batchNumber,
         category: i.category,
-        daysUntil: Math.ceil((new Date(i.expiryDate).getTime() - now.getTime()) / 86400000),
-        value: Math.round(i.quantity * i.costPerUnit * 100) / 100,
+        daysUntil: Math.ceil((new Date(i.expiryDate!).getTime() - now.getTime()) / 86400000),
+        value: Math.round(i.quantity * Number(i.costPerUnit) * 100) / 100,
       })),
       expiringWeek: expiringWeek.map((i) => ({
         id: i.id,
@@ -91,11 +91,11 @@ export async function GET(req: NextRequest) {
         unit: i.unit,
         quantity: i.quantity,
         costPerUnit: i.costPerUnit,
-        expiryDate: i.expiryDate.toISOString(),
+        expiryDate: i.expiryDate!.toISOString(),
         batchNumber: i.batchNumber,
         category: i.category,
-        daysUntil: Math.ceil((new Date(i.expiryDate).getTime() - now.getTime()) / 86400000),
-        value: Math.round(i.quantity * i.costPerUnit * 100) / 100,
+        daysUntil: Math.ceil((new Date(i.expiryDate!).getTime() - now.getTime()) / 86400000),
+        value: Math.round(i.quantity * Number(i.costPerUnit) * 100) / 100,
       })),
     });
   } catch (e) {

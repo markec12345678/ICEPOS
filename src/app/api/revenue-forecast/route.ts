@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
       if (!o.paidAt) continue;
       const dateKey = o.paidAt.toISOString().slice(0, 10);
       if (!dailyRevenue[dateKey]) dailyRevenue[dateKey] = { revenue: 0, orders: 0 };
-      dailyRevenue[dateKey].revenue += o.total;
+      dailyRevenue[dateKey].revenue += Number(o.total);
       dailyRevenue[dateKey].orders++;
     }
 
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
     }
     for (const dow of Object.keys(dayOfWeekRevenue)) {
       const d = dayOfWeekRevenue[parseInt(dow)];
-      d.avg = d.count > 0 ? d.total / d.count : 0;
+      d.avg = d.count > 0 ? Number(d.total) / d.count : 0;
     }
 
     // Trend: primerjaj zadnji teden s prejšnjim
@@ -65,10 +65,10 @@ export async function GET(req: NextRequest) {
 
     const lastWeekRev = orders
       .filter((o) => o.paidAt && o.paidAt >= last7)
-      .reduce((s, o) => s + o.total, 0);
+      .reduce((s, o) => s + Number(o.total), 0);
     const prevWeekRev = orders
       .filter((o) => o.paidAt && o.paidAt >= prev7 && o.paidAt < last7)
-      .reduce((s, o) => s + o.total, 0);
+      .reduce((s, o) => s + Number(o.total), 0);
 
     const trendPct = prevWeekRev > 0 ? ((lastWeekRev - prevWeekRev) / prevWeekRev) * 100 : 0;
 

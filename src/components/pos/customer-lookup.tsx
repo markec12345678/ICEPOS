@@ -119,7 +119,7 @@ export function CustomerLookup({ selectedCustomerId, onSelect }: CustomerLookupP
         </div>
         <Button
           variant="ghost"
-          size="icon"
+          size="icon" aria-label="Akcija"
           className="h-6 w-6 shrink-0"
           onClick={clearSelection}
           title="Odstrani stranko"

@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
         if (!vatBreakdown[key]) {
           vatBreakdown[key] = { base: 0, vat: 0, total: 0, count: 0 };
         }
-        const itemTotal = item.unitPrice * item.quantity;
+        const itemTotal = Number(item.unitPrice) * item.quantity;
         const itemBase = itemTotal / (1 + vatRate);
         const itemVat = itemTotal - itemBase;
 
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
       ratePercent: parseFloat(rate) * 100,
       base: Math.round(v.base * 100) / 100,
       vat: Math.round(v.vat * 100) / 100,
-      total: Math.round(v.total * 100) / 100,
+      total: Math.round(Number(v.total) * 100) / 100,
       count: v.count,
     })).sort((a, b) => b.rate - a.rate);
 
@@ -74,10 +74,10 @@ export async function GET(req: NextRequest) {
     const validOrders = orders.filter((o) => !o.stornoOf);
     const stornos = orders.filter((o) => o.stornoOf);
 
-    const totalRevenue = validOrders.reduce((s, o) => s + o.total, 0);
+    const totalRevenue = validOrders.reduce((s, o) => s + Number(o.total), 0);
     const totalVat = vatRates.reduce((s, v) => s + v.vat, 0);
     const totalBase = vatRates.reduce((s, v) => s + v.base, 0);
-    const stornoTotal = stornos.reduce((s, o) => s + Math.abs(o.total), 0);
+    const stornoTotal = stornos.reduce((s, o) => s + Math.abs(Number(o.total)), 0);
     const netRevenue = totalRevenue - stornoTotal;
 
     // Po načinih plačila
@@ -88,14 +88,14 @@ export async function GET(req: NextRequest) {
         byPaymentMethod[method] = { count: 0, total: 0, vat: 0 };
       }
       byPaymentMethod[method].count++;
-      byPaymentMethod[method].total += order.total;
-      byPaymentMethod[method].vat += order.vatTotal;
+      byPaymentMethod[method].total += Number(order.total);
+      byPaymentMethod[method].vat += Number(order.vatTotal);
     }
 
     const paymentMethodStats = Object.entries(byPaymentMethod).map(([method, v]) => ({
       method,
       count: v.count,
-      total: Math.round(v.total * 100) / 100,
+      total: Math.round(Number(v.total) * 100) / 100,
       vat: Math.round(v.vat * 100) / 100,
     }));
 
@@ -105,8 +105,8 @@ export async function GET(req: NextRequest) {
       if (!order.paidAt) continue;
       const dayKey = order.paidAt.toISOString().slice(0, 10);
       if (!byDay[dayKey]) byDay[dayKey] = { revenue: 0, vat: 0, orders: 0 };
-      byDay[dayKey].revenue += order.total;
-      byDay[dayKey].vat += order.vatTotal;
+      byDay[dayKey].revenue += Number(order.total);
+      byDay[dayKey].vat += Number(order.vatTotal);
       byDay[dayKey].orders++;
     }
 

@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
+import { verifyLoyaltyToken } from "@/lib/jwt";
+
+// Extract + verify loyalty token from header or query
+function extractLoyaltyToken(req: NextRequest): string | null {
+  // 1. x-loyalty-token header (preferred)
+  const headerToken = req.headers.get("x-loyalty-token");
+  if (headerToken) return headerToken;
+  // 2. ?token= query param (backward compat)
+  const queryToken = req.nextUrl.searchParams.get("token");
+  if (queryToken) return queryToken;
+  return null;
+}
+
+
 import { sendNotification, buildOrderConfirmation } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
@@ -15,12 +29,13 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { token, items, pickupTime, type } = body as {
+    const { token: bodyToken, items, pickupTime, type } = body as {
       token: string;
       items: { menuItemId: string; quantity: number; note?: string }[];
       pickupTime: string;
       type: "dinein" | "takeaway";
     };
+    const token = bodyToken || req.headers.get("x-loyalty-token");
 
     if (!token || !items || !Array.isArray(items) || items.length === 0 || !pickupTime) {
       return NextResponse.json(
@@ -29,9 +44,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const jwtPayload = verifyLoyaltyToken(token);
+    if (!jwtPayload) {
+      return NextResponse.json({ error: "Neveljaven ali potekel token" }, { status: 401 });
+    }
+
     // Poišči stranko
     const customer = await db.customer.findFirst({
-      where: { id: token, restaurantId: tenant.id },
+      where: { id: jwtPayload.customerId, restaurantId: jwtPayload.restaurantId },
     });
 
     if (!customer) {
@@ -71,7 +91,7 @@ export async function POST(req: NextRequest) {
       .filter((i) => menuMap.has(i.menuItemId) && i.quantity > 0)
       .map((i) => {
         const m = menuMap.get(i.menuItemId)!;
-        const lineTotal = m.price * i.quantity;
+        const lineTotal = Number(m.price) * i.quantity;
         total += lineTotal;
         vatTotal += lineTotal * m.vatRate;
         return {
@@ -123,7 +143,7 @@ export async function POST(req: NextRequest) {
       total,
       items.map((i) => {
         const m = menuMap.get(i.menuItemId)!;
-        return { name: m.name, quantity: i.quantity, price: m.price };
+        return { name: m.name, quantity: i.quantity, price: Number(m.price) };
       }),
       type === "takeaway"
     );

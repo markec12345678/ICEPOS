@@ -61,12 +61,12 @@ export async function GET() {
         o.paidAt
       ).getMonth()}-${day}`;
       dayStats[day].weeksWithData.add(dateKey);
-      dayStats[day].totalRevenue += o.total;
+      dayStats[day].totalRevenue += Number(o.total);
       dayStats[day].orderCount += 1;
       if (o.paymentMethod === "cash") {
-        dayStats[day].cashRevenue += o.total;
+        dayStats[day].cashRevenue += Number(o.total);
       } else if (o.paymentMethod === "card") {
-        dayStats[day].cardRevenue += o.total;
+        dayStats[day].cardRevenue += Number(o.total);
       }
     }
 
@@ -77,9 +77,9 @@ export async function GET() {
         dayIndex: d.dayIndex,
         dayName: d.dayName,
         dayShort: d.dayShort,
-        totalRevenue: Math.round(d.totalRevenue * 100) / 100,
+        totalRevenue: Math.round(Number(d.totalRevenue) * 100) / 100,
         orderCount: d.orderCount,
-        avgRevenue: Math.round((d.totalRevenue / daysCount) * 100) / 100,
+        avgRevenue: Math.round((Number(d.totalRevenue) / daysCount) * 100) / 100,
         avgOrders: Math.round((d.orderCount / daysCount) * 10) / 10,
         cashRevenue: Math.round(d.cashRevenue * 100) / 100,
         cardRevenue: Math.round(d.cardRevenue * 100) / 100,

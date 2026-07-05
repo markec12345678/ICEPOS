@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { validate, CreateInventoryItemSchema } from "@/lib/validation";
 import { getOperatorFromRequest } from "@/lib/auth";
 import { getTenantFromRequest } from "@/lib/tenant";
 
@@ -39,6 +40,10 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+    const parsed = validate(CreateInventoryItemSchema, body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Neveljaven vhod", details: parsed.error }, { status: 400 });
+    }
     const {
       name,
       unit,

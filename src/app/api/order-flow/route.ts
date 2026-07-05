@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
       const hourPaid = paidOrders.filter((o) => o.paidAt && o.paidAt.getHours() === h).length;
       const hourRevenue = paidOrders
         .filter((o) => o.paidAt && o.paidAt.getHours() === h)
-        .reduce((s, o) => s + o.total, 0);
+        .reduce((s, o) => s + Number(o.total), 0);
       if (hourOpen > 0 || hourPaid > 0 || hourRevenue > 0) {
         hourly.push({
           hour: h,
@@ -94,12 +94,12 @@ export async function GET(req: NextRequest) {
       paid: {
         count: stages.paid.length,
         items: stages.paid.reduce((s, o) => s + o.items.reduce((si, i) => si + i.quantity, 0), 0),
-        value: Math.round(stages.paid.reduce((s, o) => s + o.total, 0) * 100) / 100,
+        value: Math.round(stages.paid.reduce((s, o) => s + Number(o.total), 0) * 100) / 100,
         avgTime: Math.round(avgOrderToPay),
       },
       storno: {
         count: stages.storno.length,
-        value: Math.round(stages.storno.reduce((s, o) => s + Math.abs(o.total), 0) * 100) / 100,
+        value: Math.round(stages.storno.reduce((s, o) => s + Math.abs(Number(o.total)), 0) * 100) / 100,
       },
     };
 

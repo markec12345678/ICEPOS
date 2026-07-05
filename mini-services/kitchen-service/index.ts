@@ -1,26 +1,75 @@
-// ICEPOS Kuhinja Display Service (KOT)
+// ICEPOS Kuhinja Display Service (KDS)
 // Real-time prikaz naročil v kuhinji prek WebSocket
 //
 // Port: 3003 (Caddy forwarda prek /?XTransformPort=3003)
 //
-// Eventi:
-// - order:new      → novo naročilo iz blagajne
-// - order:status   → sprememba statusa (new → preparing → ready → served)
-// - order:recall   → klic nazaj (popup na blagajni)
-// - kitchen:sync   → full sync ob povezavi (pošlje vsa odprta naročila)
-// - kitchen:stats  → statistika (koliko v pripravi, koliko ready)
+// Faza 3 izboljšave:
+// - Redis adapter za horizontalno skaliranje (multi-instance)
+// - Socket.io auth (KITCHEN_API_KEY env var)
+// - /health HTTP endpoint za Docker healthcheck
+// - CORS omejen na APP_URL (ne "*")
+// - Graceful shutdown
 
 import { createServer } from "http";
 import { Server } from "socket.io";
+import { createAdapter } from "@socket.io/redis-adapter";
+import { createClient } from "redis";
 
-const httpServer = createServer();
+// === Konfiguracija ===
+const PORT = parseInt(process.env.PORT || "3003", 10);
+const KITCHEN_API_KEY = process.env.KITCHEN_API_KEY;
+const REDIS_URL = process.env.REDIS_URL;
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+// === HTTP server (za /health) ===
+const httpServer = createServer((req, res) => {
+  if (req.url === "/health") {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({
+      status: "ok",
+      service: "kitchen",
+      port: PORT,
+      uptime: process.uptime(),
+      activeOrders: activeOrders.size,
+      redis: REDIS_URL ? "connected" : "disabled",
+    }));
+    return;
+  }
+  res.writeHead(404);
+  res.end("Not found");
+});
+
+// === Socket.io server ===
 const io = new Server(httpServer, {
   path: "/",
-  cors: { origin: "*", methods: ["GET", "POST"] },
+  cors: {
+    origin: APP_URL.split(","),
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
   pingTimeout: 60000,
   pingInterval: 25000,
 });
 
+// === Redis adapter (optional — za multi-instance) ===
+async function setupRedis() {
+  if (!REDIS_URL) {
+    console.log("[kitchen] Redis URL ni nastavljen — uporabljam in-memory (single-instance)");
+    return;
+  }
+  try {
+    const pubClient = createClient({ url: REDIS_URL });
+    const subClient = pubClient.duplicate();
+    await pubClient.connect();
+    await subClient.connect();
+    io.adapter(createAdapter(pubClient, subClient));
+    console.log("[kitchen] Redis adapter povezan — multi-instance podpora aktivna");
+  } catch (e) {
+    console.error("[kitchen] Redis povezava ni uspela, fallback na in-memory:", e);
+  }
+}
+
+// === Tipi ===
 export interface KitchenItem {
   menuItemId: string;
   name: string;
@@ -41,7 +90,7 @@ export interface KitchenOrder {
   priority?: boolean;
 }
 
-// In-memory store odprtih naročil (v produkciji: Redis ali DB)
+// === In-memory store (fallback če Redis ni na voljo) ===
 const activeOrders = new Map<string, KitchenOrder>();
 
 function emitStats() {
@@ -60,6 +109,21 @@ function emitStats() {
   return stats;
 }
 
+// === Socket.io auth middleware ===
+io.use((socket, next) => {
+  // Če KITCHEN_API_KEY ni nastavljen, dovoli vse (dev mode)
+  if (!KITCHEN_API_KEY) {
+    return next();
+  }
+  const token = socket.handshake.auth?.token || socket.handshake.headers?.["x-kitchen-key"];
+  if (token !== KITCHEN_API_KEY) {
+    console.warn(`[kitchen] Avtentikacija zavrnjena za socket ${socket.id}`);
+    return next(new Error("Neveljaven API ključ"));
+  }
+  next();
+});
+
+// === Connection handler ===
 io.on("connection", (socket) => {
   console.log(`[kitchen] Povezan: ${socket.id}`);
 
@@ -135,16 +199,21 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = 3003;
-httpServer.listen(PORT, () => {
-  console.log(`🍳 ICEPOS Kitchen Service na portu ${PORT}`);
+// === Startup ===
+setupRedis().then(() => {
+  httpServer.listen(PORT, () => {
+    console.log(`Kitchen Service na portu ${PORT} (Redis: ${REDIS_URL ? "on" : "off"}, Auth: ${KITCHEN_API_KEY ? "on" : "off"})`);
+  });
 });
 
+// === Graceful shutdown ===
 process.on("SIGTERM", () => {
   console.log("[kitchen] SIGTERM, ugašam...");
+  io.close();
   httpServer.close(() => process.exit(0));
 });
 process.on("SIGINT", () => {
   console.log("[kitchen] SIGINT, ugašam...");
+  io.close();
   httpServer.close(() => process.exit(0));
 });

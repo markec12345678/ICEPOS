@@ -33,7 +33,7 @@ export default async function PrintReceiptPage({
   // DDV po stopnjah
   const vatBuckets = new Map<number, { base: number; vat: number; gross: number }>();
   for (const it of order.items) {
-    const lineGross = it.unitPrice * it.quantity;
+    const lineGross = Number(it.unitPrice) * it.quantity;
     const lineVat = lineGross * it.vatRate;
     const lineBase = lineGross - lineVat;
     const existing = vatBuckets.get(it.vatRate);
@@ -129,7 +129,7 @@ export default async function PrintReceiptPage({
             </p>
             <p>
               <strong>Datum:</strong>{" "}
-              {order.paidAt ? formatDateTime(order.paidAt) : "-"}
+              {order.paidAt ? formatDateTime(order.paidAt as any) : "-"}
             </p>
             <p>
               <strong>Miza:</strong> {order.table.name}
@@ -162,7 +162,7 @@ export default async function PrintReceiptPage({
                 <td className="center">{it.quantity}</td>
                 <td className="right">{it.unitPrice.toFixed(2)}</td>
                 <td className="right">
-                  {(it.unitPrice * it.quantity).toFixed(2)}
+                  {(Number(it.unitPrice) * it.quantity).toFixed(2)}
                 </td>
               </tr>
             ))}
@@ -194,7 +194,7 @@ export default async function PrintReceiptPage({
 
         <div className="total">SKUPAJ: {order.total.toFixed(2)} €</div>
 
-        {order.tip > 0 && (
+        {Number(order.tip) > 0 && (
           <div className="total" style={{ fontSize: 14, color: "#16a34a" }}>
             Napitnina: {order.tip.toFixed(2)} €
           </div>

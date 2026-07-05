@@ -40,9 +40,19 @@ export async function POST(req: NextRequest) {
     console.log(`[Deliverect webhook] Event: ${payload.event}, Channel: ${payload.order?.channel || "N/A"}`);
 
     // Poišči restavracijo
-    const restaurant = await db.restaurant.findFirst({
-      where: { active: true },
-    });
+    // Poišči tenant po locationId (Deliverect webhook payload)
+    const locationId = (payload as any).locationId || (payload as any).channelLinkId;
+    let restaurant: Awaited<ReturnType<typeof db.restaurant.findFirst>> | null = null;
+    if (locationId) {
+      restaurant = await db.restaurant.findFirst({
+        where: { deliverectLocationId: locationId, active: true },
+      });
+    }
+    if (!restaurant) {
+      restaurant = await db.restaurant.findFirst({
+        where: { active: true },
+      });
+    }
 
     if (!restaurant) {
       console.error("[Deliverect webhook] Ni aktivne restavracije");

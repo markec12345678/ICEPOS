@@ -45,23 +45,23 @@ export async function GET(req: NextRequest) {
         byMethod[method] = { count: 0, total: 0, tips: 0, avgOrder: 0 };
       }
       byMethod[method].count++;
-      byMethod[method].total += o.total;
-      byMethod[method].tips += o.tip || 0;
+      byMethod[method].total += Number(o.total);
+      byMethod[method].tips += Number(o.tip) || 0;
     }
 
-    const totalRevenue = orders.reduce((s, o) => s + o.total, 0);
-    const totalTips = orders.reduce((s, o) => s + (o.tip || 0), 0);
+    const totalRevenue = orders.reduce((s, o) => s + Number(o.total), 0);
+    const totalTips = orders.reduce((s, o) => s + (Number(o.tip) || 0), 0);
     const totalOrders = orders.length;
 
     const methodStats = Object.entries(byMethod).map(([method, v]) => ({
       method,
       count: v.count,
-      total: Math.round(v.total * 100) / 100,
+      total: Math.round(Number(v.total) * 100) / 100,
       tips: Math.round(v.tips * 100) / 100,
-      avgOrder: v.count > 0 ? Math.round((v.total / v.count) * 100) / 100 : 0,
-      share: totalRevenue > 0 ? Math.round((v.total / totalRevenue) * 1000) / 10 : 0,
-      tipRate: v.total > 0 ? Math.round((v.tips / v.total) * 1000) / 10 : 0,
-    })).sort((a, b) => b.total - a.total);
+      avgOrder: v.count > 0 ? Math.round((Number(v.total) / v.count) * 100) / 100 : 0,
+      share: totalRevenue > 0 ? Math.round((Number(v.total) / totalRevenue) * 1000) / 10 : 0,
+      tipRate: Number(v.total) > 0 ? Math.round((v.tips / v.total) * 1000) / 10 : 0,
+    })).sort((a, b) => Number(b.total) - a.total);
 
     // Trend po dnevih (zadnjih 14 dni)
     const dailyTrend: { date: string; cash: number; card: number; giftcard: number; other: number }[] = [];
@@ -75,10 +75,10 @@ export async function GET(req: NextRequest) {
       });
       dailyTrend.push({
         date: dateStr,
-        cash: Math.round(dayOrders.filter((o) => o.paymentMethod === "cash").reduce((s, o) => s + o.total, 0) * 100) / 100,
-        card: Math.round(dayOrders.filter((o) => o.paymentMethod === "card").reduce((s, o) => s + o.total, 0) * 100) / 100,
-        giftcard: Math.round(dayOrders.filter((o) => o.paymentMethod === "giftcard").reduce((s, o) => s + o.total, 0) * 100) / 100,
-        other: Math.round(dayOrders.filter((o) => o.paymentMethod && !["cash", "card", "giftcard"].includes(o.paymentMethod)).reduce((s, o) => s + o.total, 0) * 100) / 100,
+        cash: Math.round(dayOrders.filter((o) => o.paymentMethod === "cash").reduce((s, o) => s + Number(o.total), 0) * 100) / 100,
+        card: Math.round(dayOrders.filter((o) => o.paymentMethod === "card").reduce((s, o) => s + Number(o.total), 0) * 100) / 100,
+        giftcard: Math.round(dayOrders.filter((o) => o.paymentMethod === "giftcard").reduce((s, o) => s + Number(o.total), 0) * 100) / 100,
+        other: Math.round(dayOrders.filter((o) => o.paymentMethod && !["cash", "card", "giftcard"].includes(o.paymentMethod)).reduce((s, o) => s + Number(o.total), 0) * 100) / 100,
       });
     }
 
@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
     for (const o of orders) {
       const op = o.operator || "Neznan";
       if (!byOperator[op]) byOperator[op] = { cash: 0, card: 0, giftcard: 0, total: 0, count: 0 };
-      byOperator[op].total += o.total;
+      byOperator[op].total += Number(o.total);
       byOperator[op].count++;
       if (o.paymentMethod === "cash") byOperator[op].cash++;
       else if (o.paymentMethod === "card") byOperator[op].card++;
@@ -96,14 +96,14 @@ export async function GET(req: NextRequest) {
 
     const operatorStats = Object.entries(byOperator).map(([operator, v]) => ({
       operator,
-      total: Math.round(v.total * 100) / 100,
+      total: Math.round(Number(v.total) * 100) / 100,
       count: v.count,
       cashCount: v.cash,
       cardCount: v.card,
       giftcardCount: v.giftcard,
       cashPct: v.count > 0 ? Math.round((v.cash / v.count) * 1000) / 10 : 0,
       cardPct: v.count > 0 ? Math.round((v.card / v.count) * 1000) / 10 : 0,
-    })).sort((a, b) => b.total - a.total);
+    })).sort((a, b) => Number(b.total) - a.total);
 
     // Po dnevih v tednu
     const dayNames = ["Ned", "Pon", "Tor", "Sre", "Čet", "Pet", "Sob"];
@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
       if (!o.paidAt) continue;
       const dow = o.paidAt.getDay();
       if (!byDayOfWeek[dow]) byDayOfWeek[dow] = { cash: 0, card: 0, total: 0 };
-      byDayOfWeek[dow].total += o.total;
+      byDayOfWeek[dow].total += Number(o.total);
       if (o.paymentMethod === "cash") byDayOfWeek[dow].cash++;
       else if (o.paymentMethod === "card") byDayOfWeek[dow].card++;
     }

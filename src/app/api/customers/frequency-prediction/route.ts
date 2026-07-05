@@ -98,7 +98,7 @@ export async function GET(req: NextRequest) {
         id: c.id,
         name: c.name,
         phone: c.phone,
-        totalSpent: Math.round(c.totalSpent * 100) / 100,
+        totalSpent: Math.round(Number(c.totalSpent) * 100) / 100,
         visitCount: visits.length,
         lastVisit: lastVisit.toISOString(),
         avgDaysBetween: Math.round(avgDaysBetween * 10) / 10,

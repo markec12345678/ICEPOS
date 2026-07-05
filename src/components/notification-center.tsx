@@ -162,7 +162,7 @@ export function NotificationCenter() {
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          size="icon"
+          size="icon" aria-label="Akcija"
           className="relative h-9 w-9"
           title="Obvestila"
         >

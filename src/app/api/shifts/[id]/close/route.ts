@@ -42,18 +42,18 @@ export async function POST(
       select: { total: true, paymentMethod: true, tip: true },
     });
 
-    const totalRevenue = paidOrders.reduce((s, o) => s + o.total, 0);
-    const totalTips = paidOrders.reduce((s, o) => s + (o.tip || 0), 0);
+    const totalRevenue = paidOrders.reduce((s, o) => s + Number(o.total), 0);
+    const totalTips = paidOrders.reduce((s, o) => s + (Number(o.tip) || 0), 0);
     const cashRevenue = paidOrders
       .filter((o) => o.paymentMethod === "cash")
-      .reduce((s, o) => s + o.total, 0);
+      .reduce((s, o) => s + Number(o.total), 0);
 
     const closed = await db.shift.update({
       where: { id },
       data: {
         status: "closed",
         endTime: new Date(),
-        endCash: endCash ?? shift.startCash + cashRevenue,
+        endCash: endCash ?? Number(shift.startCash) + cashRevenue,
         totalRevenue,
         ordersCount: paidOrders.length,
         note,
@@ -68,8 +68,8 @@ export async function POST(
         ordersCount: paidOrders.length,
         cashRevenue,
         cardRevenue: totalRevenue - cashRevenue,
-        expectedCash: shift.startCash + cashRevenue,
-        difference: (endCash ?? shift.startCash + cashRevenue) - (shift.startCash + cashRevenue),
+        expectedCash: Number(shift.startCash) + cashRevenue,
+        difference: (endCash ?? Number(shift.startCash) + cashRevenue) - (Number(shift.startCash) + cashRevenue),
       },
     });
   } catch (e) {

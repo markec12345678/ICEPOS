@@ -227,7 +227,7 @@ export function ComboMealsView() {
                     />
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="icon" aria-label="Akcija"
                       className="h-7 w-7"
                       onClick={() => { setEditing(combo); setEditOpen(true); }}
                     >
@@ -235,7 +235,7 @@ export function ComboMealsView() {
                     </Button>
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="icon" aria-label="Akcija"
                       className="h-7 w-7 text-destructive"
                       onClick={() => deleteCombo(combo)}
                     >
@@ -472,7 +472,7 @@ function ComboDialog({
                     </label>
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="icon" aria-label="Akcija"
                       className="h-7 w-7 text-destructive"
                       onClick={() => removeSlot(idx)}
                       disabled={slots.length === 1}

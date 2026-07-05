@@ -19,8 +19,8 @@ export async function GET(req: NextRequest) {
 
     // Izračunaj vrednost za vsak artikel
     const valuedItems = items.map((item) => {
-      const stockValue = item.quantity * item.costPerUnit;
-      const minStockValue = item.minQuantity * item.costPerUnit;
+      const stockValue = item.quantity * Number(item.costPerUnit);
+      const minStockValue = item.minQuantity * Number(item.costPerUnit);
       const isLow = item.quantity <= item.minQuantity;
       const isOut = item.quantity <= 0;
       const isOverstocked = item.quantity > item.minQuantity * 3 && item.minQuantity > 0;

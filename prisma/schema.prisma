@@ -12,6 +12,53 @@ datasource db {
 }
 
 // ============================================================
+// ENUMS — tipno-varne statusne vrednosti
+// ============================================================
+
+enum OrderStatus {
+  open
+  paid
+  cancelled
+  storno
+  new
+  void
+}
+
+enum PaymentMethod {
+  cash
+  card
+  giftcard
+  sumup
+  stripe
+  wallet
+}
+
+enum OperatorRole {
+  cashier
+  admin
+}
+
+enum ReservationStatus {
+  pending
+  confirmed
+  seated
+  cancelled
+  no_show
+}
+
+enum ShiftStatus {
+  open
+  closed
+}
+
+enum HappyHourDiscountType {
+  percent
+  fixed
+}
+
+
+
+// ============================================================
 // RESTAURANT (TENANT) — centralni model za multi-tenant
 // ============================================================
 
@@ -33,6 +80,12 @@ model Restaurant {
   fursEnv         String   @default("test") // "test" | "production"
   fursCertPath    String?  // pot do eDavki certifikata
   fursCertPassword String?
+
+  // Webhook tenant identification (Task S3)
+  woltVenueId           String?
+  deliverectLocationId  String?
+  opentableRestaurantId String?
+  resyVenueId           String?
 
   // Nastavitve
   currency        String   @default("EUR")
@@ -58,6 +111,7 @@ model Restaurant {
   comboMeals      ComboMeal[]
   feedbacks       Feedback[]
   waitlist        WaitlistEntry[]
+  auditLogs       AuditLog[]
 }
 
 // ============================================================
@@ -71,7 +125,7 @@ model MenuItem {
   name          String
   nameEn        String?
   category      String // "predjedi" | "glavne_jedi" | "brezalkoholne" | "alkoholne" | "sladice"
-  price         Float // EUR
+  price         Decimal // EUR
   vatRate       Float // 0.095 (znižana - hrana) | 0.22 (splošna - alkohol)
   available     Boolean @default(true)
   desc          String?
@@ -88,6 +142,8 @@ model MenuItem {
   orderItems    OrderItem[]
   modifiers     Modifier[]
   recipes       Recipe[]
+  @@index([restaurantId])
+  @@index([restaurantId, category])
 }
 
 model Modifier {
@@ -95,7 +151,7 @@ model Modifier {
   menuItemId String
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
   label      String // npr. "Brez čebule", "Dobra pečena", "Bez glutena"
-  priceDelta Float    @default(0) // sprememba cene (Lahko negativna za popust)
+  priceDelta Decimal @default(0) // sprememba cene
   createdAt  DateTime @default(now())
 }
 
@@ -116,6 +172,8 @@ model Table {
   reservations Reservation[]
 
   @@unique([restaurantId, number])
+  @@index([restaurantId])
+  @@index([restaurantId, section])
 }
 
 model Order {
@@ -124,13 +182,13 @@ model Order {
   restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   tableId       String
   table         Table     @relation(fields: [tableId], references: [id])
-  status        String    @default("open") // "open" | "paid" | "cancelled" | "storno"
+  status        OrderStatus @default(open)
   items         OrderItem[]
-  total         Float     @default(0)
-  vatTotal      Float     @default(0)
+  total         Decimal  @default(0)
+  vatTotal      Decimal  @default(0)
   createdAt     DateTime  @default(now())
   paidAt        DateTime?
-  paymentMethod String? // "cash" | "card" | "giftcard"
+  paymentMethod PaymentMethod?
   receiptNo     String? // SRS številka računa
   zoi           String? // Zaščitna oznaka izdajatelja (ZOI) — 32 hex
   eor           String? // Enkratna identifikacija računa (EOR) — UUID
@@ -141,7 +199,9 @@ model Order {
   operator      String   @default("Blagajnik")
   operatorTaxNo String   @default("SI12345678")
   shiftId       String?
-  tip           Float    @default(0) // napitnina (EUR)
+  tip           Decimal @default(0) // napitnina (EUR)
+  stripePaymentIntentId String? // Stripe PaymentIntent ID
+  fursSubmitted   Boolean  @default(false) // ali je račun uspešno fiskaliziran pri FURS
   // Flags
   flags         String?  // JSON array: ["vip", "birthday", "rush", "allergy"]
   // Storno
@@ -152,6 +212,10 @@ model Order {
   stornoEor     String?
   customerId    String?
   customer      Customer? @relation(fields: [customerId], references: [id])
+  @@index([restaurantId])
+  @@index([restaurantId, status])
+  @@index([restaurantId, paidAt])
+  @@index([tableId])
 }
 
 model OrderItem {
@@ -161,10 +225,12 @@ model OrderItem {
   menuItemId String
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
   quantity   Int      @default(1)
-  unitPrice  Float // snapshot cene ob naročilu (vključno z modifierji)
+  unitPrice  Decimal // snapshot cene
   vatRate    Float // snapshot DDV stopnje
   note       String?
   modifiers  String? // JSON array izbranih modifierjev
+  @@index([orderId])
+  @@index([menuItemId])
 }
 
 model Reservation {
@@ -179,10 +245,12 @@ model Reservation {
   date       String // YYYY-MM-DD
   time       String // HH:mm
   duration   Int      @default(120)
-  status     String   @default("confirmed")
+  status     ReservationStatus @default(confirmed)
   note       String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  @@index([restaurantId])
+  @@index([restaurantId, date])
 }
 
 // ============================================================
@@ -197,13 +265,15 @@ model Shift {
   operatorTaxNo String
   startTime  DateTime @default(now())
   endTime    DateTime?
-  startCash  Float    @default(0)
-  endCash    Float?
-  status     String   @default("open")
+  startCash  Decimal @default(0)
+  endCash    Decimal?
+  status     ShiftStatus @default(open)
   ordersCount Int     @default(0)
-  totalRevenue Float  @default(0)
+  totalRevenue Decimal @default(0)
   note       String?
   createdAt  DateTime @default(now())
+  @@index([restaurantId])
+  @@index([restaurantId, status])
 }
 
 model Operator {
@@ -213,14 +283,15 @@ model Operator {
   name       String
   pin        String
   taxNumber  String   @default("SI12345678")
-  role       String   @default("cashier") // "cashier" | "admin"
-  hourlyRate Float    @default(12)
+  role       OperatorRole @default(cashier)
+  hourlyRate Decimal @default(12)
   active     Boolean  @default(true)
   createdAt  DateTime @default(now())
   schedules  Schedule[]
   timesheets Timesheet[]
 
   @@unique([restaurantId, pin])
+  @@index([restaurantId])
 }
 
 // ============================================================
@@ -235,7 +306,7 @@ model InventoryItem {
   unit        String   @default("kos")
   quantity    Float    @default(0)
   minQuantity Float    @default(0)
-  costPerUnit Float    @default(0)
+  costPerUnit Decimal @default(0)
   supplier    String?
   category    String   @default("splosno")
   expiryDate  DateTime? // rok trajanja (opcijsko)
@@ -244,6 +315,7 @@ model InventoryItem {
   updatedAt   DateTime @updatedAt
   recipes     Recipe[]
   wasteLogs   WasteLog[]
+  @@index([restaurantId])
 }
 
 model Recipe {
@@ -268,8 +340,9 @@ model Customer {
   phone       String?
   email       String?
   points      Int      @default(0)
-  totalSpent  Float    @default(0)
+  totalSpent  Decimal @default(0)
   visitCount  Int      @default(0)
+  lastVisitAt DateTime?
   allergens   String?
   note        String?
   birthday    DateTime?
@@ -278,6 +351,8 @@ model Customer {
   orders      Order[]
 
   @@unique([restaurantId, phone])
+  @@index([restaurantId])
+  @@index([restaurantId, phone])
 }
 
 // ============================================================
@@ -289,8 +364,8 @@ model GiftCard {
   restaurantId String
   restaurant  Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   code        String
-  balance     Float    @default(0)
-  initialAmount Float
+  balance     Decimal @default(0)
+  initialAmount Decimal
   status      String   @default("active")
   customerName String?
   note        String?
@@ -299,6 +374,7 @@ model GiftCard {
   updatedAt   DateTime @updatedAt
 
   @@unique([restaurantId, code])
+  @@index([restaurantId])
 }
 
 // ============================================================
@@ -318,6 +394,7 @@ model Schedule {
   updatedAt    DateTime @updatedAt
 
   @@unique([operatorId, date])
+  @@index([operatorId])
 }
 
 model Timesheet {
@@ -331,6 +408,7 @@ model Timesheet {
   note         String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  @@index([operatorId])
 }
 
 // ============================================================
@@ -347,11 +425,12 @@ model WasteLog {
   name            String   // ime izdelka (snapshot)
   quantity        Float    // količina odpadka
   unit            String   // "kos" | "kg" | "l" | "g" | "ml"
-  cost            Float    // strošek odpadka (EUR)
+  cost            Decimal // strošek odpadka (EUR)
   reason          String   // "expired" | "burnt" | "dropped" | "returned" | "spoilage" | "other"
   note            String?
   operator        String?  // ime operaterja
   createdAt       DateTime @default(now())
+  @@index([restaurantId])
 }
 
 // ============================================================
@@ -366,7 +445,7 @@ model HappyHour {
   daysOfWeek    String   // JSON array: [1,2,3,4,5] = pon-pet
   startTime     String   // "16:00"
   endTime       String   // "18:00"
-  discountType  String   // "percent" | "fixed"
+  discountType  HappyHourDiscountType
   discountValue Float    // 30 = 30% off, ali 2 = 2€ off
   // Filter na kategorije (JSON array ali "all")
   categories    String   @default("all") // "all" ali JSON ["alkoholne","brezalkoholne"]
@@ -375,6 +454,7 @@ model HappyHour {
   active        Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  @@index([restaurantId])
 }
 
 // ============================================================
@@ -387,13 +467,14 @@ model ComboMeal {
   restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   name          String   // "Lunch Meni 1", "Biftek meni", itd.
   description   String?
-  price         Float    // fiksna cena combo-ja (manjša od vsote posameznih)
+  price         Decimal // fiksna cena combo-ja
   active        Boolean  @default(true)
   // Slike/ikona (opcijsko)
   icon          String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   slots         ComboSlot[]
+  @@index([restaurantId])
 }
 
 // Slot v combo-ju (npr. "Izberi 1 juho", "Izberi 1 glavno jed", "Izberi 1 pijačo")
@@ -434,6 +515,7 @@ model Feedback {
   // Metadata
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  @@index([restaurantId])
 }
 
 // Čakalna vrsta (waitlist) — gostje ki čakajo na prosto mizo
@@ -460,4 +542,44 @@ model WaitlistEntry {
   leftAt        DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  @@index([restaurantId])
+}
+
+
+// ============================================================
+// AUDIT LOG — sledljivost sprememb (FURS skladnost)
+// ============================================================
+// Beleži vse kritične spremembe: FURS fiskalizacija, storno, PIN spremembe,
+// tenant konfiguracija, itd. Zahtevano za FURS revizije.
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  
+  // Kdo je naredil spremembo
+  operatorId   String?  // Operator.id (nullable za sistemske akcije)
+  operatorName String?  // Ime operaterja (snapshot)
+  ipAddress    String?  // IP naslov zahtevka
+  
+  // Kaj je bilo spremenjeno
+  action       String   // "furs_fiscalize", "storno", "pin_change", "tenant_config", "payment", "inventory_adjust"
+  entityType   String   // "order", "operator", "restaurant", "gift_card", "inventory_item"
+  entityId     String?  // ID entitete
+  
+  // Podrobnosti
+  description  String   // Človeku berljiv opis
+  oldValue     String?  // JSON snapshot prejšnjega stanja
+  newValue     String?  // JSON snapshot novega stanja
+  metadata     String?  // Dodatni podatki (JSON)
+  
+  // Status
+  success      Boolean  @default(true)
+  errorMessage String?  // Če success=false, opis napake
+  
+  createdAt    DateTime @default(now())
+  
+  @@index([restaurantId, createdAt])
+  @@index([restaurantId, action])
+  @@index([entityType, entityId])
 }

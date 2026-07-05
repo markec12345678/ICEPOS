@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
       select: { total: true, paidAt: true },
     });
 
-    const dayRevenue = paidOrders.reduce((s, o) => s + o.total, 0);
+    const dayRevenue = paidOrders.reduce((s, o) => s + Number(o.total), 0);
 
     // Izračunaj strošek per operater
     const operators = timesheets.map((ts) => {
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
       const totalMinutes = (clockOut.getTime() - ts.clockIn.getTime()) / 60000;
       const workMinutes = Math.max(0, totalMinutes - ts.breakMinutes);
       const hours = workMinutes / 60;
-      const cost = hours * ts.operator.hourlyRate;
+      const cost = hours * Number(ts.operator.hourlyRate);
       const isClockedIn = !ts.clockOut;
 
       return {
@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
 
     // Skupne metrike
     const totalHours = operators.reduce((s, o) => s + o.workHours, 0);
-    const totalCost = operators.reduce((s, o) => s + o.cost, 0);
+    const totalCost = operators.reduce((s, o) => s + Number(o.cost), 0);
     const activeCount = operators.filter((o) => o.isClockedIn).length;
     const laborCostPct = dayRevenue > 0 ? (totalCost / dayRevenue) * 100 : 0;
 
@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
           const overlapEnd = new Date(Math.min(clockOut.getTime(), hourEnd.getTime()));
           const overlapMin = (overlapEnd.getTime() - overlapStart.getTime()) / 60000;
           if (overlapMin > 0) {
-            hourCost += (overlapMin / 60) * op.hourlyRate;
+            hourCost += (overlapMin / 60) * Number(op.hourlyRate);
             count++;
           }
         }

@@ -1,16 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
+import { OrderStatus } from "@prisma/client";
 import { db } from "@/lib/db";
+import { getTenantFromRequest } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 // Izvoz računov v CSV za računovodstvo
 export async function GET(req: NextRequest) {
   try {
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Tenant ni najden" }, { status: 400 });
+    }
+
     const from = req.nextUrl.searchParams.get("from");
     const to = req.nextUrl.searchParams.get("to");
 
-    const where: { status?: string; paidAt?: { gte?: Date; lte?: Date } } = {
-      status: { in: ["paid", "storno"] },
+    const where: { status?: any; paidAt?: { gte?: Date; lte?: Date }; restaurantId: string } = {
+      status: { in: [OrderStatus.paid, OrderStatus.storno] },
+      restaurantId: tenant.id,
     };
     if (from || to) {
       where.paidAt = {};
@@ -60,8 +68,8 @@ export async function GET(req: NextRequest) {
       const method = o.paymentMethod === "card" ? "Kartica" : "Gotovina";
 
       for (const it of o.items) {
-        const lineTotal = it.unitPrice * it.quantity;
-        const lineVat = lineTotal * it.vatRate;
+        const lineTotal = Number(it.unitPrice) * it.quantity;
+        const lineVat = lineTotal * Number(it.vatRate);
         const lineBase = lineTotal - lineVat;
 
         rows.push(
@@ -75,12 +83,12 @@ export async function GET(req: NextRequest) {
             method,
             it.menuItem.name,
             it.quantity.toString(),
-            it.unitPrice.toFixed(2),
-            (it.vatRate * 100).toFixed(1) + "%",
+            Number(it.unitPrice).toFixed(2),
+            (Number(it.vatRate) * 100).toFixed(1) + "%",
             lineTotal.toFixed(2),
             lineBase.toFixed(2),
             lineVat.toFixed(2),
-            o.total.toFixed(2),
+            Number(o.total).toFixed(2),
             o.zoi || "",
             o.eor || "",
           ]
@@ -108,7 +116,7 @@ export async function GET(req: NextRequest) {
         "",
         "",
         "",
-        orders.reduce((s, o) => s + o.total, 0).toFixed(2),
+        orders.reduce((s, o) => s + Number(o.total), 0).toFixed(2),
         "",
         "",
       ]

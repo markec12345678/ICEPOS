@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { validate, CreateGiftCardSchema } from "@/lib/validation";
 import { getOperatorFromRequest } from "@/lib/auth";
 import { getTenantFromRequest } from "@/lib/tenant";
 import crypto from "crypto";
@@ -41,6 +42,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Potrebna je prijava" }, { status: 401 });
     }
     const body = await req.json();
+    const parsed = validate(CreateGiftCardSchema, body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Neveljaven vhod", details: parsed.error }, { status: 400 });
+    }
     const { amount, customerName, note } = body as {
       amount: number;
       customerName?: string;

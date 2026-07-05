@@ -38,8 +38,8 @@ export async function GET(req: NextRequest) {
       select: { tip: true, total: true, paymentMethod: true },
     });
 
-    const totalTips = paidOrders.reduce((s, o) => s + (o.tip || 0), 0);
-    const totalRevenue = paidOrders.reduce((s, o) => s + o.total, 0);
+    const totalTips = paidOrders.reduce((s, o) => s + (Number(o.tip) || 0), 0);
+    const totalRevenue = paidOrders.reduce((s, o) => s + Number(o.total), 0);
     const orderCount = paidOrders.length;
 
     // Pridobi vse timesheet-e za ta dan

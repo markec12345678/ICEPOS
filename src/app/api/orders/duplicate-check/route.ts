@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
     // 1. Enak znesek v zadnjih 10 minutah
     const sameAmount = recentOrders.find(
-      (o) => Math.abs(o.total - total) < 0.01
+      (o) => Math.abs(Number(o.total) - total) < 0.01
     );
     if (sameAmount) {
       warnings.push({

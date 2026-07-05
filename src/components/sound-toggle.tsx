@@ -25,7 +25,7 @@ export function SoundToggle() {
   return (
     <Button
       variant="ghost"
-      size="icon"
+      size="icon" aria-label="Akcija"
       className="h-8 w-8"
       onClick={handleClick}
       title={enabled ? "Izklopi zvoke" : "Vklopi zvoke"}

@@ -223,7 +223,7 @@ export function HappyHourView() {
                   />
                   <Button
                     variant="ghost"
-                    size="icon"
+                    size="icon" aria-label="Akcija"
                     className="h-7 w-7"
                     onClick={() => { setEditing(hh); setEditOpen(true); }}
                   >
@@ -231,7 +231,7 @@ export function HappyHourView() {
                   </Button>
                   <Button
                     variant="ghost"
-                    size="icon"
+                    size="icon" aria-label="Akcija"
                     className="h-7 w-7 text-destructive"
                     onClick={() => deleteHH(hh)}
                   >

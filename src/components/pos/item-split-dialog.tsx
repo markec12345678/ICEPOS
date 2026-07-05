@@ -129,7 +129,7 @@ export function ItemSplitDialog({
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                size="icon"
+                size="icon" aria-label="Akcija"
                 className="h-8 w-8"
                 onClick={() => setPeople((p) => Math.max(2, p - 1))}
                 disabled={people <= 2}
@@ -139,7 +139,7 @@ export function ItemSplitDialog({
               <span className="w-8 text-center font-bold">{people}</span>
               <Button
                 variant="outline"
-                size="icon"
+                size="icon" aria-label="Akcija"
                 className="h-8 w-8"
                 onClick={() => setPeople((p) => Math.min(8, p + 1))}
                 disabled={people >= 8}

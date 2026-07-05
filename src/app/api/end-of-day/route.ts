@@ -56,9 +56,9 @@ export async function GET(req: NextRequest) {
     const stornoOrders = orders.filter((o) => o.stornoOf);
 
     // Osnovne metrike
-    const totalRevenue = validOrders.reduce((s, o) => s + o.total, 0);
-    const totalTips = validOrders.reduce((s, o) => s + (o.tip || 0), 0);
-    const stornoTotal = stornoOrders.reduce((s, o) => s + Math.abs(o.total), 0);
+    const totalRevenue = validOrders.reduce((s, o) => s + Number(o.total), 0);
+    const totalTips = validOrders.reduce((s, o) => s + (Number(o.tip) || 0), 0);
+    const stornoTotal = stornoOrders.reduce((s, o) => s + Math.abs(Number(o.total)), 0);
     const netRevenue = totalRevenue - stornoTotal;
     const orderCount = validOrders.length;
     const avgOrderValue = orderCount > 0 ? totalRevenue / orderCount : 0;
@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
       for (const item of order.items) {
         const key = item.vatRate.toFixed(3);
         if (!vatBreakdown[key]) vatBreakdown[key] = { base: 0, vat: 0, total: 0 };
-        const itemTotal = item.unitPrice * item.quantity;
+        const itemTotal = Number(item.unitPrice) * item.quantity;
         const itemBase = itemTotal / (1 + item.vatRate);
         vatBreakdown[key].base += itemBase;
         vatBreakdown[key].vat += itemTotal - itemBase;
@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
       ratePercent: parseFloat(rate) * 100,
       base: Math.round(v.base * 100) / 100,
       vat: Math.round(v.vat * 100) / 100,
-      total: Math.round(v.total * 100) / 100,
+      total: Math.round(Number(v.total) * 100) / 100,
     }));
 
     // Načini plačila
@@ -91,8 +91,8 @@ export async function GET(req: NextRequest) {
       const method = order.paymentMethod || "unknown";
       if (!byPaymentMethod[method]) byPaymentMethod[method] = { count: 0, total: 0, tips: 0 };
       byPaymentMethod[method].count++;
-      byPaymentMethod[method].total += order.total;
-      byPaymentMethod[method].tips += order.tip || 0;
+      byPaymentMethod[method].total += Number(order.total);
+      byPaymentMethod[method].tips += Number(order.tip) || 0;
     }
 
     // Top jedi
@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
           };
         }
         itemStats[key].quantity += item.quantity;
-        itemStats[key].revenue += item.unitPrice * item.quantity;
+        itemStats[key].revenue += Number(item.unitPrice) * item.quantity;
       }
     }
     const topItems = Object.values(itemStats)
@@ -126,7 +126,7 @@ export async function GET(req: NextRequest) {
       if (hourOrders.length > 0) {
         hourly.push({
           hour: h,
-          revenue: Math.round(hourOrders.reduce((s, o) => s + o.total, 0) * 100) / 100,
+          revenue: Math.round(hourOrders.reduce((s, o) => s + Number(o.total), 0) * 100) / 100,
           orders: hourOrders.length,
         });
       }
@@ -141,11 +141,11 @@ export async function GET(req: NextRequest) {
       const minutes = Math.max(0, (end.getTime() - ts.clockIn.getTime()) / 60000 - ts.breakMinutes);
       const hours = minutes / 60;
       laborHours += hours;
-      laborCost += hours * ts.operator.hourlyRate;
+      laborCost += hours * Number(ts.operator.hourlyRate);
     }
 
     // Inventory stock value
-    const stockValue = inventoryItems.reduce((s, i) => s + i.quantity * i.costPerUnit, 0);
+    const stockValue = inventoryItems.reduce((s, i) => s + i.quantity * Number(i.costPerUnit), 0);
 
     // Smena
     const shift = activeShift
@@ -178,7 +178,7 @@ export async function GET(req: NextRequest) {
       paymentMethods: Object.entries(byPaymentMethod).map(([method, v]) => ({
         method,
         count: v.count,
-        total: Math.round(v.total * 100) / 100,
+        total: Math.round(Number(v.total) * 100) / 100,
         tips: Math.round(v.tips * 100) / 100,
       })),
       topItems: topItems.map((i) => ({

@@ -21,7 +21,8 @@ import crypto from "crypto";
 // KONFIGURACIJA IZDAJATELJA
 // ============================================================================
 
-export const ISSUER = {
+// ⚠️ DEMO ONLY — v produkciji NE uporabljaj! Uporabi InvoiceIssuer iz tenant podatkov.
+export const DEMO_ISSUER = {
   // Davčna številka izdajatelja (brez "SI" predpone, 8 števk)
   taxNumber: "12345678",
   // Oznaka poslovnega prostora
@@ -34,6 +35,33 @@ export const ISSUER = {
   posta: "1000",
   kraj: "Ljubljana",
 };
+// Backward-compat alias (za POC display strani)
+export const ISSUER = DEMO_ISSUER;
+
+// Issuer iz tenant podatkov (zamenja DEMO_ISSUER v fiskalizaciji).
+// Polja so obvezna razen naslovnih (address/city/post), ki lahko manjkajo.
+export interface InvoiceIssuer {
+  taxNumber: string;          // brez "SI" predpone
+  businessPremiseID: string;
+  electronicDeviceID: string;
+  name: string;
+  address?: string;
+  city?: string;
+  post?: string;
+}
+
+// Validacija — vrže napako če so demo placeholder vrednosti
+export function assertIssuerValid(issuer: InvoiceIssuer): void {
+  if (!issuer.taxNumber || issuer.taxNumber === "12345678") {
+    throw new Error("InvoiceIssuer.taxNumber manjka ali je demo vrednost");
+  }
+  if (!issuer.businessPremiseID || issuer.businessPremiseID === "PREVOZ11") {
+    throw new Error("InvoiceIssuer.businessPremiseID manjka ali je demo vrednost");
+  }
+  if (!issuer.electronicDeviceID || issuer.electronicDeviceID === "BLAG01") {
+    throw new Error("InvoiceIssuer.electronicDeviceID manjka ali je demo vrednost");
+  }
+}
 
 // Demo RSA zasebni ključ (2048-bit) — v produkciji pride iz FURS certifikata (.p12)
 let demoPrivateKey: crypto.KeyObject | null = null;
@@ -194,7 +222,15 @@ export function generateEOR(): string {
  * Generira XML za FURS račun (Invoice ali Storno).
  * Struktura sledi FURS eBusiness shemi (fu:Invoice).
  */
-export function buildInvoiceXml(params: InvoiceParams): string {
+export function buildInvoiceXml(params: InvoiceParams, issuer?: InvoiceIssuer): string {
+  const iss: InvoiceIssuer = issuer ?? DEMO_ISSUER;
+  if (issuer) {
+    assertIssuerValid(issuer);
+  } else {
+    console.warn(
+      "[FURS] buildInvoiceXml klican brez issuer — uporabljam DEMO_ISSUER (NE v produkciji!)"
+    );
+  }
   const isStorno = !!params.referenceInvoice;
 
   // DDV po stopnjah (agregirano)
@@ -245,7 +281,11 @@ export function buildInvoiceXml(params: InvoiceParams): string {
     : "";
 
   const subseqSeq = isStorno ? `<SubsequentSeq>1</SubsequentSeq>` : "";
-  const invoiceNumberStr = buildInvoiceNumber(params.invoiceNumber);
+  const invoiceNumberStr = buildInvoiceNumber(
+    params.invoiceNumber,
+    iss.businessPremiseID,
+    iss.electronicDeviceID
+  );
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Invoice xmlns="http://www.fu.gov.si/FURS">
@@ -261,18 +301,18 @@ export function buildInvoiceXml(params: InvoiceParams): string {
       <TypeOfInvoice>${isStorno ? "STORNO" : "INVOICE"}</TypeOfInvoice>
       ${subseqSeq}
       <Issuer>
-        <VATTaxNumber>${ISSUER.taxNumber}</VATTaxNumber>
-        <Name>${escapeXml(ISSUER.name)}</Name>
+        <VATTaxNumber>${iss.taxNumber}</VATTaxNumber>
+        <Name>${escapeXml(iss.name)}</Name>
         <Address>
-          <Street>${escapeXml(ISSUER.naslov)}</Street>
-          <PostalCode>${ISSUER.posta}</PostalCode>
-          <City>${escapeXml(ISSUER.kraj)}</City>
+          <Street>${escapeXml(iss.address || "N/A")}</Street>
+          <PostalCode>${iss.post || "1000"}</PostalCode>
+          <City>${escapeXml(iss.city || "Ljubljana")}</City>
         </Address>
-        <BusinessPremiseID>${ISSUER.businessPremiseID}</BusinessPremiseID>
-        <ElectronicDeviceID>${ISSUER.electronicDeviceID}</ElectronicDeviceID>
+        <BusinessPremiseID>${iss.businessPremiseID}</BusinessPremiseID>
+        <ElectronicDeviceID>${iss.electronicDeviceID}</ElectronicDeviceID>
       </Issuer>
       <Operator>
-        <VATTaxNumber>${ISSUER.taxNumber}</VATTaxNumber>
+        <VATTaxNumber>${iss.taxNumber}</VATTaxNumber>
         <Name>${escapeXml(params.operator)}</Name>
       </Operator>
       ${refInvoiceBlock}
@@ -343,8 +383,8 @@ export function buildQrPayload(
 // ŠTEVILKA RAČUNA (FURS format: PP-EN-ŠT)
 // ============================================================================
 
-export function buildInvoiceNumber(seq: number): string {
-  return `${ISSUER.businessPremiseID}-${ISSUER.electronicDeviceID}-${String(
-    seq
-  ).padStart(10, "0")}`;
+export function buildInvoiceNumber(seq: number, businessPremiseID?: string, electronicDeviceID?: string): string {
+  const bp = businessPremiseID || DEMO_ISSUER.businessPremiseID;
+  const ed = electronicDeviceID || DEMO_ISSUER.electronicDeviceID;
+  return `${bp}-${ed}-${String(seq).padStart(10, "0")}`;
 }

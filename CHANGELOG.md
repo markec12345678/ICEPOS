@@ -1,4 +1,56 @@
-# Changelog — Gostilna POS
+# Changelog
+
+## [Nepublikovano] — Julij 2025 (Faza 1-5)
+
+### Varnost (Faza 1+3+4)
+- proxy.ts — centralni auth middleware z DB PIN validacijo
+- scrypt PIN hashing z backward-compat
+- Redis-backed rate limiting (login, loyalty, FURS INI, Stripe)
+- Loyalty JWT (HS256, 30-dnevni TTL)
+- CSRF protection (Origin header check)
+- Webhook tenant routing brez unsafe fallback
+- fursCertPassword encryption (AES-256-GCM)
+- Super-admin key za POST /api/restaurants
+- 8 IDOR popravkov (orders/export, operators/[id], pay, qr, customers, gift-cards, itd.)
+
+### FURS skladnost (Faza 1+2)
+- InvoiceIssuer parameterization (per-tenant, ne hardcoded)
+- xml-crypto SignedXml z exc-c14n canonicalization
+- node-forge .p12 certifikat loading
+- Storno sendInvoiceToFurs (ne generateEOR bypass)
+- $transaction v pay + storno + Stripe webhook
+- AuditLog model + integracija v pay/storno/INI + audit-log API
+- AuditLogView admin komponenta
+
+### Data integrity (Faza 2)
+- 16 Float -> Decimal monetarnih polj
+- 6 Prisma enumov (OrderStatus, PaymentMethod, itd.)
+- 29 @@index direktiv
+- Prisma migrations baseline
+
+### Infrastructure (Faza 3+4)
+- Kitchen service: Redis adapter + socket.io auth + /health endpoint
+- Sentry error tracking (client + server + edge + captureException v 5 rutah)
+- CORS + security headers v next.config.ts
+- Production docker-compose (Postgres + Redis + Kitchen + POS)
+- Caddyfile.prod z TLS + security headers
+- Dockerfile popravljen za PostgreSQL
+
+### Testing & Docs (Faza 1+4+5)
+- 20 unit testov (auth, FURS, proxy, JWT)
+- 15 e2e testov (auth, order flow, IDOR, audit log)
+- OpenAPI 3.1 spec (33 pathov) + Swagger UI na /api-docs
+- DEPLOYMENT.md (700-vrsticni vodič)
+- ARCHITECTURE.md (diagram komponent)
+- CI/CD 5-job pipeline z security scan
+- 7 phantom deps odstranjenih
+- ESLint rules re-enabled
+
+### PWA (Faza 3)
+- Offline queue za POST/PUT/DELETE (Background Sync + IndexedDB)
+- useOfflineQueue hook
+
+ — Gostilna POS
 
 Vse pomembne spremembe tega projekta bodo zapisane v tem dokumentu.
 

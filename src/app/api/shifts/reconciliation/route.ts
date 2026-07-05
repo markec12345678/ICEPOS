@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 
     const shiftId = req.nextUrl.searchParams.get("shiftId");
 
-    let shift = null;
+    let shift: Awaited<ReturnType<typeof db.shift.findFirst>> | null = null;
     if (shiftId) {
       shift = await db.shift.findFirst({
         where: { id: shiftId, restaurantId: tenant.id },
@@ -73,13 +73,13 @@ export async function GET(req: NextRequest) {
     const cardOrders = paidOrders.filter((o) => o.paymentMethod === "card");
     const giftcardOrders = paidOrders.filter((o) => o.paymentMethod === "giftcard");
 
-    const cashRevenue = cashOrders.reduce((s, o) => s + o.total, 0);
-    const cardRevenue = cardOrders.reduce((s, o) => s + o.total, 0);
-    const giftcardRevenue = giftcardOrders.reduce((s, o) => s + o.total, 0);
-    const totalTips = paidOrders.reduce((s, o) => s + (o.tip || 0), 0);
+    const cashRevenue = cashOrders.reduce((s, o) => s + Number(o.total), 0);
+    const cardRevenue = cardOrders.reduce((s, o) => s + Number(o.total), 0);
+    const giftcardRevenue = giftcardOrders.reduce((s, o) => s + Number(o.total), 0);
+    const totalTips = paidOrders.reduce((s, o) => s + (Number(o.tip) || 0), 0);
 
     // Pričakovan stanje blagajne = začetno stanje + gotovinski promet + napitnine
-    const expectedCash = shift.startCash + cashRevenue + totalTips;
+    const expectedCash = Number(shift.startCash) + cashRevenue + totalTips;
 
     return NextResponse.json({
       shift: {

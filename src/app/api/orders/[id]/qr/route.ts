@@ -1,19 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { buildQrPayload, ISSUER } from "@/lib/furs";
+import { buildQrPayload } from "@/lib/furs";
+import { getTenantFromRequest } from "@/lib/tenant";
 import QRCode from "qrcode";
 
 export const dynamic = "force-dynamic";
 
 // Generira QR kodo (data URL) za FURS račun po specifikaciji
+// Tenant-scoped — preprečuje cross-tenant IDOR
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const order = await db.order.findUnique({
-      where: { id },
+    const tenant = await getTenantFromRequest(req);
+    if (!tenant) {
+      return NextResponse.json({ error: "Tenant ni najden" }, { status: 400 });
+    }
+
+    // Tenant-scoped lookup
+    const order = await db.order.findFirst({
+      where: { id, restaurantId: tenant.id },
       select: {
         zoi: true,
         paidAt: true,
@@ -29,10 +37,12 @@ export async function GET(
       );
     }
 
+    // Uporabi tenant taxNumber (ne hardcoded ISSUER.taxNumber)
+    const taxNumber = tenant.taxNumber.replace(/^SI/i, "");
     const payload = buildQrPayload(
       order.zoi,
       order.paidAt,
-      ISSUER.taxNumber
+      taxNumber
     );
 
     // Generiraj QR kot SVG data URL (ostri pri printu, majhen)

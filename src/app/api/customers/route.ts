@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { validate, CreateCustomerSchema } from "@/lib/validation";
 import { getTenantFromRequest } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
@@ -47,6 +48,10 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+    const parsed = validate(CreateCustomerSchema, body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Neveljaven vhod", details: parsed.error }, { status: 400 });
+    }
     const { name, phone, email, note } = body as {
       name: string;
       phone?: string;

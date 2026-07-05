@@ -27,10 +27,10 @@ export async function GET(req: NextRequest) {
     const validReceipts = paidOrders.filter((o) => o.status === "paid");
     const stornoReceipts = paidOrders.filter((o) => o.status === "storno");
 
-    const grossTotal = validReceipts.reduce((s, o) => s + o.total, 0);
-    const totalTips = validReceipts.reduce((s, o) => s + (o.tip || 0), 0);
+    const grossTotal = validReceipts.reduce((s, o) => s + Number(o.total), 0);
+    const totalTips = validReceipts.reduce((s, o) => s + Number(o.tip || 0), 0);
     const stornoTotal = stornoReceipts.reduce(
-      (s, o) => s + Math.abs(o.total),
+      (s, o) => s + Math.abs(Number(o.total)),
       0
     );
     const netTotal = grossTotal - stornoTotal;
@@ -41,10 +41,10 @@ export async function GET(req: NextRequest) {
       { base: number; vat: number; gross: number }
     >();
     const applyItem = (
-      it: { unitPrice: number; quantity: number; vatRate: number },
+      it: { unitPrice: any; quantity: number; vatRate: number },
       sign: number
     ) => {
-      const lineGross = it.unitPrice * it.quantity * sign;
+      const lineGross = Number(it.unitPrice) * it.quantity * sign;
       const lineVat = lineGross * it.vatRate;
       const lineBase = lineGross - lineVat;
       const existing = vatBuckets.get(it.vatRate);
@@ -86,16 +86,16 @@ export async function GET(req: NextRequest) {
       const existing = paymentMap.get(method);
       if (existing) {
         existing.count += 1;
-        existing.total += o.total;
+        existing.total += Number(o.total);
       } else {
-        paymentMap.set(method, { count: 1, total: o.total });
+        paymentMap.set(method, { count: 1, total: Number(o.total) });
       }
     }
     const paymentBreakdown = Array.from(paymentMap.entries()).map(
       ([method, v]) => ({
         method,
         count: v.count,
-        total: Math.round(v.total * 100) / 100,
+        total: Math.round(Number(v.total) * 100) / 100,
       })
     );
 

@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
       }
 
       sectionMap[section].totalOrders++;
-      sectionMap[section].totalRevenue += order.total;
+      sectionMap[section].totalRevenue += Number(order.total);
       sectionMap[section].totalItems += order.items.reduce((s, i) => s + i.quantity, 0);
 
       // Turn time
@@ -127,7 +127,7 @@ export async function GET(req: NextRequest) {
       const ts = tableStats[order.tableId];
       if (ts) {
         ts.orders++;
-        ts.revenue += order.total;
+        ts.revenue += Number(order.total);
         if (order.paidAt) {
           const turnMin = (order.paidAt.getTime() - order.createdAt.getTime()) / 60000;
           if (turnMin > 0 && turnMin < 600) {
@@ -139,9 +139,9 @@ export async function GET(req: NextRequest) {
 
     // Izračunaj povprečja in dodaj mize v sekcije
     const sections = Object.values(sectionMap).map((s) => {
-      s.avgOrderValue = s.totalOrders > 0 ? s.totalRevenue / s.totalOrders : 0;
+      s.avgOrderValue = s.totalOrders > 0 ? Number(s.totalRevenue) / s.totalOrders : 0;
       s.avgTurnTime = s.totalOrders > 0 ? s.avgTurnTime / s.totalOrders : 0;
-      s.revenuePerSeat = s.totalSeats > 0 ? s.totalRevenue / s.totalSeats : 0;
+      s.revenuePerSeat = s.totalSeats > 0 ? Number(s.totalRevenue) / s.totalSeats : 0;
       s.ordersPerTable = s.tableCount > 0 ? s.totalOrders / s.tableCount : 0;
 
       // Dodaj mize v to sekcijo
@@ -158,7 +158,7 @@ export async function GET(req: NextRequest) {
 
       return {
         ...s,
-        totalRevenue: Math.round(s.totalRevenue * 100) / 100,
+        totalRevenue: Math.round(Number(s.totalRevenue) * 100) / 100,
         avgOrderValue: Math.round(s.avgOrderValue * 100) / 100,
         avgTurnTime: Math.round(s.avgTurnTime),
         revenuePerSeat: Math.round(s.revenuePerSeat * 100) / 100,
@@ -168,7 +168,7 @@ export async function GET(req: NextRequest) {
           revenue: Math.round(t.revenue * 100) / 100,
         })),
       };
-    }).sort((a, b) => b.totalRevenue - a.totalRevenue);
+    }).sort((a, b) => Number(b.totalRevenue) - a.totalRevenue);
 
     // Skupne metrike
     const totalRevenue = sections.reduce((s, x) => s + x.totalRevenue, 0);

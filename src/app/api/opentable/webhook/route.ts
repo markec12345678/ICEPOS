@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ReservationStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import {
   getOpenTableConfig,
@@ -37,7 +38,19 @@ export async function POST(req: NextRequest) {
     console.log(`[OpenTable webhook] Event: ${payload.event}, Reservation: ${payload.reservation.id}`);
 
     // Poišči restavracijo
-    const restaurant = await db.restaurant.findFirst({ where: { active: true } });
+    // Poišči restavracijo po opentableRestaurantId (multi-tenant — BREZ fallback-a)
+    const otRestaurantId = (payload as any)?.restaurant_id || (payload as any)?.restaurantId || (payload as any)?.reservation?.restaurant_id;
+    if (!otRestaurantId) {
+      console.error("[OpenTable webhook] Manjka restaurant_id v webhook payload-u");
+      return NextResponse.json({ ok: true, error: "Missing restaurant_id" });
+    }
+    const restaurant = await db.restaurant.findFirst({
+      where: { opentableRestaurantId: String(otRestaurantId), active: true },
+    });
+    if (!restaurant) {
+      console.error("[OpenTable webhook] Nobena restavracija ne match-a restaurant_id:", otRestaurantId);
+      return NextResponse.json({ ok: true, error: "No tenant match" });
+    }
     if (!restaurant) {
       return NextResponse.json({ ok: true });
     }
@@ -98,7 +111,7 @@ export async function POST(req: NextRequest) {
             time: reservationTime,
             duration: otRes.duration,
             note: otRes.specialRequests || `OpenTable #${otRes.id}`,
-            status: mapOpenTableStatus(otRes.status),
+                        status: mapOpenTableStatus(otRes.status) as any,
             tableId: assignedTableId || existing.tableId,
           },
         });
@@ -116,7 +129,7 @@ export async function POST(req: NextRequest) {
             time: reservationTime,
             duration: otRes.duration,
             note: otRes.specialRequests || `OpenTable #${otRes.id}`,
-            status: mapOpenTableStatus(otRes.status),
+                        status: mapOpenTableStatus(otRes.status) as any,
           },
         });
       }
@@ -130,7 +143,7 @@ export async function POST(req: NextRequest) {
       if (existing) {
         await db.reservation.update({
           where: { id: existing.id },
-          data: { status: "cancelled" },
+          data: { status: ReservationStatus.cancelled },
         });
       }
     }
