@@ -92,7 +92,7 @@ bun run dev          # port 3003
    - `fix:` popravljena napaka
    - `docs:` dokumentacija
    - `refactor:` refactor brez spremembe funkcionalnosti
-   - `test:` testi (češprav mi ne pišemo testov)
+   - `test:` testi (z vitest (unit) in playwright (e2e) — glej tests/)
    - `chore:` vzdrževalni commit
 
 4. **Preveri kodo**:

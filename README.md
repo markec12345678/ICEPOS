@@ -140,7 +140,7 @@
 | Framework | **Next.js 16** (App Router, Turbopack) |
 | Jezik | **TypeScript 5** |
 | Styling | **Tailwind CSS 4** + **shadcn/ui** (New York) |
-| ORM | **Prisma** + SQLite (20+ modelov) |
+| ORM | **Prisma** + SQLite (22 modelov) |
 | State | **Zustand** (client) + **TanStack Query** (server) |
 | Real-time | **socket.io** (mini-service, port 3003) |
 | Fiskalizacija | **crypto** (RSA-SHA256, MD5, WS-Security) + **qrcode** |
@@ -236,7 +236,7 @@ cd mini-services/kitchen-service && bun install && bun run dev
 ```
 .
 ├── prisma/
-│   ├── schema.prisma          # 11 modelov (MenuItem, Order, Table, ...)
+│   ├── schema.prisma          # 22 modelov (MenuItem, Order, Table, ...)
 │   └── seed.ts                # Demo podatki (34 jedi, 14 miz, ...)
 ├── src/
 │   ├── app/
@@ -244,14 +244,14 @@ cd mini-services/kitchen-service && bun install && bun run dev
 │   │   ├── meni/              # Javni meni za goste (QR)
 │   │   ├── sledi/[id]/        # Sledenje naročila v živo
 │   │   ├── print/receipt/[id]/# PDF izvoz računa
-│   │   └── api/               # REST API (30+ endpointov)
+│   │   └── api/               # REST API (160+ API endpointov)
 │   ├── components/
 │   │   ├── pos/               # 25+ blagajniških komponent
 │   │   ├── ui/                # shadcn/ui komponente
 │   │   └── menu-client.tsx    # Guest ordering UI
 │   ├── lib/
 │   │   ├── furs.ts            # FURS modul (ZOI, EOR, XML, QR)
-│   │   ├── furs-api.ts        # FURS REST API (POC)
+│   │   ├── furs-api.ts        # FURS REST API (produkcija)
 │   │   ├── auth.ts            # PIN avtentikacija
 │   │   ├── db.ts              # Prisma client
 │   │   └── types.ts           # TypeScript tipi
@@ -269,7 +269,7 @@ cd mini-services/kitchen-service && bun install && bun run dev
 
 ---
 
-## 🇸🇮 FURS skladnost (POC)
+## 🇸🇮 FURS skladnost (produkcija)
 
 Ta implementacija vključuje **proof-of-concept** FURS fiskalizacije:
 
