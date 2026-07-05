@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
     for (const order of orders) {
       const op = Object.values(operatorMap).find((o) => o.operatorName === order.operator);
       if (op) {
-        Number(op.totalRevenue) += order.total;
+        op.totalRevenue += Number(order.total);
         op.totalTips += Number(order.tip) || 0;
         op.orderCount++;
         op.totalItems += order.items.reduce((s, i) => s + i.quantity, 0);

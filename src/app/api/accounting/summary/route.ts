@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
       const existing = paymentMethods.get(method);
       if (existing) {
         existing.count += 1;
-        Number(existing.total) += Number(o.total) * sign;
+        existing.total += Number(Number(o.total) * sign);
       } else {
         paymentMethods.set(method, { count: 1, total: Number(o.total) * sign });
       }

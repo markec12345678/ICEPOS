@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
       const existing = byReason.get(w.reason);
       if (existing) {
         existing.count += 1;
-        Number(existing.cost) += w.cost;
+        existing.cost += Number(w.cost);
       } else {
         byReason.set(w.reason, { count: 1, cost: w.cost });
       }
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
       const existing = byItem.get(w.name);
       if (existing) {
         existing.count += 1;
-        Number(existing.cost) += w.cost;
+        existing.cost += Number(w.cost);
         existing.quantity += w.quantity;
       } else {
         byItem.set(w.name, {
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
       const day = w.createdAt.toISOString().slice(0, 10);
       const existing = byDay.get(day);
       if (existing) {
-        Number(existing.cost) += w.cost;
+        existing.cost += Number(w.cost);
         existing.count += 1;
       } else {
         byDay.set(day, { cost: w.cost, count: 1 });

@@ -198,7 +198,7 @@ export function PaymentDialog() {
       const payload: Record<string, unknown> = { paymentMethod: method };
       if (method === "giftcard") payload.giftCardCode = giftCardCode.trim().toUpperCase();
       if (selectedCustomerId) payload.customerId = selectedCustomerId;
-      if (tipAmount > 0) Number(payload.tip) = Math.round(tipAmount * 100) / 100;
+      if (tipAmount > 0) payload.tip = Math.round(tipAmount * 100) / 100;
 
       const res = await fetch(`/api/orders/${openOrder.id}/pay`, {
         method: "POST",

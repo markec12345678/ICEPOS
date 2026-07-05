@@ -104,7 +104,7 @@ export async function GET(req: NextRequest) {
       const existing = paymentMap.get(method);
       if (existing) {
         existing.count += 1;
-        Number(existing.total) += o.total;
+        existing.total += Number(o.total);
       } else {
         paymentMap.set(method, { count: 1, total: o.total });
       }
@@ -121,7 +121,7 @@ export async function GET(req: NextRequest) {
       const existing = operatorMap.get(o.operator);
       if (existing) {
         existing.count += 1;
-        Number(existing.total) += o.total;
+        existing.total += Number(o.total);
       } else {
         operatorMap.set(o.operator, { count: 1, total: o.total });
       }
