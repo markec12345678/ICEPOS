@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -78,7 +79,7 @@ export function PairingSuggestions() {
                 {/* Item 1 */}
                 <div className="flex items-center gap-1.5">
                   {pair.items[0].imageUrl && (
-                    <img src={pair.items[0].imageUrl} alt="" className="h-8 w-8 rounded object-cover" />
+                    <Image src={pair.items[0].imageUrl} alt="" width={32} height={32} className="h-8 w-8 rounded object-cover" />
                   )}
                   <div className="min-w-0">
                     <p className="truncate text-xs font-medium">{pair.items[0].name}</p>
@@ -92,7 +93,7 @@ export function PairingSuggestions() {
                 {/* Item 2 */}
                 <div className="flex items-center gap-1.5">
                   {pair.items[1].imageUrl && (
-                    <img src={pair.items[1].imageUrl} alt="" className="h-8 w-8 rounded object-cover" />
+                    <Image src={pair.items[1].imageUrl} alt="" width={32} height={32} className="h-8 w-8 rounded object-cover" />
                   )}
                   <div className="min-w-0">
                     <p className="truncate text-xs font-medium">{pair.items[1].name}</p>

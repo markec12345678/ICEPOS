@@ -12,35 +12,8 @@ import { TablesView } from "@/components/pos/tables-view";
 import { OrderView } from "@/components/pos/order-view";
 import { ReceiptsView } from "@/components/pos/receipts-view";
 import { KitchenDisplayView } from "@/components/pos/kitchen-display-view";
-import { MenuAdminView } from "@/components/pos/menu-admin-view";
-import { ReservationsView } from "@/components/pos/reservations-view";
 import { ShiftView } from "@/components/pos/shift-view";
 import { DashboardView } from "@/components/pos/dashboard-view";
-import { MonthlyReportView } from "@/components/pos/monthly-report-view";
-import { WeeklyStatsView } from "@/components/pos/weekly-stats-view";
-import { ZReportView } from "@/components/pos/z-report-view";
-import { SettingsView } from "@/components/pos/settings-view";
-import { OperatorsAdminView } from "@/components/pos/operators-admin-view";
-import { TablesAdminView } from "@/components/pos/tables-admin-view";
-import { InventoryView } from "@/components/pos/inventory-view";
-import { CustomerView } from "@/components/pos/customer-view";
-import { GiftCardsView } from "@/components/pos/gift-cards-view";
-import { SchedulingView } from "@/components/pos/scheduling-view";
-import { MenuEngineeringView } from "@/components/pos/menu-engineering-view";
-import { BenchmarkView } from "@/components/pos/benchmark-view";
-import { WasteView } from "@/components/pos/waste-view";
-import { HappyHourView } from "@/components/pos/happy-hour-view";
-import { WoltView } from "@/components/pos/wolt-view";
-import { ForecastView } from "@/components/pos/forecast-view";
-import { ComboMealsView } from "@/components/pos/combo-meals-view";
-import { AccountingView } from "@/components/pos/accounting-view";
-import { DeliverectView } from "@/components/pos/deliverect-view";
-import { OpenTableView } from "@/components/pos/opentable-view";
-import { ImagesView } from "@/components/pos/images-view";
-import { EmployeePerformanceView } from "@/components/pos/employee-performance-view";
-import { CustomerAnalyticsView } from "@/components/pos/customer-analytics-view";
-import { FeedbackView } from "@/components/pos/feedback-view";
-import { WaitlistView } from "@/components/pos/waitlist-view";
 import { OutOfStockBanner } from "@/components/pos/out-of-stock-banner";
 import { OfflineResilienceBanner } from "@/components/pos/offline-resilience-banner";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
@@ -50,6 +23,148 @@ import { PinLoginDialog, getStoredOperator, type Operator } from "@/components/p
 import { Toaster, toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Lock, UserCircle, Bell } from "lucide-react";
+
+import dynamic from "next/dynamic";
+const MenuAdminView = dynamic(() => import("@/components/pos/menu-admin-view").then(m => { return { default: m.MenuAdminView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const ReservationsView = dynamic(() => import("@/components/pos/reservations-view").then(m => { return { default: m.ReservationsView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const MonthlyReportView = dynamic(() => import("@/components/pos/monthly-report-view").then(m => { return { default: m.MonthlyReportView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const WeeklyStatsView = dynamic(() => import("@/components/pos/weekly-stats-view").then(m => { return { default: m.WeeklyStatsView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const ZReportView = dynamic(() => import("@/components/pos/z-report-view").then(m => { return { default: m.ZReportView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const SettingsView = dynamic(() => import("@/components/pos/settings-view").then(m => { return { default: m.SettingsView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const OperatorsAdminView = dynamic(() => import("@/components/pos/operators-admin-view").then(m => { return { default: m.OperatorsAdminView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const TablesAdminView = dynamic(() => import("@/components/pos/tables-admin-view").then(m => { return { default: m.TablesAdminView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const InventoryView = dynamic(() => import("@/components/pos/inventory-view").then(m => { return { default: m.InventoryView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const CustomerView = dynamic(() => import("@/components/pos/customer-view").then(m => { return { default: m.CustomerView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const GiftCardsView = dynamic(() => import("@/components/pos/gift-cards-view").then(m => { return { default: m.GiftCardsView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const SchedulingView = dynamic(() => import("@/components/pos/scheduling-view").then(m => { return { default: m.SchedulingView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const MenuEngineeringView = dynamic(() => import("@/components/pos/menu-engineering-view").then(m => { return { default: m.MenuEngineeringView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const BenchmarkView = dynamic(() => import("@/components/pos/benchmark-view").then(m => { return { default: m.BenchmarkView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const WasteView = dynamic(() => import("@/components/pos/waste-view").then(m => { return { default: m.WasteView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const HappyHourView = dynamic(() => import("@/components/pos/happy-hour-view").then(m => { return { default: m.HappyHourView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const WoltView = dynamic(() => import("@/components/pos/wolt-view").then(m => { return { default: m.WoltView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const ForecastView = dynamic(() => import("@/components/pos/forecast-view").then(m => { return { default: m.ForecastView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const ComboMealsView = dynamic(() => import("@/components/pos/combo-meals-view").then(m => { return { default: m.ComboMealsView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const AccountingView = dynamic(() => import("@/components/pos/accounting-view").then(m => { return { default: m.AccountingView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const DeliverectView = dynamic(() => import("@/components/pos/deliverect-view").then(m => { return { default: m.DeliverectView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const OpenTableView = dynamic(() => import("@/components/pos/opentable-view").then(m => { return { default: m.OpenTableView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const ImagesView = dynamic(() => import("@/components/pos/images-view").then(m => { return { default: m.ImagesView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const EmployeePerformanceView = dynamic(() => import("@/components/pos/employee-performance-view").then(m => { return { default: m.EmployeePerformanceView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const CustomerAnalyticsView = dynamic(() => import("@/components/pos/customer-analytics-view").then(m => { return { default: m.CustomerAnalyticsView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const FeedbackView = dynamic(() => import("@/components/pos/feedback-view").then(m => { return { default: m.FeedbackView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const WaitlistView = dynamic(() => import("@/components/pos/waitlist-view").then(m => { return { default: m.WaitlistView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
+const AuditLogView = dynamic(() => import("@/components/pos/audit-log-view").then(m => { return { default: m.AuditLogView }; }), {
+  loading: () => <div className="flex items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" /></div>,
+  ssr: false,
+});
+
 
 export default function Home() {
   const activeView = usePosStore((s) => s.activeView);
