@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getOperatorFromRequest } from "@/lib/auth";
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
       .map((i) => {
         const m = menuMap.get(i.menuItemId)!;
         const unitPrice =
-          typeof i.unitPrice === "number" && Number(i.unitPrice) > 0
+          typeof Number(i.unitPrice) === "number" && Number(i.unitPrice) > 0
             ? i.unitPrice
             : m.price;
         const lineTotal = unitPrice * i.quantity;

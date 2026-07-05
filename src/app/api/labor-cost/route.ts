@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
       const minutes = Math.max(0, Math.floor((end.getTime() - ts.clockIn.getTime()) / 60000));
       const effectiveMinutes = Math.max(0, minutes - ts.breakMinutes);
       const hours = effectiveMinutes / 60;
-      const cost = hours * ts.operator.hourlyRate;
+      const cost = hours * Number(ts.operator.hourlyRate);
 
       totalMinutes += effectiveMinutes;
       totalCost += cost;

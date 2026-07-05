@@ -1,4 +1,3 @@
-// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -142,11 +141,11 @@ export async function GET(req: NextRequest) {
       const minutes = Math.max(0, (end.getTime() - ts.clockIn.getTime()) / 60000 - ts.breakMinutes);
       const hours = minutes / 60;
       laborHours += hours;
-      laborCost += hours * ts.operator.hourlyRate;
+      laborCost += hours * Number(ts.operator.hourlyRate);
     }
 
     // Inventory stock value
-    const stockValue = inventoryItems.reduce((s, i) => s + i.quantity * i.costPerUnit, 0);
+    const stockValue = inventoryItems.reduce((s, i) => s + i.quantity * Number(i.costPerUnit), 0);
 
     // Smena
     const shift = activeShift

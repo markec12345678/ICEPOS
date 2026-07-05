@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -31,13 +31,13 @@ export async function GET(req: NextRequest) {
 
     const matrix = items.map((item) => {
       const foodCost = item.recipes.reduce(
-        (s, r) => s + r.Number(inventoryItem.costPerUnit) * r.quantity,
+        (s, r) => s + Number(r.inventoryItem.costPerUnit) * r.quantity,
         0
       );
       const profitPerUnit = Number(item.price) - foodCost;
       const profitMargin = Number(item.price) > 0 ? (profitPerUnit / item.price) * 100 : 0;
       const quantitySold = item.orderItems.reduce((s, oi) => s + oi.quantity, 0);
-      const revenue = item.orderItems.reduce((s, oi) => s + oi.quantity * oi.unitPrice, 0);
+      const revenue = item.orderItems.reduce((s, oi) => s + oi.quantity * Number(oi.unitPrice), 0);
       const totalProfit = quantitySold * profitPerUnit;
 
       // Klasifikacija za matriko

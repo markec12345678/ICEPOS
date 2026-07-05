@@ -1,4 +1,3 @@
-// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -49,7 +48,7 @@ export async function GET(req: NextRequest) {
       const totalMinutes = (clockOut.getTime() - ts.clockIn.getTime()) / 60000;
       const workMinutes = Math.max(0, totalMinutes - ts.breakMinutes);
       const hours = workMinutes / 60;
-      const cost = hours * ts.operator.hourlyRate;
+      const cost = hours * Number(ts.operator.hourlyRate);
       const isClockedIn = !ts.clockOut;
 
       return {
@@ -91,7 +90,7 @@ export async function GET(req: NextRequest) {
           const overlapEnd = new Date(Math.min(clockOut.getTime(), hourEnd.getTime()));
           const overlapMin = (overlapEnd.getTime() - overlapStart.getTime()) / 60000;
           if (overlapMin > 0) {
-            hourCost += (overlapMin / 60) * op.hourlyRate;
+            hourCost += (overlapMin / 60) * Number(op.hourlyRate);
             count++;
           }
         }

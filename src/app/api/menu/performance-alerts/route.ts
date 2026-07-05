@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
       const monthQty = item.orderItems.reduce((s, oi) => s + oi.quantity, 0);
       const monthAvg = monthQty / 4; // povprečje na teden
 
-      const revenue = thisWeek.reduce((s, oi) => s + oi.quantity * oi.unitPrice, 0);
+      const revenue = thisWeek.reduce((s, oi) => s + oi.quantity * Number(oi.unitPrice), 0);
       const changePct = lastWeekQty > 0
         ? Math.round(((thisWeekQty - lastWeekQty) / lastWeekQty) * 100)
         : thisWeekQty > 0 ? 100 : 0;

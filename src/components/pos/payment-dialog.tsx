@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 "use client";
 
 import { useEffect, useState } from "react";
@@ -100,9 +100,9 @@ export function PaymentDialog() {
   const selectedTable = tables?.find((t) => t.id === selectedTableId);
   const openOrder = selectedTable?.orders.find((o) => o.status === "open");
 
-  const grossTotal = cart.reduce((s, c) => s + c.Number(menuItem.price) * c.quantity, 0);
+  const grossTotal = cart.reduce((s, c) => s + Number(c.menuItem.price) * c.quantity, 0);
   const grossVat = cart.reduce(
-    (s, c) => s + c.Number(menuItem.price) * c.quantity * c.menuItem.vatRate,
+    (s, c) => s + Number(c.menuItem.price) * c.quantity * c.menuItem.vatRate,
     0
   );
   const discountAmount = (grossTotal * discountPercent) / 100;

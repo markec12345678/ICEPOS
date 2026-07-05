@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -188,7 +188,7 @@ export function OrderView() {
   // Cena postavke z modifierji (za prikaz v vozičku)
   function lineUnitPrice(c: (any & { lineId: string })): number {
     const modDelta = (c.modifiers || []).reduce((s, m) => s + m.priceDelta, 0);
-    return c.Number(menuItem.price) + modDelta;
+    return Number(c.menuItem.price) + modDelta;
   }
 
   // Debounced search — 300ms za boljšo performance pri 500+ artiklih

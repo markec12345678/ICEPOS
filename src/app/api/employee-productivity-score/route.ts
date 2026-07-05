@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
       const minutes = Math.max(0, (end.getTime() - ts.clockIn.getTime()) / 60000 - ts.breakMinutes);
       const hours = minutes / 60;
       operatorMap[opId].totalHours += hours;
-      operatorMap[opId].laborCost += hours * ts.operator.hourlyRate;
+      operatorMap[opId].laborCost += hours * Number(ts.operator.hourlyRate);
     }
 
     // Dodaj orderje k operaterjem (po imenu)

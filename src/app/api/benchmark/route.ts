@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
           for (const it of o.items) {
             const recipes = it.menuItem.recipes || [];
             for (const recipe of recipes) {
-              foodCost += recipe.Number(inventoryItem.costPerUnit) * recipe.quantity * it.quantity;
+              foodCost += Number(recipe.inventoryItem.costPerUnit) * recipe.quantity * it.quantity;
             }
           }
         }
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
           const end = ts.clockOut || new Date();
           const minutes = Math.max(0, Math.floor((end.getTime() - ts.clockIn.getTime()) / 60000) - ts.breakMinutes);
           laborMinutes += minutes;
-          laborCost += (minutes / 60) * ts.operator.hourlyRate;
+          laborCost += (minutes / 60) * Number(ts.operator.hourlyRate);
         }
         const laborCostPct = revenue > 0 ? (laborCost / revenue) * 100 : 0;
 

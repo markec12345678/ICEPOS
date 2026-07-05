@@ -1,4 +1,3 @@
-// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -40,7 +39,7 @@ export async function GET(req: NextRequest) {
       .map((item) => {
         const quantitySold = item.orderItems.reduce((s, oi) => s + oi.quantity, 0);
         const revenue = item.orderItems.reduce(
-          (s, oi) => s + oi.quantity * oi.unitPrice,
+          (s, oi) => s + oi.quantity * Number(oi.unitPrice),
           0
         );
         const orderCount = item.orderItems.length;

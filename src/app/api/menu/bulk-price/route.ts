@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
         }
         newPrice = Math.round(newPrice * 100) / 100;
 
-        const diff = newPrice - item.price;
+        const diff = newPrice - Number(item.price);
         totalDifference += diff;
 
         await db.menuItem.update({

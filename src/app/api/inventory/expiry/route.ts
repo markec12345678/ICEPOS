@@ -1,4 +1,3 @@
-// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -49,8 +48,8 @@ export async function GET(req: NextRequest) {
     }
 
     // Izračun vrednosti izgub (expired)
-    const expiredValue = expired.reduce((s, i) => s + i.quantity * i.costPerUnit, 0);
-    const expiringSoonValue = expiringSoon.reduce((s, i) => s + i.quantity * i.costPerUnit, 0);
+    const expiredValue = expired.reduce((s, i) => s + i.quantity * Number(i.costPerUnit), 0);
+    const expiringSoonValue = expiringSoon.reduce((s, i) => s + i.quantity * Number(i.costPerUnit), 0);
 
     return NextResponse.json({
       summary: {

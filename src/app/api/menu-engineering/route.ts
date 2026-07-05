@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     const analysis = menuItems.map((m) => {
       // Food cost iz receptov
       const foodCost = m.recipes.reduce(
-        (s, r) => s + r.Number(inventoryItem.costPerUnit) * r.quantity,
+        (s, r) => s + Number(r.inventoryItem.costPerUnit) * r.quantity,
         0
       );
 
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
       // Popularnost (število prodanih + revenue)
       const quantitySold = m.orderItems.reduce((s, oi) => s + oi.quantity, 0);
       const revenue = m.orderItems.reduce(
-        (s, oi) => s + oi.quantity * oi.unitPrice,
+        (s, oi) => s + oi.quantity * Number(oi.unitPrice),
         0
       );
       const totalProfit = quantitySold * profitPerUnit;

@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
+// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
         const inv = recipe.inventoryItem;
         if (!inv) continue;
         const consumedQty = recipe.quantity * item.quantity;
-        const consumedVal = consumedQty * inv.costPerUnit;
+        const consumedVal = consumedQty * Number(inv.costPerUnit);
 
         if (!consumptionByItem[inv.id]) {
           consumptionByItem[inv.id] = {
