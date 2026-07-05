@@ -869,7 +869,7 @@ function OrderAheadTab({
               <p className="text-sm text-primary">{formatEUR(item.price)}</p>
             </div>
             <Button
-              size="icon"
+              size="icon" aria-label="Akcija"
               variant="outline"
               className="h-9 w-9"
               onClick={() => addToCart(item)}
@@ -890,7 +890,7 @@ function OrderAheadTab({
                 <span>{c.menuItem.name}</span>
                 <div className="flex items-center gap-2">
                   <Button
-                    size="icon"
+                    size="icon" aria-label="Akcija"
                     variant="outline"
                     className="h-6 w-6"
                     onClick={() => updateQty(c.menuItem.id, -1)}
@@ -899,7 +899,7 @@ function OrderAheadTab({
                   </Button>
                   <span className="min-w-6 text-center font-bold">{c.quantity}</span>
                   <Button
-                    size="icon"
+                    size="icon" aria-label="Akcija"
                     variant="outline"
                     className="h-6 w-6"
                     onClick={() => updateQty(c.menuItem.id, 1)}

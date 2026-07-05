@@ -700,7 +700,7 @@ function ItemModal({
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
-                size="icon"
+                size="icon" aria-label="Odstrani"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
               >
                 <Minus className="h-4 w-4" />
@@ -708,7 +708,7 @@ function ItemModal({
               <span className="min-w-12 text-center text-xl font-bold">{quantity}</span>
               <Button
                 variant="outline"
-                size="icon"
+                size="icon" aria-label="Dodaj"
                 onClick={() => setQuantity(quantity + 1)}
               >
                 <Plus className="h-4 w-4" />
@@ -796,7 +796,7 @@ function CartDrawer({
                 <div className="flex items-center gap-1">
                   <Button
                     variant="outline"
-                    size="icon"
+                    size="icon" aria-label="Akcija"
                     className="h-7 w-7"
                     onClick={() => onUpdateQty(line.lineId, -1)}
                   >
@@ -807,7 +807,7 @@ function CartDrawer({
                   </span>
                   <Button
                     variant="outline"
-                    size="icon"
+                    size="icon" aria-label="Akcija"
                     className="h-7 w-7"
                     onClick={() => onUpdateQty(line.lineId, 1)}
                   >
@@ -815,7 +815,7 @@ function CartDrawer({
                   </Button>
                   <Button
                     variant="ghost"
-                    size="icon"
+                    size="icon" aria-label="Akcija"
                     className="h-7 w-7 text-destructive"
                     onClick={() => onRemove(line.lineId)}
                   >

@@ -346,7 +346,7 @@ export function ReceiptsView() {
         </div>
         <Button
           variant="outline"
-          size="icon"
+          size="icon" aria-label="Akcija"
           onClick={() => setShowFilters(!showFilters)}
           className={cn("shrink-0", showFilters && "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400")}
           title="Napredni filtri"
@@ -558,7 +558,7 @@ export function ReceiptsView() {
                     <div className="flex gap-1">
                       <Button
                         variant="ghost"
-                        size="icon"
+                        size="icon" aria-label="Akcija"
                         className="h-8 w-8"
                         onClick={() => setSelected(r)}
                         title="Podrobnosti"
@@ -568,7 +568,7 @@ export function ReceiptsView() {
                       {!isStorno && !storniran && (
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="icon" aria-label="Akcija"
                           className="h-8 w-8 text-amber-600 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/40"
                           onClick={() => handleReorder(r)}
                           title="Ponovi naročilo"
@@ -587,7 +587,7 @@ export function ReceiptsView() {
                       </a>
                       <Button
                         variant="ghost"
-                        size="icon"
+                        size="icon" aria-label="Akcija"
                         className="h-8 w-8"
                         onClick={() => handlePrint(r)}
                         title="Natisni"
@@ -596,7 +596,7 @@ export function ReceiptsView() {
                       </Button>
                       <Button
                         variant="ghost"
-                        size="icon"
+                        size="icon" aria-label="Akcija"
                         className="h-8 w-8 text-sky-600 hover:bg-sky-50 hover:text-sky-700 dark:text-sky-400 dark:hover:bg-sky-950/40"
                         onClick={() => {
                           setEmailTarget(r);
@@ -609,7 +609,7 @@ export function ReceiptsView() {
                       {!isStorno && !storniran && (
                         <Button
                           variant="ghost"
-                          size="icon"
+                          size="icon" aria-label="Akcija"
                           className="h-8 w-8 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/40"
                           onClick={() => setStornoTarget(r)}
                           title="Storniraj"

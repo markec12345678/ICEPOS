@@ -308,7 +308,7 @@ export function MenuAdminView() {
                   <div className="col-span-3 flex items-center justify-end gap-1 sm:col-span-1">
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="icon" aria-label="Akcija"
                       className={`h-7 w-7 ${m.available ? "text-emerald-600" : "text-muted-foreground"}`}
                       onClick={async () => {
                         await fetch(`/api/menu/${m.id}`, {
@@ -328,7 +328,7 @@ export function MenuAdminView() {
                     </Button>
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="icon" aria-label="Akcija"
                       className={`h-7 w-7 ${m.isFavorite ? "text-amber-500" : "text-muted-foreground"}`}
                       onClick={async () => {
                         await fetch(`/api/menu/${m.id}`, {
@@ -344,7 +344,7 @@ export function MenuAdminView() {
                     </Button>
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="icon" aria-label="Akcija"
                       className={`h-7 w-7 text-[10px] font-bold ${m.isDailySpecial ? "text-rose-600" : "text-muted-foreground"}`}
                       onClick={async () => {
                         await fetch(`/api/menu/${m.id}`, {
@@ -360,7 +360,7 @@ export function MenuAdminView() {
                     </Button>
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="icon" aria-label="Akcija"
                       className="h-7 w-7"
                       onClick={() => setEditing(m)}
                     >
@@ -368,7 +368,7 @@ export function MenuAdminView() {
                     </Button>
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="icon" aria-label="Akcija"
                       className="h-7 w-7 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/40"
                       onClick={() => setDeleting(m)}
                     >

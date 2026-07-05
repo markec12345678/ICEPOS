@@ -333,7 +333,7 @@ export function CustomerView() {
                     <div className="flex items-center justify-end gap-1">
                       <Button
                         variant="ghost"
-                        size="icon"
+                        size="icon" aria-label="Akcija"
                         className="h-7 w-7"
                         onClick={() => setEditing(c)}
                       >
@@ -341,7 +341,7 @@ export function CustomerView() {
                       </Button>
                       <Button
                         variant="ghost"
-                        size="icon"
+                        size="icon" aria-label="Akcija"
                         className="h-7 w-7 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/40"
                         onClick={() => setDeleting(c)}
                       >

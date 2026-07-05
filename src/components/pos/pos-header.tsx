@@ -83,7 +83,7 @@ export function PosHeader() {
         <div className="flex items-center gap-3">
           <Button
             variant="ghost"
-            size="icon"
+            size="icon" aria-label="Akcija"
             className="hidden h-9 w-9 shrink-0 md:flex"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             title={sidebarCollapsed ? "Razširi stransko vrstico" : "Skrči stransko vrstico"}
@@ -168,7 +168,7 @@ export function PosHeader() {
           <NotificationCenter />
           <Button
             variant="ghost"
-            size="icon"
+            size="icon" aria-label="Akcija"
             className="hidden h-8 w-8 md:flex"
             onClick={() => {
               const event = new KeyboardEvent("keydown", { key: "?", bubbles: true });

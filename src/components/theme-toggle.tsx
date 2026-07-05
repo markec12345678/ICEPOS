@@ -17,7 +17,7 @@ export function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" className="h-9 w-9" disabled>
+      <Button variant="ghost" size="icon" className="h-9 w-9" disabled aria-label="Action">
         <Sun className="h-4 w-4" />
       </Button>
     );
@@ -28,7 +28,7 @@ export function ThemeToggle() {
   return (
     <Button
       variant="ghost"
-      size="icon"
+      size="icon" aria-label="Akcija"
       className="h-9 w-9"
       onClick={() => setTheme(isDark ? "light" : "dark")}
       title={isDark ? "Preklopi na svetlo temo" : "Preklopi na temno temo"}

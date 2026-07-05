@@ -262,7 +262,7 @@ export function KioskApp() {
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
-              size="icon"
+              size="icon" aria-label="Akcija"
               className="h-9 w-9"
               onClick={() => setDarkMode(!darkMode)}
               title="Preklopi temo"
@@ -466,7 +466,7 @@ function CartDrawer({
                 <div className="flex items-center gap-1">
                   <Button
                     variant="outline"
-                    size="icon"
+                    size="icon" aria-label="Akcija"
                     className="h-9 w-9"
                     onClick={() => onUpdateQty(line.lineId, -1)}
                   >
@@ -477,7 +477,7 @@ function CartDrawer({
                   </span>
                   <Button
                     variant="outline"
-                    size="icon"
+                    size="icon" aria-label="Akcija"
                     className="h-9 w-9"
                     onClick={() => onUpdateQty(line.lineId, 1)}
                   >
@@ -485,7 +485,7 @@ function CartDrawer({
                   </Button>
                   <Button
                     variant="ghost"
-                    size="icon"
+                    size="icon" aria-label="Akcija"
                     className="h-9 w-9 text-destructive"
                     onClick={() => onRemove(line.lineId)}
                   >

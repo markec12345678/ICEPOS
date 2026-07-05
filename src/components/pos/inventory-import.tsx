@@ -500,7 +500,7 @@ function InvoiceImport({ onImported }: { onImported: () => void }) {
                 className="w-20"
               />
               <Button
-                size="icon"
+                size="icon" aria-label="Akcija"
                 variant="ghost"
                 className="h-8 w-8 text-destructive"
                 onClick={() => removeItem(idx)}

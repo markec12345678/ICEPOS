@@ -242,7 +242,7 @@ export function ModifierDialog({
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
-                size="icon"
+                size="icon" aria-label="Akcija"
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                 disabled={quantity <= 1}
               >
@@ -253,7 +253,7 @@ export function ModifierDialog({
               </div>
               <Button
                 variant="outline"
-                size="icon"
+                size="icon" aria-label="Akcija"
                 onClick={() => setQuantity((q) => Math.min(99, q + 1))}
                 disabled={quantity >= 99}
               >

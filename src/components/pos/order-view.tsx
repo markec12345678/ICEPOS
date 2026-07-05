@@ -498,7 +498,7 @@ export function OrderView() {
             <PopoverTrigger asChild>
               <Button
                 variant={excludedAllergens.length > 0 ? "default" : "outline"}
-                size="icon"
+                size="icon" aria-label="Akcija"
                 className={cn(
                   "shrink-0",
                   excludedAllergens.length > 0 && "bg-rose-600 hover:bg-rose-700"

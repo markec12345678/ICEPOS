@@ -95,7 +95,7 @@ export function ActivityFeed() {
             {activities.length}
           </Badge>
         </h3>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={load} title="Osveži">
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={load} title="Osveži" aria-label="Osveži">
           <RefreshCw className="h-3.5 w-3.5" />
         </Button>
       </div>
