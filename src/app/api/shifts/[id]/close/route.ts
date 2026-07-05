@@ -18,7 +18,7 @@ export async function POST(
     const { id } = await params;
     const body = await req.json().catch(() => ({}));
     const endCash: number | undefined =
-      typeof body.endCash = == "number" ? body.endCash : undefined;
+      typeof body.endCash === "number" ? body.endCash : undefined;
     const note: string | undefined =
       typeof body.note === "string" ? body.note.slice(0, 500) : undefined;
 

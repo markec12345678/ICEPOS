@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
       .map((i) => {
         const m = menuMap.get(i.menuItemId)!;
         const unitPrice =
-          typeof i.unitPrice = == "number" && Number(i.unitPrice) > 0
+          typeof i.unitPrice === "number" && Number(i.unitPrice) > 0
             ? i.unitPrice
             : m.price;
         const lineTotal = unitPrice * i.quantity;
