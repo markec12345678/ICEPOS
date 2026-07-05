@@ -11,6 +11,7 @@ import {
 import { sendInvoiceToFurs } from "@/lib/furs-api";
 import { writeAuditLog, getIpAddress } from "@/lib/audit";
 import { captureException } from "@/lib/sentry-utils";
+import { validate, StornoSchema } from "@/lib/validation";
 import { getOperatorFromRequest } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,11 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await req.json().catch(() => ({}));
-    const reason: string = (body.reason || "Napaka blagajnika").slice(0, 200);
+    const parsed = validate(StornoSchema, body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Neveljaven vhod: manjka razlog", details: parsed.error }, { status: 400 });
+    }
+    const reason: string = (parsed.success ? parsed.data.reason : body.reason || "Napaka blagajnika").slice(0, 200);
 
     // === Tenant resolution ===
     const tenant = await getTenantFromRequest(req);

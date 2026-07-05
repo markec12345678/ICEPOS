@@ -24,23 +24,31 @@ const PUBLIC_API_ROUTES = [
   "/api/opentable/webhook",
   "/api/stripe/webhook",
   "/api/furs/status",
+  "/api/health", // health check za Docker/k8s
 ];
 
 // In-memory PIN lookup cache (5s TTL) — zmanjša DB obremenitev.
 const pinCache = new Map<string, { valid: boolean; ts: number }>();
 const PIN_CACHE_TTL = 5_000;
 
-async function validateOperator(tenantId: string, pin: string): Promise<boolean> {
+async function validateOperator(tenantId: string, pin: string): Promise<boolean | "db-error"> {
+  // Check cache first (avoids DB hit when DB is down but cache has entry)
   const cacheKey = `${tenantId}:${pin}`;
   const cached = pinCache.get(cacheKey);
   if (cached && Date.now() - cached.ts < PIN_CACHE_TTL) {
     return cached.valid;
   }
 
-  const operators = await db.operator.findMany({
-    where: { restaurantId: tenantId, active: true },
-    select: { id: true, pin: true },
-  });
+  let operators;
+  try {
+    operators = await db.operator.findMany({
+      where: { restaurantId: tenantId, active: true },
+      select: { id: true, pin: true },
+    });
+  } catch {
+    // DB error — return special value so proxy can return 503
+    return "db-error";
+  }
 
   let valid = false;
   for (const op of operators) {
@@ -60,20 +68,28 @@ async function resolveTenantId(req: NextRequest): Promise<string | null> {
 
   const tenantSlug = req.headers.get("x-restaurant-slug");
   if (tenantSlug) {
-    const restaurant = await db.restaurant.findUnique({
-      where: { slug: tenantSlug },
-      select: { id: true },
-    });
-    return restaurant?.id ?? null;
+    try {
+      const restaurant = await db.restaurant.findUnique({
+        where: { slug: tenantSlug },
+        select: { id: true },
+      });
+      return restaurant?.id ?? null;
+    } catch {
+      return null;
+    }
   }
 
   const restaurantQuery = req.nextUrl.searchParams.get("restaurant");
   if (restaurantQuery) {
-    const restaurant = await db.restaurant.findUnique({
-      where: { slug: restaurantQuery },
-      select: { id: true },
-    });
-    return restaurant?.id ?? null;
+    try {
+      const restaurant = await db.restaurant.findUnique({
+        where: { slug: restaurantQuery },
+        select: { id: true },
+      });
+      return restaurant?.id ?? null;
+    } catch {
+      return null;
+    }
   }
 
   return null;
@@ -151,6 +167,12 @@ export async function proxy(req: NextRequest) {
   }
 
   const valid = await validateOperator(tenantId, pin);
+  if (valid === "db-error") {
+    return NextResponse.json(
+      { error: "Storitev začasno nedosegljiva (DB napaka)" },
+      { status: 503 }
+    );
+  }
   if (!valid) {
     return NextResponse.json(
       { error: "Neveljaven PIN za to restavracijo" },

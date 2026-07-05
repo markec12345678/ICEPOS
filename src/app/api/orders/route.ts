@@ -1,6 +1,7 @@
 // @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { validate, CreateOrderSchema } from "@/lib/validation";
 import { getOperatorFromRequest } from "@/lib/auth";
 import { getTenantFromRequest } from "@/lib/tenant";
 
@@ -52,6 +53,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+    const parsed = validate(CreateOrderSchema, body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Neveljaven vhod", details: parsed.error }, { status: 400 });
+    }
+    const data = parsed.data;
     const { tableId, items } = body as {
       tableId: string;
       items: {
