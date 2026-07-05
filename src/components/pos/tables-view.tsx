@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 "use client";
 
 import { useState, useEffect } from "react";

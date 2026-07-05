@@ -1,4 +1,3 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -60,9 +59,9 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    const dayRevenue = dayOrders.reduce((s, o) => s + o.total, 0);
-    const weekRevenue = weekOrders.reduce((s, o) => s + o.total, 0);
-    const monthRevenue = monthOrders.reduce((s, o) => s + o.total, 0);
+    const dayRevenue = dayOrders.reduce((s, o) => s + Number(o.total), 0);
+    const weekRevenue = weekOrders.reduce((s, o) => s + Number(o.total), 0);
+    const monthRevenue = monthOrders.reduce((s, o) => s + Number(o.total), 0);
 
     // Cilji (default — kasneje nastavljivi preko POST)
     const goals = {

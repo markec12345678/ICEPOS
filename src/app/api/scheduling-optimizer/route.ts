@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
       if (!o.paidAt) continue;
       const dow = o.paidAt.getDay();
       if (!revenueByDay[dow]) revenueByDay[dow] = { total: 0, count: 0, avg: 0 };
-      revenueByDay[dow].total += o.total;
+      revenueByDay[dow].total += Number(o.total);
       revenueByDay[dow].count++;
     }
     for (const dow of Object.keys(revenueByDay)) {
@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
       if (!o.paidAt) continue;
       const h = o.paidAt.getHours();
       hourlyRevenue[h] = (hourlyRevenue[h] || 0) + o.total;
-      totalAllRevenue += o.total;
+      totalAllRevenue += Number(o.total);
     }
 
     // Povprečni urni promet (glede na število dni z podatki)
@@ -126,7 +126,7 @@ export async function GET(req: NextRequest) {
 
       // Ocenjen strošek dela (povprečna ura 8h, povprečna urna postavka 12€)
       const avgHourlyRate = operators.length > 0
-        ? operators.reduce((s, o) => s + o.hourlyRate, 0) / operators.length
+        ? operators.reduce((s, o) => s + Number(o.hourlyRate), 0) / operators.length
         : 12;
       const laborCost = currentStaff * 8 * avgHourlyRate;
       const laborCostPct = avgRev > 0 ? Math.round((laborCost / avgRev) * 100) : 0;

@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 "use client";
 
 import { useEffect, useState } from "react";
@@ -100,9 +100,9 @@ export function PaymentDialog() {
   const selectedTable = tables?.find((t) => t.id === selectedTableId);
   const openOrder = selectedTable?.orders.find((o) => o.status === "open");
 
-  const grossTotal = cart.reduce((s, c) => s + c.menuItem.price * c.quantity, 0);
+  const grossTotal = cart.reduce((s, c) => s + c.Number(menuItem.price) * c.quantity, 0);
   const grossVat = cart.reduce(
-    (s, c) => s + c.menuItem.price * c.quantity * c.menuItem.vatRate,
+    (s, c) => s + c.Number(menuItem.price) * c.quantity * c.menuItem.vatRate,
     0
   );
   const discountAmount = (grossTotal * discountPercent) / 100;
@@ -198,7 +198,7 @@ export function PaymentDialog() {
       const payload: Record<string, unknown> = { paymentMethod: method };
       if (method === "giftcard") payload.giftCardCode = giftCardCode.trim().toUpperCase();
       if (selectedCustomerId) payload.customerId = selectedCustomerId;
-      if (tipAmount > 0) payload.tip = Math.round(tipAmount * 100) / 100;
+      if (tipAmount > 0) Number(payload.tip) = Math.round(tipAmount * 100) / 100;
 
       const res = await fetch(`/api/orders/${openOrder.id}/pay`, {
         method: "POST",
@@ -815,10 +815,10 @@ function ReceiptView({
                   </td>
                   <td className="py-0.5 text-center">{it.quantity}</td>
                   <td className="py-0.5 text-right">
-                    {it.unitPrice.toFixed(2)}
+                    {Number(it.unitPrice).toFixed(2)}
                   </td>
                   <td className="py-0.5 text-right font-medium">
-                    {(it.unitPrice * it.quantity).toFixed(2)}
+                    {(Number(it.unitPrice) * it.quantity).toFixed(2)}
                   </td>
                 </tr>
               ))}
@@ -828,7 +828,7 @@ function ReceiptView({
           <div className="space-y-0.5">
             <div className="flex justify-between">
               <span>Vrednost brez DDV:</span>
-              <span>{(paid.total - paid.vatTotal).toFixed(2)} €</span>
+              <span>{(Number(paid.total) - paid.vatTotal).toFixed(2)} €</span>
             </div>
             <div className="flex justify-between">
               <span>DDV 9,5%:</span>
@@ -836,7 +836,7 @@ function ReceiptView({
                 {paid.items
                   .filter((i) => i.vatRate < 0.2)
                   .reduce(
-                    (s, i) => s + i.unitPrice * i.quantity * i.vatRate,
+                    (s, i) => s + Number(i.unitPrice) * i.quantity * i.vatRate,
                     0
                   )
                   .toFixed(2)}{" "}
@@ -849,7 +849,7 @@ function ReceiptView({
                 {paid.items
                   .filter((i) => i.vatRate >= 0.2)
                   .reduce(
-                    (s, i) => s + i.unitPrice * i.quantity * i.vatRate,
+                    (s, i) => s + Number(i.unitPrice) * i.quantity * i.vatRate,
                     0
                   )
                   .toFixed(2)}{" "}
@@ -860,7 +860,7 @@ function ReceiptView({
           <Separator className="my-2 border-dashed" />
           <div className="flex justify-between text-sm font-bold">
             <span>SKUPAJ:</span>
-            <span>{paid.total.toFixed(2)} €</span>
+            <span>{Number(paid.total).toFixed(2)} €</span>
           </div>
           <div className="flex justify-between">
             <span>Plačilo:</span>

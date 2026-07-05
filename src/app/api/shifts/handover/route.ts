@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -75,8 +75,8 @@ export async function POST(req: NextRequest) {
       select: { total: true, tip: true, paymentMethod: true },
     });
 
-    const totalRevenue = paidOrders.reduce((s, o) => s + o.total, 0);
-    const totalTips = paidOrders.reduce((s, o) => s + (o.tip || 0), 0);
+    const totalRevenue = paidOrders.reduce((s, o) => s + Number(o.total), 0);
+    const totalTips = paidOrders.reduce((s, o) => s + (Number(o.tip) || 0), 0);
     const ordersCount = paidOrders.length;
     const cashOrders = paidOrders.filter((o) => o.paymentMethod === "cash").length;
     const cardOrders = paidOrders.filter((o) => o.paymentMethod === "card").length;

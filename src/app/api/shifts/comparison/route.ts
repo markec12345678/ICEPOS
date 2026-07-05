@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
         ? Math.round((s.endTime.getTime() - s.startTime.getTime()) / 60000)
         : 0;
       byOperator[op].shiftCount++;
-      byOperator[op].totalRevenue += s.totalRevenue;
+      byOperator[op].totalRevenue += Number(s.totalRevenue);
       byOperator[op].totalOrders += s.ordersCount;
       byOperator[op].totalDuration += duration;
       byOperator[op].shifts.push({
@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
     for (const s of shifts) {
       const dateKey = s.startTime.toISOString().slice(0, 10);
       if (!byDay[dateKey]) byDay[dateKey] = { date: dateKey, revenue: 0, orders: 0, shifts: 0 };
-      byDay[dateKey].revenue += s.totalRevenue;
+      byDay[dateKey].revenue += Number(s.totalRevenue);
       byDay[dateKey].orders += s.ordersCount;
       byDay[dateKey].shifts++;
     }

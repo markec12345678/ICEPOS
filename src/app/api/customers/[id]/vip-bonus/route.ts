@@ -1,4 +1,3 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -42,7 +41,7 @@ export async function POST(
       return NextResponse.json({ error: "Stranka ni najdena" }, { status: 404 });
     }
 
-    const totalSpent = customer.orders.reduce((s, o) => s + o.total, 0);
+    const totalSpent = customer.orders.reduce((s, o) => s + Number(o.total), 0);
 
     // Najdi milestone (ali uporabi podani threshold)
     const milestone = milestoneThreshold
@@ -109,7 +108,7 @@ export async function GET(
       return NextResponse.json({ error: "Stranka ni najdena" }, { status: 404 });
     }
 
-    const totalSpent = customer.orders.reduce((s, o) => s + o.total, 0);
+    const totalSpent = customer.orders.reduce((s, o) => s + Number(o.total), 0);
     const achievedMilestones = VIP_MILESTONES.filter((m) => totalSpent >= m.threshold);
     const nextMilestone = VIP_MILESTONES.find((m) => totalSpent < m.threshold);
 

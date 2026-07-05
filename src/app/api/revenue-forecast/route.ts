@@ -1,4 +1,3 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -40,7 +39,7 @@ export async function GET(req: NextRequest) {
       if (!o.paidAt) continue;
       const dateKey = o.paidAt.toISOString().slice(0, 10);
       if (!dailyRevenue[dateKey]) dailyRevenue[dateKey] = { revenue: 0, orders: 0 };
-      dailyRevenue[dateKey].revenue += o.total;
+      dailyRevenue[dateKey].revenue += Number(o.total);
       dailyRevenue[dateKey].orders++;
     }
 
@@ -66,10 +65,10 @@ export async function GET(req: NextRequest) {
 
     const lastWeekRev = orders
       .filter((o) => o.paidAt && o.paidAt >= last7)
-      .reduce((s, o) => s + o.total, 0);
+      .reduce((s, o) => s + Number(o.total), 0);
     const prevWeekRev = orders
       .filter((o) => o.paidAt && o.paidAt >= prev7 && o.paidAt < last7)
-      .reduce((s, o) => s + o.total, 0);
+      .reduce((s, o) => s + Number(o.total), 0);
 
     const trendPct = prevWeekRev > 0 ? ((lastWeekRev - prevWeekRev) / prevWeekRev) * 100 : 0;
 

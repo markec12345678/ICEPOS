@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 "use client";
 
 import { useEffect, useState } from "react";
@@ -621,7 +621,7 @@ function CustomerDetailDialog({
                 label="Povprečno"
                 value={
                   data.visitCount > 0
-                    ? formatEUR(data.totalSpent / data.visitCount)
+                    ? formatEUR(Number(data.totalSpent) / data.visitCount)
                     : formatEUR(0)
                 }
                 icon={Trophy}
@@ -959,7 +959,7 @@ function QuickReorderSection({
               )}
             </span>
             <span className="text-muted-foreground">
-              {formatEUR(item.unitPrice * item.quantity)}
+              {formatEUR(Number(item.unitPrice) * item.quantity)}
             </span>
           </div>
         ))}

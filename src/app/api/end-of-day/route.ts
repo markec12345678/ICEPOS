@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -57,9 +57,9 @@ export async function GET(req: NextRequest) {
     const stornoOrders = orders.filter((o) => o.stornoOf);
 
     // Osnovne metrike
-    const totalRevenue = validOrders.reduce((s, o) => s + o.total, 0);
-    const totalTips = validOrders.reduce((s, o) => s + (o.tip || 0), 0);
-    const stornoTotal = stornoOrders.reduce((s, o) => s + Math.abs(o.total), 0);
+    const totalRevenue = validOrders.reduce((s, o) => s + Number(o.total), 0);
+    const totalTips = validOrders.reduce((s, o) => s + (Number(o.tip) || 0), 0);
+    const stornoTotal = stornoOrders.reduce((s, o) => s + Math.abs(Number(o.total)), 0);
     const netRevenue = totalRevenue - stornoTotal;
     const orderCount = validOrders.length;
     const avgOrderValue = orderCount > 0 ? totalRevenue / orderCount : 0;
@@ -92,8 +92,8 @@ export async function GET(req: NextRequest) {
       const method = order.paymentMethod || "unknown";
       if (!byPaymentMethod[method]) byPaymentMethod[method] = { count: 0, total: 0, tips: 0 };
       byPaymentMethod[method].count++;
-      byPaymentMethod[method].total += order.total;
-      byPaymentMethod[method].tips += order.tip || 0;
+      byPaymentMethod[method].total += Number(order.total);
+      byPaymentMethod[method].tips += Number(order.tip) || 0;
     }
 
     // Top jedi
@@ -127,7 +127,7 @@ export async function GET(req: NextRequest) {
       if (hourOrders.length > 0) {
         hourly.push({
           hour: h,
-          revenue: Math.round(hourOrders.reduce((s, o) => s + o.total, 0) * 100) / 100,
+          revenue: Math.round(hourOrders.reduce((s, o) => s + Number(o.total), 0) * 100) / 100,
           orders: hourOrders.length,
         });
       }

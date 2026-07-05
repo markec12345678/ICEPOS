@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 "use client";
 
 import { useEffect, useState } from "react";
@@ -78,7 +78,7 @@ export function ModifierDialog({
   const allModifiers = modifiers || [];
   const selectedModifiers = allModifiers.filter((m) => selected.has(m.id));
   const modifierDelta = selectedModifiers.reduce((s, m) => s + m.priceDelta, 0);
-  const unitPrice = item.price + modifierDelta;
+  const unitPrice = Number(item.price) + modifierDelta;
   const total = unitPrice * quantity;
 
   function toggleModifier(id: string) {
@@ -140,9 +140,9 @@ export function ModifierDialog({
                         </div>
                         <span className="text-sm font-medium">{m.label}</span>
                       </div>
-                      {m.priceDelta !== 0 && (
+                      {Number(m.priceDelta) !== 0 && (
                         <Badge variant="outline" className="font-mono text-xs">
-                          {m.priceDelta > 0 ? "+" : ""}
+                          {Number(m.priceDelta) > 0 ? "+" : ""}
                           {formatEUR(m.priceDelta)}
                         </Badge>
                       )}

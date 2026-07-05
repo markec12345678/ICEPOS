@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
       if (!o.paidAt) continue;
       const hour = o.paidAt.getHours();
       hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + o.total;
-      totalHistoricalRevenue += o.total;
+      totalHistoricalRevenue += Number(o.total);
     }
 
     // Dnevni cilj (vikend višji)
@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
       // Dejanski promet za to uro danes
       const actual = todayOrders
         .filter((o) => o.paidAt && o.paidAt.getHours() === h)
-        .reduce((s, o) => s + o.total, 0);
+        .reduce((s, o) => s + Number(o.total), 0);
 
       cumulativeActual += actual;
       cumulativeTargetSum += target;
@@ -106,7 +106,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Skupne metrike
-    const todayRevenue = todayOrders.reduce((s, o) => s + o.total, 0);
+    const todayRevenue = todayOrders.reduce((s, o) => s + Number(o.total), 0);
     const todayTargetSoFar = hourlyTargets
       .filter((h) => h.hour <= currentHour)
       .reduce((s, h) => s + h.target, 0);

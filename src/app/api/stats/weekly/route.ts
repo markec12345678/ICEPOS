@@ -1,4 +1,3 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -62,12 +61,12 @@ export async function GET() {
         o.paidAt
       ).getMonth()}-${day}`;
       dayStats[day].weeksWithData.add(dateKey);
-      dayStats[day].totalRevenue += o.total;
+      dayStats[day].totalRevenue += Number(o.total);
       dayStats[day].orderCount += 1;
       if (o.paymentMethod === "cash") {
-        dayStats[day].cashRevenue += o.total;
+        dayStats[day].cashRevenue += Number(o.total);
       } else if (o.paymentMethod === "card") {
-        dayStats[day].cardRevenue += o.total;
+        dayStats[day].cardRevenue += Number(o.total);
       }
     }
 

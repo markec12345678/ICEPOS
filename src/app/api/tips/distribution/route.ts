@@ -1,4 +1,3 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -45,7 +44,7 @@ export async function GET(req: NextRequest) {
     });
 
     // Skupne napitnine
-    const totalTips = orders.reduce((s, o) => s + (o.tip || 0), 0);
+    const totalTips = orders.reduce((s, o) => s + (Number(o.tip) || 0), 0);
 
     // Porazdelitev po načinih:
     // 1. By orders (vsak operater dobi napitnine od svojih računov)
@@ -58,7 +57,7 @@ export async function GET(req: NextRequest) {
       const op = o.operator || "Neznan";
       if (!byOrders[op]) byOrders[op] = { operator: op, tipCount: 0, totalTips: 0 };
       byOrders[op].tipCount++;
-      byOrders[op].totalTips += o.tip || 0;
+      byOrders[op].totalTips += Number(o.tip) || 0;
     }
 
     // 2. By hours
@@ -119,8 +118,8 @@ export async function GET(req: NextRequest) {
         totalTips: Math.round(totalTips * 100) / 100,
         tipCount: orders.length,
         avgTip: orders.length > 0 ? Math.round((totalTips / orders.length) * 100) / 100 : 0,
-        tipRate: orders.reduce((s, o) => s + o.total, 0) > 0
-          ? Math.round((totalTips / orders.reduce((s, o) => s + o.total, 0)) * 1000) / 10
+        tipRate: orders.reduce((s, o) => s + Number(o.total), 0) > 0
+          ? Math.round((totalTips / orders.reduce((s, o) => s + Number(o.total), 0)) * 1000) / 10
           : 0,
         operatorCount: Object.keys(operatorHours).length,
       },

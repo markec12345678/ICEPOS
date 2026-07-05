@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -88,7 +88,7 @@ export async function GET(req: NextRequest) {
       const op = Object.values(operatorMap).find((o) => o.operatorName === order.operator);
       if (op) {
         Number(op.totalRevenue) += order.total;
-        op.totalTips += order.tip || 0;
+        op.totalTips += Number(order.tip) || 0;
         op.orderCount++;
         op.totalItems += order.items.reduce((s, i) => s + i.quantity, 0);
       } else {
@@ -108,8 +108,8 @@ export async function GET(req: NextRequest) {
             laborCost: 0,
           };
         }
-        operatorMap[key].totalRevenue += order.total;
-        operatorMap[key].totalTips += order.tip || 0;
+        operatorMap[key].totalRevenue += Number(order.total);
+        operatorMap[key].totalTips += Number(order.tip) || 0;
         operatorMap[key].orderCount++;
         operatorMap[key].totalItems += order.items.reduce((s, i) => s + i.quantity, 0);
       }
@@ -160,8 +160,8 @@ export async function GET(req: NextRequest) {
       .sort((a, b) => b.score - a.score);
 
     // Skupne metrike
-    const totalRevenue = operators.reduce((s, o) => s + o.totalRevenue, 0);
-    const totalHours = operators.reduce((s, o) => s + o.totalHours, 0);
+    const totalRevenue = operators.reduce((s, o) => s + Number(o.totalRevenue), 0);
+    const totalHours = operators.reduce((s, o) => s + Number(o.totalHours), 0);
     const totalOrders = operators.reduce((s, o) => s + o.orderCount, 0);
     const avgScore = operators.length > 0 ? Math.round(operators.reduce((s, o) => s + o.score, 0) / operators.length) : 0;
 

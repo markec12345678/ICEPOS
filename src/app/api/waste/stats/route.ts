@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
       },
       select: { total: true },
     });
-    const revenue = paidOrders.reduce((s, o) => s + o.total, 0);
+    const revenue = paidOrders.reduce((s, o) => s + Number(o.total), 0);
     const wastePct = revenue > 0 ? (totalCost / revenue) * 100 : 0;
 
     return NextResponse.json({

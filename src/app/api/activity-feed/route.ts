@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
         type: "paid",
         timestamp: (o.paidAt || o.createdAt).toISOString(),
         title: `Račun plačan — ${o.table?.name || "Miza"}`,
-        description: `${o.items.length} postavk · ${o.paymentMethod === "cash" ? "Gotovina" : o.paymentMethod === "card" ? "Kartica" : o.paymentMethod === "giftcard" ? "Darilna kartica" : "—"}${Number(o.tip) > 0 ? ` · napitnina ${o.tip.toFixed(2)}€` : ""}`,
+        description: `${o.items.length} postavk · ${o.paymentMethod === "cash" ? "Gotovina" : o.paymentMethod === "card" ? "Kartica" : o.paymentMethod === "giftcard" ? "Darilna kartica" : "—"}${Number(o.tip) > 0 ? ` · napitnina ${Number(o.tip).toFixed(2)}€` : ""}`,
         amount: o.total,
         tableName: o.table?.name,
         operator: o.operator,
@@ -93,7 +93,7 @@ export async function GET(req: NextRequest) {
           id: `tip-${o.id}`,
           type: "tip",
           timestamp: (o.paidAt || o.createdAt).toISOString(),
-          title: `🪙 Napitnina ${o.tip.toFixed(2)}€`,
+          title: `🪙 Napitnina ${Number(o.tip).toFixed(2)}€`,
           description: `${o.table?.name || "Miza"} · ${o.operator}`,
           amount: o.tip,
           tableName: o.table?.name,

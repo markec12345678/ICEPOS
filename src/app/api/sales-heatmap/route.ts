@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -141,7 +141,7 @@ export async function GET(req: NextRequest) {
       dayNamesShort,
       weeks,
       totalOrders: orders.length,
-      totalRevenue: Math.round(orders.reduce((s, o) => s + o.total, 0) * 100) / 100,
+      totalRevenue: Math.round(orders.reduce((s, o) => s + Number(o.total), 0) * 100) / 100,
     });
   } catch (e) {
     console.error("GET /api/sales-heatmap error:", e);

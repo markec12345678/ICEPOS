@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { PrismaClient, OperatorRole, OrderStatus, PaymentMethod, ReservationStatus, ShiftStatus } from "@prisma/client";
 
 const db = new PrismaClient();

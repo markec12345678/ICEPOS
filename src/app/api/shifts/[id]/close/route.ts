@@ -1,4 +1,3 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -43,11 +42,11 @@ export async function POST(
       select: { total: true, paymentMethod: true, tip: true },
     });
 
-    const totalRevenue = paidOrders.reduce((s, o) => s + o.total, 0);
-    const totalTips = paidOrders.reduce((s, o) => s + (o.tip || 0), 0);
+    const totalRevenue = paidOrders.reduce((s, o) => s + Number(o.total), 0);
+    const totalTips = paidOrders.reduce((s, o) => s + (Number(o.tip) || 0), 0);
     const cashRevenue = paidOrders
       .filter((o) => o.paymentMethod === "cash")
-      .reduce((s, o) => s + o.total, 0);
+      .reduce((s, o) => s + Number(o.total), 0);
 
     const closed = await db.shift.update({
       where: { id },

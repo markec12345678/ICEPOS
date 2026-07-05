@@ -1,4 +1,3 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -34,8 +33,8 @@ export async function GET(req: NextRequest) {
     const analyzedCustomers = customers
       .map((c) => {
         const orders = c.orders;
-        const totalSpent = orders.reduce((s, o) => s + o.total, 0);
-        const totalTips = orders.reduce((s, o) => s + (o.tip || 0), 0);
+        const totalSpent = orders.reduce((s, o) => s + Number(o.total), 0);
+        const totalTips = orders.reduce((s, o) => s + (Number(o.tip) || 0), 0);
         const visitCount = orders.length;
         const avgOrderValue = visitCount > 0 ? totalSpent / visitCount : 0;
 

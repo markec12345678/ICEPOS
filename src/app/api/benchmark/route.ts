@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -35,8 +35,8 @@ export async function GET(req: NextRequest) {
           },
         });
 
-        const revenue = paidOrders.reduce((s, o) => s + o.total, 0);
-        const tips = paidOrders.reduce((s, o) => s + (o.tip || 0), 0);
+        const revenue = paidOrders.reduce((s, o) => s + Number(o.total), 0);
+        const tips = paidOrders.reduce((s, o) => s + (Number(o.tip) || 0), 0);
         const orderCount = paidOrders.length;
         const avgOrder = orderCount > 0 ? revenue / orderCount : 0;
 

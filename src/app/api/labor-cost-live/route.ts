@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
       select: { total: true, paidAt: true },
     });
 
-    const dayRevenue = paidOrders.reduce((s, o) => s + o.total, 0);
+    const dayRevenue = paidOrders.reduce((s, o) => s + Number(o.total), 0);
 
     // Izračunaj strošek per operater
     const operators = timesheets.map((ts) => {
@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
 
     // Skupne metrike
     const totalHours = operators.reduce((s, o) => s + o.workHours, 0);
-    const totalCost = operators.reduce((s, o) => s + o.cost, 0);
+    const totalCost = operators.reduce((s, o) => s + Number(o.cost), 0);
     const activeCount = operators.filter((o) => o.isClockedIn).length;
     const laborCostPct = dayRevenue > 0 ? (totalCost / dayRevenue) * 100 : 0;
 

@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -30,8 +30,8 @@ export async function GET(req: NextRequest) {
       include: { items: { include: { menuItem: true } } },
     });
 
-    const todayRevenue = paidOrders.reduce((s, o) => s + o.total, 0);
-    const todayTips = paidOrders.reduce((s, o) => s + (o.tip || 0), 0);
+    const todayRevenue = paidOrders.reduce((s, o) => s + Number(o.total), 0);
+    const todayTips = paidOrders.reduce((s, o) => s + (Number(o.tip) || 0), 0);
     const todayOrders = paidOrders.length;
     const avgOrderValue = todayOrders > 0 ? todayRevenue / todayOrders : 0;
 
@@ -73,7 +73,7 @@ export async function GET(req: NextRequest) {
       );
       hourly.push({
         hour: `${String(h).padStart(2, "0")}:00`,
-        revenue: hourOrders.reduce((s, o) => s + o.total, 0),
+        revenue: hourOrders.reduce((s, o) => s + Number(o.total), 0),
       });
     }
 

@@ -1,4 +1,3 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -74,10 +73,10 @@ export async function GET(req: NextRequest) {
     const cardOrders = paidOrders.filter((o) => o.paymentMethod === "card");
     const giftcardOrders = paidOrders.filter((o) => o.paymentMethod === "giftcard");
 
-    const cashRevenue = cashOrders.reduce((s, o) => s + o.total, 0);
-    const cardRevenue = cardOrders.reduce((s, o) => s + o.total, 0);
-    const giftcardRevenue = giftcardOrders.reduce((s, o) => s + o.total, 0);
-    const totalTips = paidOrders.reduce((s, o) => s + (o.tip || 0), 0);
+    const cashRevenue = cashOrders.reduce((s, o) => s + Number(o.total), 0);
+    const cardRevenue = cardOrders.reduce((s, o) => s + Number(o.total), 0);
+    const giftcardRevenue = giftcardOrders.reduce((s, o) => s + Number(o.total), 0);
+    const totalTips = paidOrders.reduce((s, o) => s + (Number(o.tip) || 0), 0);
 
     // Pričakovan stanje blagajne = začetno stanje + gotovinski promet + napitnine
     const expectedCash = Number(shift.startCash) + cashRevenue + totalTips;

@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -28,11 +28,11 @@ export async function GET(req: NextRequest) {
     const validOrders = paidOrders.filter((o) => o.status === "paid");
     const stornoOrders = paidOrders.filter((o) => o.status === "storno");
 
-    const grossTotal = validOrders.reduce((s, o) => s + o.total, 0);
-    const stornoTotal = stornoOrders.reduce((s, o) => s + Math.abs(o.total), 0);
+    const grossTotal = validOrders.reduce((s, o) => s + Number(o.total), 0);
+    const stornoTotal = stornoOrders.reduce((s, o) => s + Math.abs(Number(o.total)), 0);
     const netTotal = grossTotal - stornoTotal;
-    const netVat = validOrders.reduce((s, o) => s + o.vatTotal, 0) -
-      stornoOrders.reduce((s, o) => s + Math.abs(o.vatTotal), 0);
+    const netVat = validOrders.reduce((s, o) => s + Number(o.vatTotal), 0) -
+      stornoOrders.reduce((s, o) => s + Math.abs(Number(o.vatTotal)), 0);
 
     // Dnevna dinamika
     const daysInMonth = new Date(year, month, 0).getDate();
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
       });
       dailyRevenue.push({
         day: `${String(d).padStart(2, "0")}.${String(month).padStart(2, "0")}`,
-        revenue: dayOrders.reduce((s, o) => s + o.total, 0),
+        revenue: dayOrders.reduce((s, o) => s + Number(o.total), 0),
         orders: dayOrders.length,
       });
     }

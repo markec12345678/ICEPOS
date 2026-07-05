@@ -1,4 +1,3 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -113,7 +112,7 @@ export async function GET(req: NextRequest) {
       }
 
       sectionMap[section].totalOrders++;
-      sectionMap[section].totalRevenue += order.total;
+      sectionMap[section].totalRevenue += Number(order.total);
       sectionMap[section].totalItems += order.items.reduce((s, i) => s + i.quantity, 0);
 
       // Turn time
@@ -128,7 +127,7 @@ export async function GET(req: NextRequest) {
       const ts = tableStats[order.tableId];
       if (ts) {
         ts.orders++;
-        ts.revenue += order.total;
+        ts.revenue += Number(order.total);
         if (order.paidAt) {
           const turnMin = (order.paidAt.getTime() - order.createdAt.getTime()) / 60000;
           if (turnMin > 0 && turnMin < 600) {

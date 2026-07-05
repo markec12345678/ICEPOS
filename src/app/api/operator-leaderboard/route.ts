@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -50,8 +50,8 @@ export async function GET(req: NextRequest) {
         operatorMap[op] = { operator: op, orders: 0, revenue: 0, tips: 0, items: 0, avgOrder: 0, maxOrder: 0, tipRate: 0 };
       }
       operatorMap[op].orders++;
-      operatorMap[op].revenue += o.total;
-      operatorMap[op].tips += o.tip || 0;
+      operatorMap[op].revenue += Number(o.total);
+      operatorMap[op].tips += Number(o.tip) || 0;
       operatorMap[op].items += o.items.reduce((s, i) => s + i.quantity, 0);
       operatorMap[op].maxOrder = Math.max(operatorMap[op].maxOrder, o.total);
     }
@@ -88,7 +88,7 @@ export async function GET(req: NextRequest) {
     // Skupne metrike
     const totalRevenue = leaderboard.reduce((s, o) => s + o.revenue, 0);
     const totalOrders = leaderboard.reduce((s, o) => s + o.orders, 0);
-    const totalTips = leaderboard.reduce((s, o) => s + o.tips, 0);
+    const totalTips = leaderboard.reduce((s, o) => s + Number(o.tips), 0);
 
     // Top performer
     const topPerformer = leaderboard[0] || null;

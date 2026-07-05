@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -49,8 +49,8 @@ export async function GET(req: NextRequest) {
       const existing = perfMap.get(op);
       if (existing) {
         existing.orders++;
-        existing.revenue += o.total;
-        existing.tips += o.tip || 0;
+        existing.revenue += Number(o.total);
+        existing.tips += Number(o.tip) || 0;
         if (o.paymentMethod === "cash") existing.cashOrders++;
         if (o.paymentMethod === "card") existing.cardOrders++;
         if (o.paidAt) {

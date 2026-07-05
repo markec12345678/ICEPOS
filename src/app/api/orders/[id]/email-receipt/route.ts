@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -77,8 +77,8 @@ ${itemsList}
 DDV po stopnjah:
 ${vatLines}
 
-💰 Skupaj: ${order.total.toFixed(2)} €
-${Number(order.tip) > 0 ? `🤝 Napitnina: ${order.tip.toFixed(2)} €\n📊 Skupaj z napitnino: ${(Number(order.total) + order.tip).toFixed(2)} €` : ""}
+💰 Skupaj: ${Number(order.total).toFixed(2)} €
+${Number(order.tip) > 0 ? `🤝 Napitnina: ${Number(order.tip).toFixed(2)} €\n📊 Skupaj z napitnino: ${(Number(order.total) + order.tip).toFixed(2)} €` : ""}
 
 🔒 ZOI: ${order.zoi || "—"}
 🔒 EOR: ${order.eor || "—"}

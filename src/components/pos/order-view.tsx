@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -188,7 +188,7 @@ export function OrderView() {
   // Cena postavke z modifierji (za prikaz v vozičku)
   function lineUnitPrice(c: (any & { lineId: string })): number {
     const modDelta = (c.modifiers || []).reduce((s, m) => s + m.priceDelta, 0);
-    return c.menuItem.price + modDelta;
+    return c.Number(menuItem.price) + modDelta;
   }
 
   // Debounced search — 300ms za boljšo performance pri 500+ artiklih
@@ -256,8 +256,8 @@ export function OrderView() {
   const cartCount = cart.reduce((s, c) => s + c.quantity, 0);
 
   // Popust in končna cena
-  const discountAmount = (cartTotals.total * discountPercent) / 100;
-  const finalTotal = cartTotals.total - discountAmount;
+  const discountAmount = (Number(cartTotals.total) * discountPercent) / 100;
+  const finalTotal = Number(cartTotals.total) - discountAmount;
 
   // Sinhroniziraj voziček z Customer Display Unit (CDU)
   useEffect(() => {
@@ -795,10 +795,10 @@ export function OrderView() {
                                 className="bg-amber-50 px-1.5 py-0 text-[10px] text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
                               >
                                 {mod.label}
-                                {mod.priceDelta !== 0 && (
+                                {Number(mod.priceDelta) !== 0 && (
                                   <span className="ml-0.5 font-mono">
-                                    {mod.priceDelta > 0 ? "+" : ""}
-                                    {mod.priceDelta.toFixed(2)}
+                                    {Number(mod.priceDelta) > 0 ? "+" : ""}
+                                    {Number(mod.priceDelta).toFixed(2)}
                                   </span>
                                 )}
                               </Badge>

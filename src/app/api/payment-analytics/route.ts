@@ -1,4 +1,3 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -46,12 +45,12 @@ export async function GET(req: NextRequest) {
         byMethod[method] = { count: 0, total: 0, tips: 0, avgOrder: 0 };
       }
       byMethod[method].count++;
-      byMethod[method].total += o.total;
-      byMethod[method].tips += o.tip || 0;
+      byMethod[method].total += Number(o.total);
+      byMethod[method].tips += Number(o.tip) || 0;
     }
 
-    const totalRevenue = orders.reduce((s, o) => s + o.total, 0);
-    const totalTips = orders.reduce((s, o) => s + (o.tip || 0), 0);
+    const totalRevenue = orders.reduce((s, o) => s + Number(o.total), 0);
+    const totalTips = orders.reduce((s, o) => s + (Number(o.tip) || 0), 0);
     const totalOrders = orders.length;
 
     const methodStats = Object.entries(byMethod).map(([method, v]) => ({
@@ -76,10 +75,10 @@ export async function GET(req: NextRequest) {
       });
       dailyTrend.push({
         date: dateStr,
-        cash: Math.round(dayOrders.filter((o) => o.paymentMethod === "cash").reduce((s, o) => s + o.total, 0) * 100) / 100,
-        card: Math.round(dayOrders.filter((o) => o.paymentMethod === "card").reduce((s, o) => s + o.total, 0) * 100) / 100,
-        giftcard: Math.round(dayOrders.filter((o) => o.paymentMethod === "giftcard").reduce((s, o) => s + o.total, 0) * 100) / 100,
-        other: Math.round(dayOrders.filter((o) => o.paymentMethod && !["cash", "card", "giftcard"].includes(o.paymentMethod)).reduce((s, o) => s + o.total, 0) * 100) / 100,
+        cash: Math.round(dayOrders.filter((o) => o.paymentMethod === "cash").reduce((s, o) => s + Number(o.total), 0) * 100) / 100,
+        card: Math.round(dayOrders.filter((o) => o.paymentMethod === "card").reduce((s, o) => s + Number(o.total), 0) * 100) / 100,
+        giftcard: Math.round(dayOrders.filter((o) => o.paymentMethod === "giftcard").reduce((s, o) => s + Number(o.total), 0) * 100) / 100,
+        other: Math.round(dayOrders.filter((o) => o.paymentMethod && !["cash", "card", "giftcard"].includes(o.paymentMethod)).reduce((s, o) => s + Number(o.total), 0) * 100) / 100,
       });
     }
 
@@ -88,7 +87,7 @@ export async function GET(req: NextRequest) {
     for (const o of orders) {
       const op = o.operator || "Neznan";
       if (!byOperator[op]) byOperator[op] = { cash: 0, card: 0, giftcard: 0, total: 0, count: 0 };
-      byOperator[op].total += o.total;
+      byOperator[op].total += Number(o.total);
       byOperator[op].count++;
       if (o.paymentMethod === "cash") byOperator[op].cash++;
       else if (o.paymentMethod === "card") byOperator[op].card++;
@@ -113,7 +112,7 @@ export async function GET(req: NextRequest) {
       if (!o.paidAt) continue;
       const dow = o.paidAt.getDay();
       if (!byDayOfWeek[dow]) byDayOfWeek[dow] = { cash: 0, card: 0, total: 0 };
-      byDayOfWeek[dow].total += o.total;
+      byDayOfWeek[dow].total += Number(o.total);
       if (o.paymentMethod === "cash") byDayOfWeek[dow].cash++;
       else if (o.paymentMethod === "card") byDayOfWeek[dow].card++;
     }

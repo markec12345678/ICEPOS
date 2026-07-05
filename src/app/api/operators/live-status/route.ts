@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -78,8 +78,8 @@ export async function GET(req: NextRequest) {
       const op = o.operator || "Neznan";
       const existing = salesMap.get(op);
       if (existing) {
-        existing.revenue += o.total;
-        existing.tips += o.tip || 0;
+        existing.revenue += Number(o.total);
+        existing.tips += Number(o.tip) || 0;
         existing.orders++;
       } else {
         salesMap.set(op, {
@@ -115,8 +115,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       operators,
       totalOpen: openOrders.length,
-      totalRevenue: Math.round(paidOrders.reduce((s, o) => s + o.total, 0) * 100) / 100,
-      totalTips: Math.round(paidOrders.reduce((s, o) => s + (o.tip || 0), 0) * 100) / 100,
+      totalRevenue: Math.round(paidOrders.reduce((s, o) => s + Number(o.total), 0) * 100) / 100,
+      totalTips: Math.round(paidOrders.reduce((s, o) => s + (Number(o.tip) || 0), 0) * 100) / 100,
     });
   } catch (e) {
     console.error("GET /api/operators/live-status error:", e);

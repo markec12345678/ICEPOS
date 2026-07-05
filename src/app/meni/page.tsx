@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { db } from "@/lib/db";
 import { ISSUER } from "@/lib/furs";
 import type { MenuItem } from "@/lib/types";

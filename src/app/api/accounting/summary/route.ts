@@ -1,4 +1,4 @@
-// @ts-nocheck — pre-existing TS errors (non-critical route)
+// @ts-nocheck — pre-existing TS errors (non-critical analytics/reporting route)
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getTenantFromRequest } from "@/lib/tenant";
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
 
       if (isStorno) {
         stornoCount++;
-        stornoAmount += o.total;
+        stornoAmount += Number(o.total);
       }
 
       totalRevenue += Number(o.total) * sign;
