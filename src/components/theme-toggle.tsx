@@ -28,7 +28,7 @@ export function ThemeToggle() {
   return (
     <Button
       variant="ghost"
-      size="icon" aria-label="Akcija"
+      size="icon"
       className="h-9 w-9"
       onClick={() => setTheme(isDark ? "light" : "dark")}
       title={isDark ? "Preklopi na svetlo temo" : "Preklopi na temno temo"}
