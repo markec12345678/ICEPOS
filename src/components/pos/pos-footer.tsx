@@ -28,6 +28,8 @@ import {
   Brain,
   Layers,
   Calculator,
+  Shield,
+  Sparkles,
   Truck,
   CalendarCheck2,
   ImagePlus,
@@ -86,13 +88,16 @@ export function PosFooter() {
     { id: "suppliers" as const, label: "Dobavitelji", desc: "Upravljanje dobaviteljev", icon: Truck },
     { id: "cash-drawer" as const, label: "Gotovinska blagajna", desc: "Cash in/out, petty cash", icon: Wallet },
     { id: "purchase-orders" as const, label: "Nabavni nalogi", desc: "Naročila pri dobaviteljih", icon: ClipboardList },
+    { id: "cost-analysis" as const, label: "Analiza stroškov", desc: "Food cost analiza", icon: Calculator },
+    { id: "allergen-matrix" as const, label: "Matrika alergenov", desc: "HACCP pregled", icon: Shield },
+    { id: "daily-specials" as const, label: "Dnevne specialitete", desc: "Današnje ponudbe", icon: Sparkles },
     { id: "weekly" as const, label: "Tedenska statistika", desc: "Po dnevih v tednu", icon: CalendarClock },
     { id: "monthly" as const, label: "Mesečno poročilo", desc: "Statistika meseca", icon: CalendarRange },
     { id: "zreport" as const, label: "Z-report", desc: "Dnevni zaključek", icon: FileBarChart },
     { id: "settings" as const, label: "Nastavitve", desc: "Podjetje in FURS", icon: Settings },
   ];
 
-  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards", "scheduling", "menu-engineering", "benchmark", "waste", "happy-hour", "wolt", "forecast", "combos", "accounting", "deliverect", "opentable", "images", "performance", "customer-analytics", "feedback", "waitlist", "suppliers", "cash-drawer", "purchase-orders"].includes(activeView);
+  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards", "scheduling", "menu-engineering", "benchmark", "waste", "happy-hour", "wolt", "forecast", "combos", "accounting", "deliverect", "opentable", "images", "performance", "customer-analytics", "feedback", "waitlist", "suppliers", "cash-drawer", "purchase-orders", "cost-analysis", "allergen-matrix", "daily-specials"].includes(activeView);
 
   return (
     <footer className="sticky bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:hidden print:hidden safe-bottom">
@@ -394,6 +399,24 @@ export function PosSidebar() {
       label: "Nabavni nalogi",
       desc: "Naročila pri dobaviteljih",
       icon: ClipboardList,
+    },
+    {
+      id: "cost-analysis" as const,
+      label: "Analiza stroškov",
+      desc: "Food cost analiza",
+      icon: Calculator,
+    },
+    {
+      id: "allergen-matrix" as const,
+      label: "Matrika alergenov",
+      desc: "HACCP pregled",
+      icon: Shield,
+    },
+    {
+      id: "daily-specials" as const,
+      label: "Dnevne specialitete",
+      desc: "Današnje ponudbe",
+      icon: Sparkles,
     },
   ];
 

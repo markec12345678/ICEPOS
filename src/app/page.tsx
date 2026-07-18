@@ -44,6 +44,9 @@ import { WaitlistView } from "@/components/pos/waitlist-view";
 import { SupplierView } from "@/components/pos/supplier-view";
 import { CashDrawerView } from "@/components/pos/cash-drawer-view";
 import { PurchaseOrderView } from "@/components/pos/purchase-order-view";
+import { CostAnalysisView } from "@/components/pos/cost-analysis-view";
+import { AllergenMatrixView } from "@/components/pos/allergen-matrix-view";
+import { DailySpecialsView } from "@/components/pos/daily-specials-view";
 import { OutOfStockBanner } from "@/components/pos/out-of-stock-banner";
 import { OfflineResilienceBanner } from "@/components/pos/offline-resilience-banner";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
@@ -187,6 +190,9 @@ export default function Home() {
             {activeView === "suppliers" && <SupplierView />}
             {activeView === "cash-drawer" && <CashDrawerView />}
             {activeView === "purchase-orders" && <PurchaseOrderView />}
+            {activeView === "cost-analysis" && <CostAnalysisView />}
+            {activeView === "allergen-matrix" && <AllergenMatrixView />}
+            {activeView === "daily-specials" && <DailySpecialsView />}
           </div>
         </main>
       </div>

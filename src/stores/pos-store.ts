@@ -54,7 +54,10 @@ interface PosState {
     | "waitlist"
     | "suppliers"
     | "cash-drawer"
-    | "purchase-orders";
+    | "purchase-orders"
+    | "cost-analysis"
+    | "allergen-matrix"
+    | "daily-specials";
   setActiveView: (
     v:
       | "tables"
@@ -93,6 +96,9 @@ interface PosState {
       | "suppliers"
       | "cash-drawer"
       | "purchase-orders"
+      | "cost-analysis"
+      | "allergen-matrix"
+      | "daily-specials"
   ) => void;
 
   // Selected table
