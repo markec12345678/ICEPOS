@@ -57,7 +57,10 @@ interface PosState {
     | "purchase-orders"
     | "cost-analysis"
     | "allergen-matrix"
-    | "daily-specials";
+    | "daily-specials"
+    | "ddv-report"
+    | "furs-audit"
+    | "equipment";
   setActiveView: (
     v:
       | "tables"
@@ -99,6 +102,9 @@ interface PosState {
       | "cost-analysis"
       | "allergen-matrix"
       | "daily-specials"
+      | "ddv-report"
+      | "furs-audit"
+      | "equipment"
   ) => void;
 
   // Selected table

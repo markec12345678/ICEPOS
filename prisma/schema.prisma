@@ -61,6 +61,7 @@ model Restaurant {
   suppliers       Supplier[]
   cashDrawer      CashDrawerEntry[]
   purchaseOrders  PurchaseOrder[]
+  equipment       Equipment[]
 }
 
 // ============================================================
@@ -547,3 +548,47 @@ model PurchaseOrderItem {
   lineTotal       Float    // quantity * unitCost
   createdAt       DateTime @default(now())
 }
+
+// ============================================================
+// EQUIPMENT — oprema in vzdrževanje
+// ============================================================
+
+model Equipment {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name          String   // "Hladilnik Bosch", "Pečica Gorenje"
+  category      String   // "cooling" | "cooking" | "dishwashing" | "preparation" | "other"
+  serialNumber  String?
+  manufacturer  String?
+  model         String?
+  location      String?  // "Kuhinja", "Hladilnica", "Bar"
+  purchaseDate  DateTime?
+  purchaseCost  Float    @default(0)
+  warrantyExpiry DateTime?
+  // Vzdrževanje
+  lastServiceDate DateTime?
+  nextServiceDate DateTime?
+  serviceIntervalDays Int @default(90) // interval vzdrževanja v dnevih
+  status        String   @default("operational") // "operational" | "maintenance" | "broken" | "retired"
+  note          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  maintenanceLogs EquipmentMaintenance[]
+}
+
+model EquipmentMaintenance {
+  id            String   @id @default(cuid())
+  equipmentId   String
+  equipment     Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  type          String   // "routine" | "repair" | "inspection" | "cleaning" | "replacement"
+  description   String
+  cost          Float    @default(0)
+  technician    String?  // kdo je opravil
+  serviceDate   DateTime @default(now())
+  nextServiceDate DateTime? // naslednji predvideni servis
+  status        String   @default("completed") // "scheduled" | "in_progress" | "completed" | "cancelled"
+  note          String?
+  createdAt     DateTime @default(now())
+}
+
