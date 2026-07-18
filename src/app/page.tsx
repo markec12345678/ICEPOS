@@ -41,6 +41,9 @@ import { EmployeePerformanceView } from "@/components/pos/employee-performance-v
 import { CustomerAnalyticsView } from "@/components/pos/customer-analytics-view";
 import { FeedbackView } from "@/components/pos/feedback-view";
 import { WaitlistView } from "@/components/pos/waitlist-view";
+import { SupplierView } from "@/components/pos/supplier-view";
+import { CashDrawerView } from "@/components/pos/cash-drawer-view";
+import { PurchaseOrderView } from "@/components/pos/purchase-order-view";
 import { OutOfStockBanner } from "@/components/pos/out-of-stock-banner";
 import { OfflineResilienceBanner } from "@/components/pos/offline-resilience-banner";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
@@ -181,6 +184,9 @@ export default function Home() {
             {activeView === "customer-analytics" && <CustomerAnalyticsView />}
             {activeView === "feedback" && <FeedbackView />}
             {activeView === "waitlist" && <WaitlistView />}
+            {activeView === "suppliers" && <SupplierView />}
+            {activeView === "cash-drawer" && <CashDrawerView />}
+            {activeView === "purchase-orders" && <PurchaseOrderView />}
           </div>
         </main>
       </div>

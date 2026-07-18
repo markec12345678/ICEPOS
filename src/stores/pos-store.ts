@@ -51,7 +51,10 @@ interface PosState {
     | "performance"
     | "customer-analytics"
     | "feedback"
-    | "waitlist";
+    | "waitlist"
+    | "suppliers"
+    | "cash-drawer"
+    | "purchase-orders";
   setActiveView: (
     v:
       | "tables"
@@ -87,6 +90,9 @@ interface PosState {
       | "customer-analytics"
       | "feedback"
       | "waitlist"
+      | "suppliers"
+      | "cash-drawer"
+      | "purchase-orders"
   ) => void;
 
   // Selected table

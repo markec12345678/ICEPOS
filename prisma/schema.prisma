@@ -58,6 +58,9 @@ model Restaurant {
   comboMeals      ComboMeal[]
   feedbacks       Feedback[]
   waitlist        WaitlistEntry[]
+  suppliers       Supplier[]
+  cashDrawer      CashDrawerEntry[]
+  purchaseOrders  PurchaseOrder[]
 }
 
 // ============================================================
@@ -460,4 +463,87 @@ model WaitlistEntry {
   leftAt        DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// ============================================================
+// SUPPLIER MANAGEMENT — dobavitelji
+// ============================================================
+
+model Supplier {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name          String
+  contactPerson String?
+  phone         String?
+  email         String?
+  address       String?
+  city          String?
+  taxNumber     String?
+  paymentTerms  String   @default("30 dni") // plačilni pogoji
+  discountPercent Float  @default(0) // rabat %
+  note          String?
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  purchaseOrders PurchaseOrder[]
+}
+
+// ============================================================
+// CASH DRAWER — gotovinska blagajna (cash in/out, petty cash)
+// ============================================================
+
+model CashDrawerEntry {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  type          String   // "cash_in" | "cash_out" | "sale" | "refund" | "petty" | "start" | "end"
+  amount        Float    // vedno pozitivno; direction določa tok
+  direction     String   // "in" | "out"
+  reason        String?
+  operator      String?
+  shiftId       String?
+  balanceBefore Float    @default(0)
+  balanceAfter  Float    @default(0)
+  createdAt     DateTime @default(now())
+}
+
+// ============================================================
+// PURCHASE ORDERS — nabavni nalogi
+// ============================================================
+
+model PurchaseOrder {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  supplierId    String?
+  supplier      Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  poNumber      String   // "PO-2026-001" — unikaten znotraj restavracije
+  status        String   @default("draft") // "draft" | "sent" | "received" | "cancelled"
+  orderDate     DateTime @default(now())
+  expectedDate  DateTime?
+  receivedDate  DateTime?
+  totalAmount   Float    @default(0) // vsota postavk (po rabatu)
+  discountPercent Float  @default(0)
+  note          String?
+  operator      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  items         PurchaseOrderItem[]
+
+  @@unique([restaurantId, poNumber])
+}
+
+model PurchaseOrderItem {
+  id              String   @id @default(cuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  inventoryItemId String?
+  name            String   // ime izdelka (snapshot)
+  quantity        Float    // naročena količina
+  receivedQty     Float    @default(0) // prejeta količina
+  unit            String   @default("kos")
+  unitCost        Float    // cena na enoto (EUR)
+  lineTotal       Float    // quantity * unitCost
+  createdAt       DateTime @default(now())
 }
