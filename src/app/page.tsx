@@ -50,6 +50,9 @@ import { DailySpecialsView } from "@/components/pos/daily-specials-view";
 import { DdvReportView } from "@/components/pos/ddv-report-view";
 import { FursAuditView } from "@/components/pos/furs-audit-view";
 import { EquipmentView } from "@/components/pos/equipment-view";
+import { RecipeScalingView } from "@/components/pos/recipe-scaling-view";
+import { TaxFreeView } from "@/components/pos/tax-free-view";
+import { StaffMealView } from "@/components/pos/staff-meal-view";
 import { OutOfStockBanner } from "@/components/pos/out-of-stock-banner";
 import { OfflineResilienceBanner } from "@/components/pos/offline-resilience-banner";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
@@ -199,6 +202,9 @@ export default function Home() {
             {activeView === "ddv-report" && <DdvReportView />}
             {activeView === "furs-audit" && <FursAuditView />}
             {activeView === "equipment" && <EquipmentView />}
+            {activeView === "recipe-scaling" && <RecipeScalingView />}
+            {activeView === "tax-free" && <TaxFreeView />}
+            {activeView === "staff-meals" && <StaffMealView />}
           </div>
         </main>
       </div>

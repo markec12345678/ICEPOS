@@ -60,7 +60,10 @@ interface PosState {
     | "daily-specials"
     | "ddv-report"
     | "furs-audit"
-    | "equipment";
+    | "equipment"
+    | "recipe-scaling"
+    | "tax-free"
+    | "staff-meals";
   setActiveView: (
     v:
       | "tables"
@@ -105,6 +108,9 @@ interface PosState {
       | "ddv-report"
       | "furs-audit"
       | "equipment"
+      | "recipe-scaling"
+      | "tax-free"
+      | "staff-meals"
   ) => void;
 
   // Selected table
