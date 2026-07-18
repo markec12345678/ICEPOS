@@ -17,6 +17,7 @@ import { formatSecondaryCurrency } from "@/lib/multi-currency";
 import { ALLERGEN_INFO, ALLERGEN_KEYS, parseAllergens } from "@/lib/allergens";
 import { CustomerLookup } from "@/components/pos/customer-lookup";
 import { OrderFlagsManager } from "@/components/pos/order-flags";
+import { OrderTemplateManager } from "@/components/pos/order-template-manager";
 import { useCartPersistence } from "@/hooks/use-cart-persistence";
 import { useUndo } from "@/hooks/use-undo";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -435,8 +436,25 @@ export function OrderView() {
               )}
             </p>
           </div>
-          {/* Quick customer lookup */}
-          <div className="ml-auto hidden sm:block">
+          {/* Quick customer lookup + order templates */}
+          <div className="ml-auto hidden items-center gap-2 sm:flex">
+            <OrderTemplateManager
+              cart={cart}
+              onLoadTemplate={(items) => {
+                // Počisti košarico in dodaj postavke iz predloge
+                clearCart();
+                items.forEach((item) => {
+                  const menuItem = menu?.find((m) => m.id === item.menuItemId);
+                  if (menuItem && menuItem.available) {
+                    addCartItem(menuItem, item.quantity, [], item.note);
+                  }
+                });
+                toast.success(`Predloga naložena`, {
+                  description: `${items.length} postavk`,
+                  duration: 2000,
+                });
+              }}
+            />
             <CustomerLookup
               selectedCustomerId={selectedCustomer?.id || null}
               onSelect={(c) => setSelectedCustomer(c)}
@@ -705,6 +723,28 @@ export function OrderView() {
                     {m.desc}
                   </p>
                 )}
+                {/* Alergeni in kalorije */}
+                <div className="mt-1 flex flex-wrap items-center gap-1">
+                  {(() => {
+                    const allergens = parseAllergens(m.allergens);
+                    if (allergens.length === 0) return null;
+                    return (
+                      <span className="flex items-center gap-0.5" title={`Alergeni: ${allergens.map(a => ALLERGEN_INFO[a]?.sl || a).join(", ")}`}>
+                        {allergens.slice(0, 3).map((a) => (
+                          <span key={a} className="text-[9px]">{ALLERGEN_INFO[a]?.icon || "🏷️"}</span>
+                        ))}
+                        {allergens.length > 3 && (
+                          <span className="text-[9px] text-muted-foreground">+{allergens.length - 3}</span>
+                        )}
+                      </span>
+                    );
+                  })()}
+                  {m.calories && (
+                    <span className="text-[9px] text-muted-foreground" title={`${m.calories} kcal`}>
+                      🔥{m.calories}
+                    </span>
+                  )}
+                </div>
                 <div className="mt-2 flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     {happyHourMap.has(m.id) ? (

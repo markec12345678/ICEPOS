@@ -3,10 +3,20 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { UserSearch, X, UserPlus, Phone, Mail, Star } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { UserSearch, X, UserPlus, Phone, Mail, Star, Loader2 } from "lucide-react";
 import { formatEUR } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { playFeedbackSound } from "@/hooks/use-sound-feedback";
 
 interface CustomerResult {
   id: string;
@@ -31,6 +41,11 @@ export function CustomerLookup({ selectedCustomerId, onSelect }: CustomerLookupP
   const [showResults, setShowResults] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<CustomerResult | null>(null);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [adding, setAdding] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -44,7 +59,6 @@ export function CustomerLookup({ selectedCustomerId, onSelect }: CustomerLookupP
         })
         .catch(() => {});
     } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelected(null);
     }
   }, [selectedCustomerId]);
@@ -52,7 +66,6 @@ export function CustomerLookup({ selectedCustomerId, onSelect }: CustomerLookupP
   // Debounced search
   useEffect(() => {
     if (query.trim().length < 2) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults([]);
       return;
     }
@@ -196,8 +209,7 @@ export function CustomerLookup({ selectedCustomerId, onSelect }: CustomerLookupP
               className="w-full text-xs"
               onClick={() => {
                 setShowResults(false);
-                setQuery("");
-                toast.info("Dodaj novo stranko v Stranke → Nova stranka");
+                setQuickAddOpen(true);
               }}
             >
               <UserPlus className="mr-1.5 h-3 w-3" />
@@ -216,6 +228,114 @@ export function CustomerLookup({ selectedCustomerId, onSelect }: CustomerLookupP
           </div>
         </div>
       )}
+
+      {/* Quick-add dialog */}
+      <Dialog open={quickAddOpen} onOpenChange={setQuickAddOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-amber-600" />
+              Hitra registracija stranke
+            </DialogTitle>
+            <DialogDescription>
+              Dodaj stranko brez navigacije — takoj poveži z naročilom
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div>
+              <label className="mb-1 block text-sm font-medium">Ime in priimek *</label>
+              <Input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Janez Novak"
+                autoFocus
+                onKeyDown={(e) => e.key === "Enter" && quickAddCustomer()}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">Telefon</label>
+              <Input
+                value={newPhone}
+                onChange={(e) => setNewPhone(e.target.value)}
+                placeholder="031 234 567"
+                onKeyDown={(e) => e.key === "Enter" && quickAddCustomer()}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">Email</label>
+              <Input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="janez@email.si"
+                onKeyDown={(e) => e.key === "Enter" && quickAddCustomer()}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setQuickAddOpen(false)} disabled={adding}>
+              Prekliči
+            </Button>
+            <Button
+              onClick={quickAddCustomer}
+              disabled={adding || !newName.trim()}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              {adding ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <UserPlus className="mr-1.5 h-4 w-4" />}
+              Dodaj in poveži
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
+
+  async function quickAddCustomer() {
+    if (!newName.trim()) {
+      toast.error("Ime je obvezno");
+      return;
+    }
+    setAdding(true);
+    try {
+      const res = await fetch("/api/customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newName.trim(),
+          phone: newPhone.trim() || undefined,
+          email: newEmail.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Napaka");
+
+      playFeedbackSound("success");
+      toast.success(`Stranka dodana: ${data.name}`, {
+        description: "Samodejno povezana z naročilom",
+        duration: 3000,
+      });
+
+      // Samodejno izberi novo stranko
+      onSelect({
+        id: data.id,
+        name: data.name,
+        phone: data.phone || null,
+        email: data.email || null,
+        points: data.points || 0,
+        totalSpent: data.totalSpent || 0,
+        visitCount: data.visitCount || 0,
+      });
+
+      // Počisti in zapri
+      setNewName("");
+      setNewPhone("");
+      setNewEmail("");
+      setQuickAddOpen(false);
+      setQuery("");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Napaka pri dodajanju stranke");
+    } finally {
+      setAdding(false);
+    }
+  }
 }
