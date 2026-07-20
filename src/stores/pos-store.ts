@@ -81,7 +81,10 @@ interface PosState {
     | "pre-orders"
     | "recipe-versioning"
     | "allergen-alerts"
-    | "table-turnover";
+    | "table-turnover"
+    | "inventory-valuation"
+    | "competitor-prices"
+    | "loyalty-history";
   setActiveView: (
     v:
       | "tables"
@@ -147,6 +150,9 @@ interface PosState {
       | "recipe-versioning"
       | "allergen-alerts"
       | "table-turnover"
+      | "inventory-valuation"
+      | "competitor-prices"
+      | "loyalty-history"
   ) => void;
 
   // Selected table

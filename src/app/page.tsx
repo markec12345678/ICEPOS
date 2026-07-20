@@ -71,6 +71,9 @@ import { PreOrdersView } from "@/components/pos/pre-orders-view";
 import { RecipeVersioningView } from "@/components/pos/recipe-versioning-view";
 import { AllergenAlertsView } from "@/components/pos/allergen-alerts-view";
 import { TableTurnoverView } from "@/components/pos/table-turnover-view";
+import { InventoryValuationView } from "@/components/pos/inventory-valuation-view";
+import { CompetitorPricesView } from "@/components/pos/competitor-prices-view";
+import { LoyaltyHistoryView } from "@/components/pos/loyalty-history-view";
 import { OutOfStockBanner } from "@/components/pos/out-of-stock-banner";
 import { OfflineResilienceBanner } from "@/components/pos/offline-resilience-banner";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
@@ -241,6 +244,9 @@ export default function Home() {
             {activeView === "recipe-versioning" && <RecipeVersioningView />}
             {activeView === "allergen-alerts" && <AllergenAlertsView />}
             {activeView === "table-turnover" && <TableTurnoverView />}
+            {activeView === "inventory-valuation" && <InventoryValuationView />}
+            {activeView === "competitor-prices" && <CompetitorPricesView />}
+            {activeView === "loyalty-history" && <LoyaltyHistoryView />}
           </div>
         </main>
       </div>
