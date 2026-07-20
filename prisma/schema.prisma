@@ -62,6 +62,7 @@ model Restaurant {
   cashDrawer      CashDrawerEntry[]
   purchaseOrders  PurchaseOrder[]
   equipment       Equipment[]
+  stockTransfers  StockTransfer[]
 }
 
 // ============================================================
@@ -590,5 +591,43 @@ model EquipmentMaintenance {
   status        String   @default("completed") // "scheduled" | "in_progress" | "completed" | "cancelled"
   note          String?
   createdAt     DateTime @default(now())
+}
+
+// ============================================================
+// STOCK TRANSFER — medlokalni prenosi zalog
+// ============================================================
+
+model StockTransfer {
+  id              String   @id @default(cuid())
+  restaurantId    String   // izvorna restavracija (tenant)
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  toRestaurantId  String   // ciljna restavracija
+  toRestaurantName String  // snapshot imena cilja
+  transferNumber  String   // "ST-2026-001"
+  status          String   @default("draft") // "draft" | "sent" | "received" | "cancelled"
+  transferDate    DateTime @default(now())
+  receivedDate    DateTime?
+  totalItems      Int      @default(0)
+  totalValue      Float    @default(0)
+  note            String?
+  operator        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  items           StockTransferItem[]
+
+  @@unique([restaurantId, transferNumber])
+}
+
+model StockTransferItem {
+  id              String   @id @default(cuid())
+  stockTransferId String
+  stockTransfer   StockTransfer @relation(fields: [stockTransferId], references: [id], onDelete: Cascade)
+  inventoryItemId String?
+  name            String   // snapshot imena
+  quantity        Float    // količina za prenos
+  unit            String   @default("kos")
+  unitCost        Float    @default(0)
+  lineTotal       Float    @default(0)
+  createdAt       DateTime @default(now())
 }
 

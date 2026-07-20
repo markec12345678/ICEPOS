@@ -63,7 +63,10 @@ interface PosState {
     | "equipment"
     | "recipe-scaling"
     | "tax-free"
-    | "staff-meals";
+    | "staff-meals"
+    | "stock-transfers"
+    | "loyalty-tiers"
+    | "mobile-orders";
   setActiveView: (
     v:
       | "tables"
@@ -111,6 +114,9 @@ interface PosState {
       | "recipe-scaling"
       | "tax-free"
       | "staff-meals"
+      | "stock-transfers"
+      | "loyalty-tiers"
+      | "mobile-orders"
   ) => void;
 
   // Selected table

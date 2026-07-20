@@ -53,6 +53,9 @@ import { EquipmentView } from "@/components/pos/equipment-view";
 import { RecipeScalingView } from "@/components/pos/recipe-scaling-view";
 import { TaxFreeView } from "@/components/pos/tax-free-view";
 import { StaffMealView } from "@/components/pos/staff-meal-view";
+import { StockTransferView } from "@/components/pos/stock-transfer-view";
+import { LoyaltyTiersView } from "@/components/pos/loyalty-tiers-view";
+import { MobileOrdersView } from "@/components/pos/mobile-orders-view";
 import { OutOfStockBanner } from "@/components/pos/out-of-stock-banner";
 import { OfflineResilienceBanner } from "@/components/pos/offline-resilience-banner";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
@@ -205,6 +208,9 @@ export default function Home() {
             {activeView === "recipe-scaling" && <RecipeScalingView />}
             {activeView === "tax-free" && <TaxFreeView />}
             {activeView === "staff-meals" && <StaffMealView />}
+            {activeView === "stock-transfers" && <StockTransferView />}
+            {activeView === "loyalty-tiers" && <LoyaltyTiersView />}
+            {activeView === "mobile-orders" && <MobileOrdersView />}
           </div>
         </main>
       </div>

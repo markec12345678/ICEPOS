@@ -5,21 +5,21 @@ const globalForPrisma = globalThis as unknown as {
   prismaClientVersion?: string
 }
 
-// Verzija Prisma clienta — spremeni ob vsakem `prisma generate`,
-// da invalidira star singleton (ki morda nima novih modelov, npr. Equipment).
-const CLIENT_VERSION = 'equip-2026-07-18'
+// Verzija Prisma clienta — spremeni ob vsakom `prisma generate`,
+// da invalidira star singleton (ki morda nima novih modelov, npr. StockTransfer).
+const CLIENT_VERSION = 'stocktransfer-2026-07-18'
 
 // Invalidiraj singleton, če je bil ustvarjen z zgodnejšo verzijo clienta
-// in nima novega modela `equipment`.
+// in nima novega modela `stockTransfer`.
 const existing = globalForPrisma.prisma
-const hasEquipment =
+const hasStockTransfer =
   existing !== undefined &&
-  typeof (existing as unknown as Record<string, unknown>).equipment !==
+  typeof (existing as unknown as Record<string, unknown>).stockTransfer !==
     'undefined'
 const isStale =
   !!existing &&
   (globalForPrisma.prismaClientVersion !== CLIENT_VERSION ||
-    !hasEquipment)
+    !hasStockTransfer)
 
 if (isStale && existing) {
   try {

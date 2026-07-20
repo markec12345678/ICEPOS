@@ -35,6 +35,9 @@ import {
   Wrench,
   Scale,
   Plane,
+  ArrowLeftRight,
+  Crown,
+  Smartphone,
   Truck,
   CalendarCheck2,
   ImagePlus,
@@ -102,13 +105,16 @@ export function PosFooter() {
     { id: "recipe-scaling" as const, label: "Preračun receptov", desc: "Skaliranje za X porcij", icon: Scale },
     { id: "tax-free" as const, label: "Tax-free", desc: "Povračilo DDV turistom", icon: Plane },
     { id: "staff-meals" as const, label: "Obroki zaposlenih", desc: "Popusti za osebje", icon: UtensilsCrossed },
+    { id: "stock-transfers" as const, label: "Medlokalni prenosi", desc: "Prenosi zalog", icon: ArrowLeftRight },
+    { id: "loyalty-tiers" as const, label: "Nivoji zvestobe", desc: "Bron/Srebro/Zlato/Platina", icon: Crown },
+    { id: "mobile-orders" as const, label: "Mobilna naročila", desc: "QR prednaročila", icon: Smartphone },
     { id: "weekly" as const, label: "Tedenska statistika", desc: "Po dnevih v tednu", icon: CalendarClock },
     { id: "monthly" as const, label: "Mesečno poročilo", desc: "Statistika meseca", icon: CalendarRange },
     { id: "zreport" as const, label: "Z-report", desc: "Dnevni zaključek", icon: FileBarChart },
     { id: "settings" as const, label: "Nastavitve", desc: "Podjetje in FURS", icon: Settings },
   ];
 
-  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards", "scheduling", "menu-engineering", "benchmark", "waste", "happy-hour", "wolt", "forecast", "combos", "accounting", "deliverect", "opentable", "images", "performance", "customer-analytics", "feedback", "waitlist", "suppliers", "cash-drawer", "purchase-orders", "cost-analysis", "allergen-matrix", "daily-specials", "ddv-report", "furs-audit", "equipment", "recipe-scaling", "tax-free", "staff-meals"].includes(activeView);
+  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards", "scheduling", "menu-engineering", "benchmark", "waste", "happy-hour", "wolt", "forecast", "combos", "accounting", "deliverect", "opentable", "images", "performance", "customer-analytics", "feedback", "waitlist", "suppliers", "cash-drawer", "purchase-orders", "cost-analysis", "allergen-matrix", "daily-specials", "ddv-report", "furs-audit", "equipment", "recipe-scaling", "tax-free", "staff-meals", "stock-transfers", "loyalty-tiers", "mobile-orders"].includes(activeView);
 
   return (
     <footer className="sticky bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:hidden print:hidden safe-bottom">
@@ -464,6 +470,24 @@ export function PosSidebar() {
       label: "Obroki zaposlenih",
       desc: "Popusti za osebje",
       icon: UtensilsCrossed,
+    },
+    {
+      id: "stock-transfers" as const,
+      label: "Medlokalni prenosi",
+      desc: "Prenosi zalog",
+      icon: ArrowLeftRight,
+    },
+    {
+      id: "loyalty-tiers" as const,
+      label: "Nivoji zvestobe",
+      desc: "Bron/Srebro/Zlato/Platina",
+      icon: Crown,
+    },
+    {
+      id: "mobile-orders" as const,
+      label: "Mobilna naročila",
+      desc: "QR prednaročila",
+      icon: Smartphone,
     },
   ];
 
