@@ -56,6 +56,9 @@ import { StaffMealView } from "@/components/pos/staff-meal-view";
 import { StockTransferView } from "@/components/pos/stock-transfer-view";
 import { LoyaltyTiersView } from "@/components/pos/loyalty-tiers-view";
 import { MobileOrdersView } from "@/components/pos/mobile-orders-view";
+import { EnergyView } from "@/components/pos/energy-view";
+import { GiftCardAnalyticsView } from "@/components/pos/gift-card-analytics-view";
+import { FeedbackDashboardView } from "@/components/pos/feedback-dashboard-view";
 import { OutOfStockBanner } from "@/components/pos/out-of-stock-banner";
 import { OfflineResilienceBanner } from "@/components/pos/offline-resilience-banner";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
@@ -211,6 +214,9 @@ export default function Home() {
             {activeView === "stock-transfers" && <StockTransferView />}
             {activeView === "loyalty-tiers" && <LoyaltyTiersView />}
             {activeView === "mobile-orders" && <MobileOrdersView />}
+            {activeView === "energy" && <EnergyView />}
+            {activeView === "gift-card-analytics" && <GiftCardAnalyticsView />}
+            {activeView === "feedback-dashboard" && <FeedbackDashboardView />}
           </div>
         </main>
       </div>

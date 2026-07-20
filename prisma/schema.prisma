@@ -63,6 +63,7 @@ model Restaurant {
   purchaseOrders  PurchaseOrder[]
   equipment       Equipment[]
   stockTransfers  StockTransfer[]
+  energyReadings  EnergyReading[]
 }
 
 // ============================================================
@@ -629,5 +630,25 @@ model StockTransferItem {
   unitCost        Float    @default(0)
   lineTotal       Float    @default(0)
   createdAt       DateTime @default(now())
+}
+
+// ============================================================
+// ENERGY READINGS — sledenje porabe energije (elektrika, plin, voda)
+// ============================================================
+
+model EnergyReading {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  type          String   // "electricity" | "gas" | "water" | "heating"
+  readingDate   DateTime @default(now())
+  value         Float    // količina (kWh, m³, l)
+  unit          String   @default("kWh")
+  cost          Float    @default(0) // skupni strošek (EUR)
+  costPerUnit   Float    @default(0) // cena na enoto
+  // Referenčna oznaka števca
+  meterNumber   String?
+  note          String?
+  createdAt     DateTime @default(now())
 }
 

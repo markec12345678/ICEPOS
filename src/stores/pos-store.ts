@@ -66,7 +66,10 @@ interface PosState {
     | "staff-meals"
     | "stock-transfers"
     | "loyalty-tiers"
-    | "mobile-orders";
+    | "mobile-orders"
+    | "energy"
+    | "gift-card-analytics"
+    | "feedback-dashboard";
   setActiveView: (
     v:
       | "tables"
@@ -117,6 +120,9 @@ interface PosState {
       | "stock-transfers"
       | "loyalty-tiers"
       | "mobile-orders"
+      | "energy"
+      | "gift-card-analytics"
+      | "feedback-dashboard"
   ) => void;
 
   // Selected table
