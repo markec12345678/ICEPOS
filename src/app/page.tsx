@@ -59,6 +59,9 @@ import { MobileOrdersView } from "@/components/pos/mobile-orders-view";
 import { EnergyView } from "@/components/pos/energy-view";
 import { GiftCardAnalyticsView } from "@/components/pos/gift-card-analytics-view";
 import { FeedbackDashboardView } from "@/components/pos/feedback-dashboard-view";
+import { HaccpView } from "@/components/pos/haccp-view";
+import { TrainingView } from "@/components/pos/training-view";
+import { CustomerRetentionView } from "@/components/pos/customer-retention-view";
 import { OutOfStockBanner } from "@/components/pos/out-of-stock-banner";
 import { OfflineResilienceBanner } from "@/components/pos/offline-resilience-banner";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
@@ -217,6 +220,9 @@ export default function Home() {
             {activeView === "energy" && <EnergyView />}
             {activeView === "gift-card-analytics" && <GiftCardAnalyticsView />}
             {activeView === "feedback-dashboard" && <FeedbackDashboardView />}
+            {activeView === "haccp" && <HaccpView />}
+            {activeView === "trainings" && <TrainingView />}
+            {activeView === "customer-retention" && <CustomerRetentionView />}
           </div>
         </main>
       </div>

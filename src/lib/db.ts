@@ -6,20 +6,20 @@ const globalForPrisma = globalThis as unknown as {
 }
 
 // Verzija Prisma clienta — spremeni ob vsakom `prisma generate`,
-// da invalidira star singleton (ki morda nima novih modelov, npr. EnergyReading).
-const CLIENT_VERSION = 'energy-2026-07-20'
+// da invalidira star singleton (ki morda nima novih modelov, npr. HaccpInspection).
+const CLIENT_VERSION = 'haccp-2026-07-20'
 
 // Invalidiraj singleton, če je bil ustvarjen z zgodnejšo verzijo clienta
-// in nima novega modela `energyReading`.
+// in nima novega modela `haccpInspection`.
 const existing = globalForPrisma.prisma
-const hasEnergyReading =
+const hasHaccpInspection =
   existing !== undefined &&
-  typeof (existing as unknown as Record<string, unknown>).energyReading !==
+  typeof (existing as unknown as Record<string, unknown>).haccpInspection !==
     'undefined'
 const isStale =
   !!existing &&
   (globalForPrisma.prismaClientVersion !== CLIENT_VERSION ||
-    !hasEnergyReading)
+    !hasHaccpInspection)
 
 if (isStale && existing) {
   try {

@@ -64,6 +64,8 @@ model Restaurant {
   equipment       Equipment[]
   stockTransfers  StockTransfer[]
   energyReadings  EnergyReading[]
+  haccpInspections HaccpInspection[]
+  trainings       Training[]
 }
 
 // ============================================================
@@ -225,6 +227,7 @@ model Operator {
   createdAt  DateTime @default(now())
   schedules  Schedule[]
   timesheets Timesheet[]
+  trainings  Training[]
 
   @@unique([restaurantId, pin])
 }
@@ -650,5 +653,71 @@ model EnergyReading {
   meterNumber   String?
   note          String?
   createdAt     DateTime @default(now())
+}
+
+// ============================================================
+// HACCP INSPECTIONS — zdravstveni in higienski pregledi
+// ============================================================
+
+model HaccpInspection {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  type          String   // "routine" | "follow_up" | "complaint" | "self_audit" | "official"
+  inspector     String?  // ime inšpektorja/organizacije
+  inspectionDate DateTime @default(now())
+  nextInspectionDate DateTime?
+  // Področja pregleda (ocene 1-5)
+  cleanlinessScore   Int  @default(5) // čistoča
+  foodHandlingScore  Int  @default(5) // ravnanje s hrano
+  storageScore       Int  @default(5) // skladiščenje
+  temperatureScore   Int  @default(5) // temperatura
+  documentationScore Int  @default(5) // dokumentacija
+  pestControlScore   Int  @default(5) // kontrolo škodljivcev
+  // Skupna ocena in status
+  overallScore       Float  @default(5)
+  status            String @default("passed") // "passed" | "conditional" | "failed"
+  findings          String? // ugotovitve
+  recommendations   String? // priporočila
+  correctiveActions String? // korektivni ukrepi
+  // Priloge (opcijsko)
+  reportUrl         String?
+  note              String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// ============================================================
+// TRAINING — usposabljanja zaposlenih
+// ============================================================
+
+model Training {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  operatorId    String?
+  operator      Operator? @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  title         String   // "Higiena hrane", "FURS postopki", "Strežba"
+  category      String   // "food_safety" | "service" | "safety" | "compliance" | "technical" | "soft_skills"
+  description   String?
+  // Datum in trajanje
+  trainingDate  DateTime @default(now())
+  durationHours Float    @default(1) // trajanje v urah
+  // Status
+  status        String   @default("scheduled") // "scheduled" | "completed" | "cancelled" | "expired"
+  completedDate DateTime?
+  // Rezultat
+  score         Float?   // ocena (0-100)
+  maxScore      Float    @default(100)
+  passed        Boolean  @default(false)
+  certificate   String?  // potrdilo (URL ali opis)
+  // Validnost (koliko časa velja)
+  validUntil    DateTime?
+  // Strošek
+  cost          Float    @default(0)
+  trainer       String?  // izvajalec usposabljanja
+  note          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 

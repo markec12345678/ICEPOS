@@ -69,7 +69,10 @@ interface PosState {
     | "mobile-orders"
     | "energy"
     | "gift-card-analytics"
-    | "feedback-dashboard";
+    | "feedback-dashboard"
+    | "haccp"
+    | "trainings"
+    | "customer-retention";
   setActiveView: (
     v:
       | "tables"
@@ -123,6 +126,9 @@ interface PosState {
       | "energy"
       | "gift-card-analytics"
       | "feedback-dashboard"
+      | "haccp"
+      | "trainings"
+      | "customer-retention"
   ) => void;
 
   // Selected table
