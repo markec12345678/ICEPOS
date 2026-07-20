@@ -78,7 +78,10 @@ interface PosState {
     | "nutrition-calculator"
     | "vouchers"
     | "delivery-zones"
-    | "pre-orders";
+    | "pre-orders"
+    | "recipe-versioning"
+    | "allergen-alerts"
+    | "table-turnover";
   setActiveView: (
     v:
       | "tables"
@@ -141,6 +144,9 @@ interface PosState {
       | "vouchers"
       | "delivery-zones"
       | "pre-orders"
+      | "recipe-versioning"
+      | "allergen-alerts"
+      | "table-turnover"
   ) => void;
 
   // Selected table

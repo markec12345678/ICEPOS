@@ -68,6 +68,9 @@ import { NutritionCalculatorView } from "@/components/pos/nutrition-calculator-v
 import { VouchersView } from "@/components/pos/vouchers-view";
 import { DeliveryZonesView } from "@/components/pos/delivery-zones-view";
 import { PreOrdersView } from "@/components/pos/pre-orders-view";
+import { RecipeVersioningView } from "@/components/pos/recipe-versioning-view";
+import { AllergenAlertsView } from "@/components/pos/allergen-alerts-view";
+import { TableTurnoverView } from "@/components/pos/table-turnover-view";
 import { OutOfStockBanner } from "@/components/pos/out-of-stock-banner";
 import { OfflineResilienceBanner } from "@/components/pos/offline-resilience-banner";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
@@ -235,6 +238,9 @@ export default function Home() {
             {activeView === "vouchers" && <VouchersView />}
             {activeView === "delivery-zones" && <DeliveryZonesView />}
             {activeView === "pre-orders" && <PreOrdersView />}
+            {activeView === "recipe-versioning" && <RecipeVersioningView />}
+            {activeView === "allergen-alerts" && <AllergenAlertsView />}
+            {activeView === "table-turnover" && <TableTurnoverView />}
           </div>
         </main>
       </div>

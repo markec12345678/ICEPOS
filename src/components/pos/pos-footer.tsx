@@ -47,6 +47,9 @@ import {
   Ticket,
   MapPin,
   ShoppingBag,
+  History,
+  ShieldAlert,
+  RefreshCw,
   Truck,
   CalendarCheck2,
   ImagePlus,
@@ -129,13 +132,16 @@ export function PosFooter() {
     { id: "vouchers" as const, label: "Vavčerji", desc: "Kuponi in popusti", icon: Ticket },
     { id: "delivery-zones" as const, label: "Cone dostave", desc: "Območja in pogoji", icon: MapPin },
     { id: "pre-orders" as const, label: "Prednaročila", desc: "Prevzem s plačilom", icon: ShoppingBag },
+    { id: "recipe-versioning" as const, label: "Verzije receptov", desc: "Zgodovina sprememb", icon: History },
+    { id: "allergen-alerts" as const, label: "Obvestila alergenov", desc: "Alergije strank", icon: ShieldAlert },
+    { id: "table-turnover" as const, label: "Obračanje miz", desc: "Analitika zasedenosti", icon: RefreshCw },
     { id: "weekly" as const, label: "Tedenska statistika", desc: "Po dnevih v tednu", icon: CalendarClock },
     { id: "monthly" as const, label: "Mesečno poročilo", desc: "Statistika meseca", icon: CalendarRange },
     { id: "zreport" as const, label: "Z-report", desc: "Dnevni zaključek", icon: FileBarChart },
     { id: "settings" as const, label: "Nastavitve", desc: "Podjetje in FURS", icon: Settings },
   ];
 
-  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards", "scheduling", "menu-engineering", "benchmark", "waste", "happy-hour", "wolt", "forecast", "combos", "accounting", "deliverect", "opentable", "images", "performance", "customer-analytics", "feedback", "waitlist", "suppliers", "cash-drawer", "purchase-orders", "cost-analysis", "allergen-matrix", "daily-specials", "ddv-report", "furs-audit", "equipment", "recipe-scaling", "tax-free", "staff-meals", "stock-transfers", "loyalty-tiers", "mobile-orders", "energy", "gift-card-analytics", "feedback-dashboard", "haccp", "trainings", "customer-retention", "currency-rates", "events", "nutrition-calculator", "vouchers", "delivery-zones", "pre-orders"].includes(activeView);
+  const isMoreActive = ["menu", "zreport", "settings", "kitchen", "reservations", "shift", "monthly", "weekly", "operators", "tables-admin", "inventory", "customers", "gift-cards", "scheduling", "menu-engineering", "benchmark", "waste", "happy-hour", "wolt", "forecast", "combos", "accounting", "deliverect", "opentable", "images", "performance", "customer-analytics", "feedback", "waitlist", "suppliers", "cash-drawer", "purchase-orders", "cost-analysis", "allergen-matrix", "daily-specials", "ddv-report", "furs-audit", "equipment", "recipe-scaling", "tax-free", "staff-meals", "stock-transfers", "loyalty-tiers", "mobile-orders", "energy", "gift-card-analytics", "feedback-dashboard", "haccp", "trainings", "customer-retention", "currency-rates", "events", "nutrition-calculator", "vouchers", "delivery-zones", "pre-orders", "recipe-versioning", "allergen-alerts", "table-turnover"].includes(activeView);
 
   return (
     <footer className="sticky bottom-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 md:hidden print:hidden safe-bottom">
@@ -581,6 +587,24 @@ export function PosSidebar() {
       label: "Prednaročila",
       desc: "Prevzem s plačilom",
       icon: ShoppingBag,
+    },
+    {
+      id: "recipe-versioning" as const,
+      label: "Verzije receptov",
+      desc: "Zgodovina sprememb",
+      icon: History,
+    },
+    {
+      id: "allergen-alerts" as const,
+      label: "Obvestila alergenov",
+      desc: "Alergije strank",
+      icon: ShieldAlert,
+    },
+    {
+      id: "table-turnover" as const,
+      label: "Obračanje miz",
+      desc: "Analitika zasedenosti",
+      icon: RefreshCw,
     },
   ];
 
