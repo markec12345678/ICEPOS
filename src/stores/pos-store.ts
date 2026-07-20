@@ -72,7 +72,10 @@ interface PosState {
     | "feedback-dashboard"
     | "haccp"
     | "trainings"
-    | "customer-retention";
+    | "customer-retention"
+    | "currency-rates"
+    | "events"
+    | "nutrition-calculator";
   setActiveView: (
     v:
       | "tables"
@@ -129,6 +132,9 @@ interface PosState {
       | "haccp"
       | "trainings"
       | "customer-retention"
+      | "currency-rates"
+      | "events"
+      | "nutrition-calculator"
   ) => void;
 
   // Selected table

@@ -62,6 +62,9 @@ import { FeedbackDashboardView } from "@/components/pos/feedback-dashboard-view"
 import { HaccpView } from "@/components/pos/haccp-view";
 import { TrainingView } from "@/components/pos/training-view";
 import { CustomerRetentionView } from "@/components/pos/customer-retention-view";
+import { CurrencyRatesView } from "@/components/pos/currency-rates-view";
+import { EventsView } from "@/components/pos/events-view";
+import { NutritionCalculatorView } from "@/components/pos/nutrition-calculator-view";
 import { OutOfStockBanner } from "@/components/pos/out-of-stock-banner";
 import { OfflineResilienceBanner } from "@/components/pos/offline-resilience-banner";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
@@ -223,6 +226,9 @@ export default function Home() {
             {activeView === "haccp" && <HaccpView />}
             {activeView === "trainings" && <TrainingView />}
             {activeView === "customer-retention" && <CustomerRetentionView />}
+            {activeView === "currency-rates" && <CurrencyRatesView />}
+            {activeView === "events" && <EventsView />}
+            {activeView === "nutrition-calculator" && <NutritionCalculatorView />}
           </div>
         </main>
       </div>

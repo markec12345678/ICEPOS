@@ -66,6 +66,8 @@ model Restaurant {
   energyReadings  EnergyReading[]
   haccpInspections HaccpInspection[]
   trainings       Training[]
+  currencyRates   CurrencyRate[]
+  events          Event[]
 }
 
 // ============================================================
@@ -717,6 +719,67 @@ model Training {
   cost          Float    @default(0)
   trainer       String?  // izvajalec usposabljanja
   note          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ============================================================
+// CURRENCY RATES — tečaji valut za multi-currency podporo
+// ============================================================
+
+model CurrencyRate {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  currency      String   // "USD" | "GBP" | "CHF" | "HRK" | "BAM" | "RSD"
+  symbol        String   // "$" | "£" | "CHF" | "kn"
+  rate          Float    // tečaj glede na osnovno valuto (EUR)
+  // 1 EUR = rate currency (npr. 1 EUR = 1.08 USD)
+  buyRate       Float?   // odkupni tečaj (za gotovinske transakcije)
+  sellRate      Float?   // prodajni tečaj
+  lastUpdated   DateTime @default(now())
+  active        Boolean  @default(true)
+  note          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([restaurantId, currency])
+}
+
+// ============================================================
+// EVENTS — dogodki in catering
+// ============================================================
+
+model Event {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  title         String   // "Poroka Marko in Ana", "Božični seminar"
+  type          String   // "wedding" | "corporate" | "birthday" | "conference" | "private" | "other"
+  customerName  String
+  customerPhone String?
+  customerEmail String?
+  // Datumi
+  eventDate     DateTime
+  endDate       DateTime?
+  setupTime     String?  // "14:00" — čas priprave
+  guestCount    Int      @default(0)
+  // Lokacija
+  location      String?  // "Dvorana Pri Marku" | "Zunanja lokacija"
+  isOffsite     Boolean  @default(false) // ali je catering zunaj restavracije
+  offsiteAddress String?
+  // Cene
+  packagePrice  Float    @default(0) // fiksna cena paketa
+  pricePerGuest Float    @default(0) // cena na gosta
+  totalQuoted   Float    @default(0) // skupni ponudbeni znesek
+  depositPaid   Float    @default(0) // plačani depozit
+  // Status
+  status        String   @default("inquiry") // "inquiry" | "quoted" | "confirmed" | "deposit" | "completed" | "cancelled"
+  // Podrobnosti
+  menu          String?  // opis menija (JSON ali tekst)
+  requirements  String?  // posebne zahteve
+  note          String?
+  assignedOperator String? // kdo odgovoren
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
