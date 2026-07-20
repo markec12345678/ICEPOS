@@ -68,6 +68,8 @@ model Restaurant {
   trainings       Training[]
   currencyRates   CurrencyRate[]
   events          Event[]
+  vouchers        Voucher[]
+  deliveryZones   DeliveryZone[]
 }
 
 // ============================================================
@@ -780,6 +782,63 @@ model Event {
   requirements  String?  // posebne zahteve
   note          String?
   assignedOperator String? // kdo odgovoren
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ============================================================
+// VOUCHERS — vavčerji in kupon popusti
+// ============================================================
+
+model Voucher {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  code          String   // "POLETJE20", "NOVI-GOST-10"
+  name          String   // opisno ime
+  description   String?
+  type          String   // "percent" | "fixed" | "item_free" | "buy_x_get_y"
+  value         Float    // 20 = 20% off, ali 5 = 5€ off
+  // Pogoji
+  minOrderValue Float    @default(0) // minimalni znesek naročila
+  maxDiscount   Float?   // najvišji popust (za percent)
+  // Veljavnost
+  validFrom     DateTime?
+  validUntil    DateTime?
+  usageLimit    Int?     // max št. uporab (null = neomejeno)
+  usedCount     Int      @default(0)
+  // Ali velja za določene kategorije (JSON array ali "all")
+  categories    String   @default("all")
+  // Ali velja samo za določene menu item-e (JSON array ali "all")
+  menuItemIds   String   @default("all")
+  // Status
+  active        Boolean  @default(true)
+  note          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([restaurantId, code])
+}
+
+// ============================================================
+// DELIVERY ZONES — cone dostave
+// ============================================================
+
+model DeliveryZone {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  name          String   // "Center", "Šiška", "Bežigrad"
+  // Območje
+  postalCodes   String   // JSON array: ["1000", "1001"]
+  // Pogoji dostave
+  minOrderValue Float    @default(0) // minimalno naročilo za dostavo
+  deliveryFee   Float    @default(0) // cena dostave
+  freeDeliveryThreshold Float? // brezplačna dostava nad X €
+  estimatedTime Int      @default(30) // predviden čas dostave (min)
+  // Razpoložljivost
+  active        Boolean  @default(true)
+  note          String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }

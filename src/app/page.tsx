@@ -65,6 +65,9 @@ import { CustomerRetentionView } from "@/components/pos/customer-retention-view"
 import { CurrencyRatesView } from "@/components/pos/currency-rates-view";
 import { EventsView } from "@/components/pos/events-view";
 import { NutritionCalculatorView } from "@/components/pos/nutrition-calculator-view";
+import { VouchersView } from "@/components/pos/vouchers-view";
+import { DeliveryZonesView } from "@/components/pos/delivery-zones-view";
+import { PreOrdersView } from "@/components/pos/pre-orders-view";
 import { OutOfStockBanner } from "@/components/pos/out-of-stock-banner";
 import { OfflineResilienceBanner } from "@/components/pos/offline-resilience-banner";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
@@ -229,6 +232,9 @@ export default function Home() {
             {activeView === "currency-rates" && <CurrencyRatesView />}
             {activeView === "events" && <EventsView />}
             {activeView === "nutrition-calculator" && <NutritionCalculatorView />}
+            {activeView === "vouchers" && <VouchersView />}
+            {activeView === "delivery-zones" && <DeliveryZonesView />}
+            {activeView === "pre-orders" && <PreOrdersView />}
           </div>
         </main>
       </div>

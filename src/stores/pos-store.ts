@@ -75,7 +75,10 @@ interface PosState {
     | "customer-retention"
     | "currency-rates"
     | "events"
-    | "nutrition-calculator";
+    | "nutrition-calculator"
+    | "vouchers"
+    | "delivery-zones"
+    | "pre-orders";
   setActiveView: (
     v:
       | "tables"
@@ -135,6 +138,9 @@ interface PosState {
       | "currency-rates"
       | "events"
       | "nutrition-calculator"
+      | "vouchers"
+      | "delivery-zones"
+      | "pre-orders"
   ) => void;
 
   // Selected table
